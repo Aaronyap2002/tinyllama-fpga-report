@@ -2,40 +2,29 @@
 
 \usepackage{listings}
 \usepackage{xcolor}
-\renewcommand{\ttdefault}{pcr}
 \usepackage{inconsolata}
-%\usepackage{DejaVuSansMono}   % ← replaces Computer Modern Typewriter with a
-                            %   modern, clean monospace font for all \texttt{}
-                            %   and lstlisting environments automatically
 
-% Define the colors to match the paper's style
-\definecolor{codekeyword}{RGB}{30, 100, 200}      % blue for keywords like for, int
-\definecolor{codecomment}{RGB}{0, 128, 96}         % teal/green for // comments
-\definecolor{codepragma}{RGB}{150, 50, 150}        % purple for #pragma directives
-\definecolor{codebackground}{RGB}{248, 248, 248}   % very light gray background
-\definecolor{linehighlight}{RGB}{230, 230, 230}    % gray for highlighted lines
+\definecolor{codekeyword}{RGB}{30, 100, 200}
+\definecolor{codecomment}{RGB}{0, 128, 96}
+\definecolor{linehighlight}{RGB}{225, 225, 225}
 
-% Configure the global listing style — this applies to ALL lstlisting blocks
 \lstset{
   language=C++,
-  basicstyle=\ttfamily\small,          % monospaced font, small size
-  keywordstyle=\color{codekeyword}\bfseries,   % blue + bold for C++ keywords
-  commentstyle=\color{codecomment}\itshape,    % teal italic for comments
-  stringstyle=\color{red!70!black},            % dark red for string literals
-  % Add HLS-specific keywords so they get colored too
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{codekeyword}\bfseries,
+  commentstyle=\color{codecomment}\itshape,
   morekeywords={pragma, HLS, PIPELINE, UNROLL, ARRAY_PARTITION,
                 II, factor, cyclic, complete, dataflow},
-  numbers=left,                        % line numbers on the left margin
-  numberstyle=\tiny\color{gray},       % line numbers are small and gray
-  stepnumber=1,                        % number every single line
-  numbersep=8pt,                       % space between line numbers and code
-  backgroundcolor=\color{codebackground},  % light gray background for code block
-  frame=single,                        % draw a box border around the code
-  rulecolor=\color{gray!40},           % border color
-  showstringspaces=false,              % don't show space markers inside strings
-  breaklines=true,                     % wrap long lines instead of overflowing
-  tabsize=2,                           % treat tabs as 2 spaces
-  captionpos=b,                        % put the caption below the listing
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  stepnumber=1,
+  numbersep=8pt,
+  frame=tb,           % only top and bottom lines, no side borders
+  rulecolor=\color{gray!50},
+  showstringspaces=false,
+  breaklines=true,
+  tabsize=2,
+  captionpos=b,
 }
 
 \begin{document}
@@ -51,66 +40,6 @@ Hello, this is a test. Here is some inline math: $E = mc^2$.
   \sum_{i=0}^{N} x_i \cdot w_i
 \end{equation}
 
-% The label= option lets you reference this listing elsewhere with \ref{}
-\begin{lstlisting}[
-  caption={Pipelined dot product loop with HLS pragma.},
-  label={lst:dot_product}
-]
-for (int i = 0; i < N; i++) {
-    #pragma HLS PIPELINE II=1
-    result += x[i] * w[i];  // accumulate weighted sum
-}
-\end{lstlisting}
-
-\end{document}\documentclass{article}
-
-\usepackage{listings}
-\usepackage{xcolor}
-
-% Define the colors to match the paper's style
-\definecolor{codekeyword}{RGB}{30, 100, 200}      % blue for keywords like for, int
-\definecolor{codecomment}{RGB}{0, 128, 96}         % teal/green for // comments
-\definecolor{codepragma}{RGB}{150, 50, 150}        % purple for #pragma directives
-\definecolor{codebackground}{RGB}{248, 248, 248}   % very light gray background
-\definecolor{linehighlight}{RGB}{230, 230, 230}    % gray for highlighted lines
-
-% Configure the global listing style — this applies to ALL lstlisting blocks
-\lstset{
-  language=C++,
-  basicstyle=\ttfamily\small,          % monospaced font, small size
-  keywordstyle=\color{codekeyword}\bfseries,   % blue + bold for C++ keywords
-  commentstyle=\color{codecomment}\itshape,    % teal italic for comments
-  stringstyle=\color{red!70!black},            % dark red for string literals
-  % Add HLS-specific keywords so they get colored too
-  morekeywords={pragma, HLS, PIPELINE, UNROLL, ARRAY_PARTITION,
-                II, factor, cyclic, complete, dataflow},
-  numbers=left,                        % line numbers on the left margin
-  numberstyle=\tiny\color{gray},       % line numbers are small and gray
-  stepnumber=1,                        % number every single line
-  numbersep=8pt,                       % space between line numbers and code
-  backgroundcolor=\color{codebackground},  % light gray background for code block
-  frame=single,                        % draw a box border around the code
-  rulecolor=\color{gray!40},           % border color
-  showstringspaces=false,              % don't show space markers inside strings
-  breaklines=true,                     % wrap long lines instead of overflowing
-  tabsize=2,                           % treat tabs as 2 spaces
-  captionpos=b,                        % put the caption below the listing
-}
-
-\begin{document}
-
-\title{Test Document}
-\author{Aaron}
-\date{\today}
-\maketitle
-
-Hello, this is a test. Here is some inline math: $E = mc^2$.
-
-\begin{equation}
-  \sum_{i=0}^{N} x_i \cdot w_i
-\end{equation}
-
-% The label= option lets you reference this listing elsewhere with \ref{}
 \begin{lstlisting}[
   caption={Pipelined dot product loop with HLS pragma.},
   label={lst:dot_product}

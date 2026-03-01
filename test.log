@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.28 (TeX Live 2025) (preloaded format=pdflatex 2026.3.1)  1 MAR 2026 19:57
+This is pdfTeX, Version 3.141592653-2.6-1.40.28 (TeX Live 2025) (preloaded format=pdflatex 2026.3.1)  1 MAR 2026 20:16
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -102,20 +102,20 @@ File: l3backend-pdftex.def 2025-10-09 L3 backend support: PDF output (pdfTeX)
 ) (./test.aux)
 \openout1 = `test.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 41.
-LaTeX Font Info:    ... okay on input line 41.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 41.
-LaTeX Font Info:    ... okay on input line 41.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 41.
-LaTeX Font Info:    ... okay on input line 41.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 41.
-LaTeX Font Info:    ... okay on input line 41.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 41.
-LaTeX Font Info:    ... okay on input line 41.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 41.
-LaTeX Font Info:    ... okay on input line 41.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 41.
-LaTeX Font Info:    ... okay on input line 41.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 30.
+LaTeX Font Info:    ... okay on input line 30.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 30.
+LaTeX Font Info:    ... okay on input line 30.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 30.
+LaTeX Font Info:    ... okay on input line 30.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 30.
+LaTeX Font Info:    ... okay on input line 30.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 30.
+LaTeX Font Info:    ... okay on input line 30.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 30.
+LaTeX Font Info:    ... okay on input line 30.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 30.
+LaTeX Font Info:    ... okay on input line 30.
 \c@lstlisting=\count294
  (c:/texlive/2025/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
@@ -134,32 +134,32 @@ LaTeX Font Info:    ... okay on input line 41.
 Package: upquote 2012/04/19 v1.3 upright-quote and grave-accent glyphs in verbatim
 )
 LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <12> on input line 46.
+(Font)              <12> on input line 35.
 LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <8> on input line 46.
+(Font)              <8> on input line 35.
 LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <6> on input line 46.
+(Font)              <6> on input line 35.
 LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <7> on input line 48.
+(Font)              <7> on input line 37.
 LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <5> on input line 48.
-LaTeX Font Info:    Trying to load font information for OT1+zi4 on input line 58.
+(Font)              <5> on input line 37.
+LaTeX Font Info:    Trying to load font information for OT1+zi4 on input line 46.
  (c:/texlive/2025/texmf-dist/tex/latex/inconsolata/ot1zi4.fd
 File: ot1zi4.fd 2018/01/14 OT1/zi4 (Inconsolata)
 )
 LaTeX Font Info:    Font shape `OT1/zi4/m/n' will be
-(Font)              scaled to size 10.0pt on input line 58.
+(Font)              scaled to size 10.0pt on input line 46.
 LaTeX Font Info:    Font shape `OT1/zi4/m/n' will be
-(Font)              scaled to size 9.0pt on input line 58.
+(Font)              scaled to size 9.0pt on input line 46.
 LaTeX Font Info:    Font shape `OT1/zi4/b/n' will be
-(Font)              scaled to size 9.0pt on input line 59.
+(Font)              scaled to size 9.0pt on input line 47.
 
 
 LaTeX Font Warning: Font shape `OT1/zi4/m/it' undefined
-(Font)              using `OT1/zi4/m/n' instead on input line 61.
+(Font)              using `OT1/zi4/m/n' instead on input line 49.
 
 LaTeX Font Info:    Font shape `OT1/zi4/m/it' will be
-(Font)              scaled to size 9.0pt on input line 61.
+(Font)              scaled to size 9.0pt on input line 49.
 [1
 
 {c:/texlive/2025/texmf-var/fonts/map/pdftex/updmap/pdftex.map}{c:/texlive/2025/texmf-dist/fonts/enc/dvips/inconsolata/i4-ot1-0.enc}] (./test.aux)
@@ -173,15 +173,15 @@ LaTeX Font Warning: Some font shapes were not available, defaults substituted.
 
  ) 
 Here is how much of TeX's memory you used:
- 3630 strings out of 467533
- 53082 string characters out of 5423669
- 687389 words of memory out of 5000000
- 32540 multiletter control sequences out of 15000+600000
+ 3628 strings out of 467533
+ 53044 string characters out of 5423669
+ 677005 words of memory out of 5000000
+ 32538 multiletter control sequences out of 15000+600000
  631672 words of font info for 54 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 47i,6n,97p,263b,1335s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 47i,6n,97p,248b,1339s stack positions out of 10000i,1000n,20000p,200000b,200000s
 <c:/texlive/2025/texmf-dist/fonts/type1/public/inconsolata/Inconsolata-zi4b.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/inconsolata/Inconsolata-zi4r.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi7.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/cm/cmr5.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb>
-Output written on test.pdf (1 page, 117681 bytes).
+Output written on test.pdf (1 page, 117373 bytes).
 PDF statistics:
  64 PDF objects out of 1000 (max. 8388607)
  38 compressed objects within 1 object stream
