@@ -1,0 +1,26 @@
+\documentclass{article}
+ 
+\usepackage{listings}
+\usepackage{xcolor}
+
+\begin{document}
+
+\title{Test Document}
+\author{Aaron}
+\date{\today}
+\maketitle
+ 
+Hello, this is a test. Here is some inline math: $E = mc^2$.
+
+\begin{equation}
+  \sum_{i=0}^{N} x_i \cdot w_i
+\end{equation}
+
+\begin{lstlisting}[language=C++, numbers=left]
+for (int i = 0; i < N; i++) {
+    #pragma HLS PIPELINE II=1
+    result += x[i] * w[i];
+}
+\end{lstlisting}
+
+\end{document}
