@@ -1,0 +1,42 @@
+% Front/abstract.tex
+% -----------------------------------------------------------------------------
+% The abstract is an unnumbered chapter (*) so it does not get a chapter number,
+% but we still add it to the table of contents manually with \addcontentsline.
+% NTU specifies a maximum of one page for the abstract.
+%
+% A good abstract for an engineering FYP covers four things in order:
+%   1. The problem and why it matters (1--2 sentences)
+%   2. What you did / your approach (2--3 sentences)
+%   3. Your key results with numbers (2--3 sentences)
+%   4. The significance / conclusion (1 sentence)
+
+\chapter*{Abstract}
+\addcontentsline{toc}{chapter}{Abstract}
+
+Large language models (LLMs) such as TinyLlama have demonstrated strong
+natural language understanding capabilities but require substantial
+computational resources that limit their deployment in embedded and
+edge environments. Field-programmable gate arrays (FPGAs) offer a
+compelling alternative to GPU-based inference by providing reconfigurable
+hardware with low power consumption and predictable latency.
+
+This project implements and optimises the inference pipeline of TinyLlama-1.1B
+on the Xilinx ZCU102 FPGA platform using Vitis High-Level Synthesis (HLS).
+The core transformer components -- including RMSNorm, matrix--vector
+multiplication, multi-head attention, and the SwiGLU feed-forward network --
+were implemented as quantised INT8 HLS kernels with hardware-level pipeline
+and loop unrolling optimisations to minimise the initiation interval.
+
+% --- Replace this block with your actual results once available ---------------
+% Example of the kind of quantitative results you should report here:
+%   "The final implementation achieves a throughput of X tokens/second at
+%    Y MHz clock frequency, utilising 43.9\% of available LUTs and 34.2\%
+%    of BRAM on the ZCU102. This represents a Z$\times$ improvement in
+%    energy efficiency compared to a software baseline running on an
+%    ARM Cortex-A53 processor."
+% -----------------------------------------------------------------------------
+
+The results demonstrate that FPGA acceleration with INT8 quantisation
+achieves competitive inference performance while operating within the
+ZCU102's resource budget, validating the viability of transformer-based
+language model deployment on reconfigurable hardware.

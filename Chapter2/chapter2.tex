@@ -1,0 +1,113 @@
+% Chapter2/chapter2.tex -- Literature Review
+% -----------------------------------------------------------------------------
+% The literature review has two jobs:
+%   1. Demonstrate that you understand the research landscape
+%   2. Justify your design decisions by showing what others have tried
+%
+% Structure tip: don't just summarise papers one-by-one. Group them by theme
+% (quantisation, attention optimisation, FPGA architectures) and synthesise
+% them -- explain how they relate to each other and to YOUR work.
+
+\chapter{Literature Review}
+\label{ch:litreview}
+
+\section{Transformer Model Architecture}
+\label{sec:transformer_arch}
+
+The transformer architecture, introduced by Vaswani et al.\ \cite{PLACEHOLDER},
+forms the computational backbone of all modern LLMs including TinyLlama.
+Unlike recurrent networks, transformers process sequences in parallel through
+a mechanism called self-attention, which allows every token to directly attend
+to every other token in the sequence. While this parallelism enables efficient
+training on GPUs, it creates a challenging memory-access pattern for hardware
+accelerators: the attention computation scales quadratically with sequence
+length, and the weight matrices must be repeatedly loaded from external DRAM
+during inference.
+
+The TinyLlama-1.1B model \cite{PLACEHOLDER} uses the LLaMA-2 architecture with
+grouped-query attention (GQA) and the SwiGLU activation function in place of
+the standard ReLU. GQA reduces the number of key and value heads relative to
+query heads, substantially decreasing the KV cache size during autoregressive
+generation -- a particularly important optimisation for memory-constrained
+hardware like the ZCU102.
+
+\lipsum[2] % Replace with your actual survey of transformer variants
+
+\section{FPGA Acceleration of Neural Networks}
+\label{sec:fpga_acceleration}
+
+FPGA-based neural network acceleration has been an active research area since
+the mid-2010s. Early work such as \cite{PLACEHOLDER} demonstrated that FPGAs
+could outperform CPUs on convolutional neural network (CNN) inference by
+exploiting data-level parallelism and on-chip memory buffering. The key insight
+is that FPGAs allow the designer to co-optimise the compute pipeline and the
+memory hierarchy simultaneously -- something that is fixed in GPU silicon.
+
+For transformer models specifically, the dominant challenge is memory bandwidth
+rather than raw arithmetic throughput. A single forward pass of TinyLlama-1.1B
+moves approximately 2.2\,GB of weight data from DRAM, yet performs only around
+2.2\,GFLOP of arithmetic -- giving a compute-to-memory ratio of roughly
+1\,FLOP/byte, which is far below what modern FPGAs can sustain at their
+arithmetic peak. This memory-bound characteristic means that the primary
+optimisation target is minimising redundant DRAM accesses through on-chip
+weight buffering and tiling, rather than maximising multiply-accumulate
+throughput.
+
+\lipsum[3] % Replace with your survey of FPGA transformer acceleration papers
+
+\section{Quantisation for Efficient Inference}
+\label{sec:quantisation}
+
+Neural network quantisation reduces the numerical precision of weights and
+activations from the standard 32-bit floating point (FP32) to lower-precision
+integer representations, trading a small amount of model accuracy for
+substantial reductions in memory footprint, bandwidth, and arithmetic cost.
+For FPGAs in particular, fixed-point integer arithmetic is significantly more
+resource-efficient than floating-point: a single-precision floating-point
+multiplier requires roughly 3$\times$ as many LUTs as an equivalent INT8
+multiplier on Xilinx UltraScale+ devices \cite{PLACEHOLDER}.
+
+Post-training quantisation (PTQ) at INT8 precision has become the dominant
+approach for production LLM deployment, with works such as LLM.int8()
+\cite{PLACEHOLDER} and SmoothQuant \cite{PLACEHOLDER} demonstrating that
+8-bit quantisation of both weights and activations incurs less than 1\%
+accuracy degradation on standard benchmarks when applied with appropriate
+per-channel scaling factors.
+
+\lipsum[4] % Replace with your survey of quantisation methods
+
+\section{HLS-Based Hardware Design}
+\label{sec:hls_design}
+
+High-level synthesis tools bridge the gap between algorithmic descriptions in
+C/C++ and synthesisable RTL, dramatically reducing the design iteration cycle
+compared to manual HDL development. Vitis HLS, the primary tool used in this
+project, translates annotated C++ functions into pipelined hardware modules
+whose behaviour is controlled through pragma directives embedded in the source
+code \cite{PLACEHOLDER}.
+
+The most critical HLS directives for throughput optimisation are PIPELINE
+(which enables concurrent execution of successive loop iterations, characterised
+by the initiation interval II), UNROLL (which replicates loop body logic to
+increase parallelism), and ARRAY\_PARTITION (which splits arrays into multiple
+memory banks to eliminate memory-port bottlenecks). Prior work on HLS-based
+transformer acceleration \cite{PLACEHOLDER} has shown that achieving II\,=\,1
+on the innermost matrix multiplication loop is the single most impactful
+optimisation, as it determines the fundamental throughput ceiling of the
+entire pipeline.
+
+\lipsum[5] % Replace with your survey of HLS-based ML accelerator papers
+
+\section{Summary and Research Gap}
+\label{sec:research_gap}
+
+Existing FPGA accelerators for transformer inference have largely focused on
+encoder-only models (BERT and its variants) for classification tasks, where
+the sequence length is fixed and the computational graph is static. Accelerators
+for autoregressive decoder-only models like TinyLlama face an additional
+challenge: each generation step produces a single token and must update the KV
+cache, creating a highly sequential data dependency that is difficult to
+pipeline across time steps. To the best of the author's knowledge, no published
+work has demonstrated a full end-to-end implementation of a 1B+ parameter
+decoder-only LLM on the ZCU102 platform using Vitis HLS with INT8 quantisation.
+This project addresses that gap.

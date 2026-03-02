@@ -1,53 +1,280 @@
-\documentclass{article}
+% ============================================================
+%  NTU FYP Report -- Master Document
+%  TinyLlama Inference Acceleration on FPGA Using HLS
+%
+%  COMPILATION:  pdflatex -> biber -> pdflatex -> pdflatex
+%
+%  FOLDER STRUCTURE:
+%    FYP.tex              <- this file (master document)
+%    references.bib       <- all BibTeX entries
+%    Front/
+%      abstract.tex
+%      acknowledgement.tex
+%      acronyms.tex
+%      symbols.tex
+%    Chapter1/  chapter1.tex  +  media/
+%    Chapter2/  chapter2.tex  +  media/
+%    Chapter3/  chapter3.tex  +  media/
+%    Chapter4/  chapter4.tex  +  media/
+%    Chapter5/  chapter5.tex  +  media/
+%    Chapter6/  chapter6.tex  +  media/
+%    Appendices/ appendix.tex +  media/
+%
+%  NOTE ON PATHS:
+%  All paths inside \input{} and \includegraphics{} are
+%  relative to THIS file. So a figure in Chapter3/media/arch.png
+%  is always written as \includegraphics{Chapter3/media/arch.png}
+%  regardless of which chapter file contains the command.
+% ============================================================
 
+% extreport is the report class from the extsizes package.
+% It supports a fixed set of sizes: 8pt 9pt 10pt 11pt 12pt 14pt 17pt 20pt.
+% We use 11pt as the closest available size to the NTU template's 10.5pt.
+% Unlike scrreprt (KOMA-Script), extreport behaves exactly like the standard
+% report class -- all standard packages work with it without conflicts.
+\documentclass[11pt, a4paper]{extreport}
+
+% -- Core font (Times New Roman) ----------------------------------------------
+% mathptmx switches both the text font and the math font to Times New Roman.
+\usepackage{mathptmx}
+
+% -- Page geometry ------------------------------------------------------------
+% Left margin is wider (3.5cm) to match the NTU Word template binding margin.
+\usepackage[
+  a4paper,
+  left       = 3.5cm,
+  right      = 3.0cm,
+  top        = 3.0cm,
+  bottom     = 3.0cm,
+  headheight = 14pt
+]{geometry}
+
+% -- Line spacing -------------------------------------------------------------
+% The NTU Word template uses 1.5x line spacing throughout the body text.
+% With extreport (unlike scrreprt), calling \onehalfspacing directly in the
+% preamble is perfectly safe -- there is no internal geometry recalculation
+% that conflicts with setspace's font metric changes.
+\usepackage{setspace}
+\onehalfspacing
+
+% -- Mathematics --------------------------------------------------------------
+\usepackage{amsmath}    % align, cases, split environments
+\usepackage{amssymb}    % extra math symbols
+\usepackage{bm}         % \bm{W} for bold math (weight matrices, vectors)
+
+% -- Graphics and figures -----------------------------------------------------
+\usepackage{graphicx}   % \includegraphics[width=0.8\linewidth]{...}
+\usepackage{caption}    % controls caption font and spacing
+\usepackage{subcaption} % \begin{subfigure} for side-by-side figures
+\usepackage{float}      % [H] placement specifier
+\usepackage{makecell}   % line breaks inside table cells
+
+% -- Tables -------------------------------------------------------------------
+\usepackage{booktabs}   % \toprule \midrule \bottomrule
+\usepackage{array}      % extended column types
+\usepackage{multirow}   % cells spanning multiple rows
+\usepackage{tabularx}   % tables that stretch to text width
+
+% -- Code listings ------------------------------------------------------------
 \usepackage{listings}
 \usepackage{xcolor}
-\usepackage{inconsolata}
+\usepackage{inconsolata}  % clean monospace font for code
 
 \definecolor{codekeyword}{RGB}{30, 100, 200}
 \definecolor{codecomment}{RGB}{0, 128, 96}
-\definecolor{linehighlight}{RGB}{225, 225, 225}
 
 \lstset{
-  language=C++,
-  basicstyle=\ttfamily\small,
-  keywordstyle=\color{codekeyword}\bfseries,
-  commentstyle=\color{codecomment}\itshape,
-  morekeywords={pragma, HLS, PIPELINE, UNROLL, ARRAY_PARTITION,
-                II, factor, cyclic, complete, dataflow},
-  numbers=left,
-  numberstyle=\tiny\color{gray},
-  stepnumber=1,
-  numbersep=8pt,
-  frame=tb,           % only top and bottom lines, no side borders
-  rulecolor=\color{gray!50},
-  showstringspaces=false,
-  breaklines=true,
-  tabsize=2,
-  captionpos=b,
+  language         = C++,
+  basicstyle       = \ttfamily\small,
+  keywordstyle     = \color{codekeyword}\bfseries,
+  commentstyle     = \color{codecomment}\itshape,
+  morekeywords     = {pragma, HLS, PIPELINE, UNROLL, ARRAY_PARTITION,
+                      II, factor, cyclic, complete, dataflow},
+  numbers          = left,
+  numberstyle      = \tiny\color{gray},
+  stepnumber       = 1,
+  numbersep        = 8pt,
+  frame            = tb,
+  rulecolor        = \color{gray!50},
+  showstringspaces = false,
+  breaklines       = true,
+  tabsize          = 2,
+  captionpos       = b,
 }
 
+% -- Headers and footers (fancyhdr) -------------------------------------------
+% fancyhdr works cleanly with extreport because extreport is a standard class.
+% The conflict warnings we saw before were specific to using fancyhdr with
+% KOMA-Script's scrreprt, which has its own incompatible header/footer system.
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}                                  % clear all header/footer fields
+\fancyhead[L]{\small\leftmark}              % chapter name on left of header
+\fancyfoot[C]{\thepage}                     % page number centred in footer
+\renewcommand{\headrulewidth}{0.4pt}        % thin rule below header
+\renewcommand{\footrulewidth}{0pt}          % no rule above footer
+
+% Also apply fancy style to chapter opening pages (which default to 'plain')
+\fancypagestyle{plain}{
+  \fancyhf{}
+  \fancyfoot[C]{\thepage}
+  \renewcommand{\headrulewidth}{0pt}
+}
+
+% -- Chapter and section heading style (titlesec) -----------------------------
+% titlesec works cleanly with extreport. The conflicts we saw before were
+% specific to titlesec trying to redefine KOMA-Script's internal heading
+% commands, which KOMA handles very differently from the standard classes.
+\usepackage{titlesec}
+
+% Chapter heading: "Chapter 1  Introduction" left-aligned, 16pt bold.
+% The [hang] shape puts the chapter number and title on the same line.
+% {before-sep}{after-sep} control vertical spacing around the heading.
+\titleformat{\chapter}[hang]
+  {\normalfont\fontsize{16pt}{20pt}\selectfont\bfseries}
+  {Chapter \thechapter\quad}
+  {0pt}
+  {}
+\titlespacing*{\chapter}{0pt}{30pt}{20pt}
+
+\titleformat{\section}
+  {\normalfont\large\bfseries}
+  {\thesection}
+  {1em}
+  {}
+\titlespacing*{\section}{0pt}{12pt}{6pt}
+
+\titleformat{\subsection}
+  {\normalfont\normalsize\bfseries\itshape}
+  {\thesubsection}
+  {1em}
+  {}
+\titlespacing*{\subsection}{0pt}{10pt}{4pt}
+
+% Unnumbered chapters (Abstract, Acknowledgement etc.) use the same font
+% but without a chapter number prefix.
+\titleformat{name=\chapter,numberless}[block]
+  {\normalfont\fontsize{16pt}{20pt}\selectfont\bfseries\centering}
+  {}
+  {0pt}
+  {}
+\titlespacing*{name=\chapter,numberless}{0pt}{30pt}{20pt}
+
+% -- Bibliography -------------------------------------------------------------
+\usepackage[
+  style   = ieee,    % numbered citations [1], [2]
+  backend = biber,   % biber handles UTF-8 and DOIs correctly
+  sorting = none     % references in citation order (required for IEEE)
+]{biblatex}
+\addbibresource{references.bib}
+
+% -- Hyperlinks ---------------------------------------------------------------
+% Load hyperref LAST -- it patches many LaTeX internals and must run after
+% all other packages have finished setting up their own patches.
+\usepackage[
+  colorlinks    = true,
+  linkcolor     = black,   % TOC entries and \ref{} links in black
+  citecolor     = black,   % citation markers [1] in black
+  urlcolor      = blue,    % URLs in blue
+  hypertexnames = false    % prevents duplicate page-ID warning from front matter
+]{hyperref}
+
+% -- Miscellaneous utilities --------------------------------------------------
+\usepackage{appendix}   % \begin{appendices} with correct TOC entries
+\usepackage{siunitx}    % \SI{200}{\mega\hertz}, \SI{43.9}{\percent}
+\usepackage{cleveref}   % \cref{fig:x} auto-prepends "Figure", "Table", etc.
+\usepackage{lipsum}     % \lipsum[n] placeholder text -- remove when done writing
+
+% -- Front/main/back matter commands ------------------------------------------
+% extreport (like the standard report class) does not define \frontmatter,
+% \mainmatter, or \backmatter -- those belong to the book class.
+% We define them here ourselves so the document structure reads clearly.
+\newcommand{\frontmatter}{%
+  \cleardoublepage
+  \pagenumbering{roman}%   % i, ii, iii ... for abstract, TOC, acronyms
+}
+\newcommand{\mainmatter}{%
+  \cleardoublepage
+  \pagenumbering{arabic}%  % 1, 2, 3 ... resets counter for chapter content
+}
+\newcommand{\backmatter}{%
+  \cleardoublepage
+}
+
+% =============================================================================
+%  DOCUMENT BEGINS
+% =============================================================================
 \begin{document}
 
-\title{Test Document}
-\author{Aaron}
-\date{\today}
-\maketitle
+% -- Cover page ---------------------------------------------------------------
+\begin{titlepage}
+  \centering
+  \vspace*{1cm}
 
-Hello, this is a test. Here is some inline math: $E = mc^2$.
+  % Uncomment once you have saved the NTU logo as Front/media/ntu_logo.png
+  % \includegraphics[width=0.4\textwidth]{Front/media/ntu_logo.png}\\[1cm]
 
-\begin{equation}
-  \sum_{i=0}^{N} x_i \cdot w_i
-\end{equation}
+  {\Large\bfseries
+    TinyLlama Inference Acceleration on FPGA\\[0.5em]
+    Using High-Level Synthesis}\\[2cm]
 
-\begin{lstlisting}[
-  caption={Pipelined dot product loop with HLS pragma.},
-  label={lst:dot_product}
-]
-for (int i = 0; i < N; i++) {
-    #pragma HLS PIPELINE II=1
-    result += x[i] * w[i];  // accumulate weighted sum
-}
-\end{lstlisting}
+  {\large\bfseries Submitted by: Aaron}\\[0.5em]
+  \vspace{0.3cm}
+  {\large\bfseries Supervisor: Professor Chang Chip Hong}\\[0.5em]
+  \vspace{0.3cm}
+  {\large Co-supervisor: Koca Nazim Altar}\\[2cm]
+
+  \vfill
+
+  {\normalsize
+    School of Electrical \& Electronic Engineering\\[0.3em]
+    A final year project report presented to\\
+    Nanyang Technological University\\[0.5em]
+    in partial fulfilment of the requirements for the\\[0.3em]
+    Degree of Bachelor of Engineering\\[1cm]
+    2026}
+\end{titlepage}
+
+% -- Front matter (roman numerals: i, ii, iii ...) ----------------------------
+\frontmatter
+
+\input{Front/abstract}
+\input{Front/acknowledgement}
+\input{Front/acronyms}
+\input{Front/symbols}
+
+\tableofcontents
+\listoffigures
+\listoftables
+
+% -- Main matter (arabic numerals: 1, 2, 3 ...) -------------------------------
+\mainmatter
+
+\input{Chapter1/chapter1}
+\input{Chapter2/chapter2}
+\input{Chapter3/chapter3}
+\input{Chapter4/chapter4}
+\input{Chapter5/chapter5}
+\input{Chapter6/chapter6}
+
+% -- Back matter --------------------------------------------------------------
+\backmatter
+
+\chapter*{Reflection on Learning Outcome Attainment}
+\addcontentsline{toc}{chapter}{Reflection on Learning Outcome Attainment}
+
+Reflect here on what you have learned from this project in terms of
+engineering knowledge, problem-solving skills, and professional development.
+
+\chapter*{Acknowledging/Declaring the Use of GAI}
+\addcontentsline{toc}{chapter}{Acknowledging/Declaring the Use of GAI}
+
+Declare here any use of generative AI tools during the project. If no GAI
+was used, state this explicitly.
+
+\printbibliography[title={References}]
+\addcontentsline{toc}{chapter}{References}
+
+\input{Appendices/appendix}
 
 \end{document}

@@ -1,0 +1,43 @@
+% Front/symbols.tex
+% -----------------------------------------------------------------------------
+% List of mathematical symbols used throughout the report.
+% Convention: group by category (model dimensions, attention, quantisation, etc.)
+% and list in the order they first appear in the text.
+%
+% The @{} in the column spec removes the extra column padding at the left edge,
+% which gives a cleaner left-aligned appearance that matches the Word template.
+
+\chapter*{Symbols}
+\addcontentsline{toc}{chapter}{Symbols}
+
+\begin{tabular}{@{}ll}
+  \textit{Symbol} & \textit{Description} \\[4pt]
+
+  % -- Model dimensions ------------------------------------------------------
+  $d_{\text{model}}$ & Hidden dimension of the model (2048 for TinyLlama-1.1B) \\
+  $d_{\text{ff}}$    & Feed-forward network hidden dimension \\
+  $d_k$              & Dimension of each attention head \\
+  $L$                & Number of transformer layers \\
+  $H$                & Number of attention heads \\
+  $V$                & Vocabulary size \\
+  $T$                & Sequence length (number of tokens) \\[4pt]
+
+  % -- Attention mechanism ---------------------------------------------------
+  $W_Q, W_K, W_V$    & Query, Key, Value projection weight matrices \\
+  $W_O$              & Output projection weight matrix \\
+  $Q, K, V$          & Query, Key, Value activation matrices \\
+  $\text{softmax}$   & Softmax normalisation function \\[4pt]
+
+  % -- Quantisation ---------------------------------------------------------
+  $s$                & Quantisation scale factor \\
+  $z$                & Quantisation zero-point offset \\
+  $b$                & Number of quantisation bits \\
+  $\hat{x}$          & Quantised representation of variable $x$ \\[4pt]
+
+  % -- HLS / hardware -------------------------------------------------------
+  $\text{II}$        & Initiation interval of a pipelined loop (clock cycles) \\
+  $f_{\text{clk}}$   & Clock frequency (\si{\mega\hertz}) \\
+  $N_{\text{LUT}}$   & Number of look-up tables consumed \\
+  $N_{\text{DSP}}$   & Number of DSP blocks consumed \\
+  $P$                & Power consumption (\si{\milli\watt}) \\
+\end{tabular}

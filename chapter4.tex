@@ -1,0 +1,127 @@
+% Chapter4/chapter4.tex -- Implementation
+% -----------------------------------------------------------------------------
+% This chapter explains HOW you built what Chapter 3 described.
+% It should be detailed enough that a competent engineer could reproduce
+% your work. Include key code snippets for the most important decisions.
+%
+% Suggested structure:
+%   4.1 -- HLS kernel implementation
+%   4.2 -- Pragma optimisation strategy
+%   4.3 -- Quantisation implementation
+%   4.4 -- Host software and XRT driver
+%   4.5 -- Vivado integration and bitstream generation
+
+\chapter{Implementation}
+\label{ch:implementation}
+
+\section{HLS Kernel Development Environment}
+\label{sec:hls_env}
+
+All HLS kernels were developed using Vitis HLS 2022.2 targeting the
+\texttt{xczu9eg-ffvb1156-2-e} device on the ZCU102 evaluation board.
+The design clock was set to \SI{200}{\mega\hertz} (\SI{5}{\nano\second}
+period), consistent with the ZCU102's recommended operating frequency for
+the PL fabric. Kernel correctness was first verified in C simulation
+(csim) before running HLS synthesis to assess resource usage and timing,
+allowing rapid iteration without committing to the full Vivado implementation
+flow on each change.
+
+\section{Matrix--Vector Multiplication Kernel}
+\label{sec:matvec_kernel}
+
+The matrix--vector multiplication $\mathbf{y} = W\mathbf{x}$ forms the
+computational kernel of both the attention projection layers and the FFN
+block. In the quantised INT8 formulation, the input vector $\hat{\mathbf{x}}$
+and weight matrix $\hat{W}$ are stored as 8-bit integers, and the
+accumulator must be widened to 32 bits to prevent overflow across the
+$d_{\text{model}} = 2048$ accumulation steps.
+
+\begin{lstlisting}[
+  caption = {INT8 matrix--vector multiplication kernel with HLS pipeline pragma.
+             The PIPELINE directive on the inner loop achieves II\,=\,1,
+             meaning one multiply-accumulate operation completes per clock cycle.},
+  label   = {lst:matvec}
+]
+void matvec_int8(
+    const int8_t  W[D_OUT][D_IN],   // weight matrix, row-major
+    const int8_t  x[D_IN],          // input activation vector
+    int32_t       y[D_OUT],          // output accumulator (INT32)
+    const int     d_in,
+    const int     d_out)
+{
+    for (int i = 0; i < d_out; i++) {
+        #pragma HLS PIPELINE II=1    // unroll this loop's iterations in time
+        int32_t acc = 0;
+        for (int j = 0; j < d_in; j++) {
+            acc += (int32_t)W[i][j] * (int32_t)x[j];
+        }
+        y[i] = acc;
+    }
+}
+\end{lstlisting}
+
+The \texttt{PIPELINE II=1} pragma on the outer loop instructs Vitis HLS to
+schedule successive iterations of the outer loop to begin every clock cycle,
+achieving maximum throughput. The inner loop over $d_{\text{in}}$ is then
+fully unrolled by the synthesiser to expose the accumulation chain as a
+tree of parallel additions, which is the critical path for timing closure.
+
+\lipsum[1] % Replace with your detailed analysis of the synthesis results
+
+\section{Pragma Optimisation Strategy}
+\label{sec:pragma_strategy}
+
+\subsection{Array Partitioning}
+\label{subsec:array_partition}
+
+A common pitfall when first applying \texttt{PIPELINE II=1} is that the
+synthesiser reports an achieved II larger than 1 due to memory port conflicts.
+This occurs when the HLS tool maps an array to a single Block RAM (BRAM),
+which has only two read ports -- meaning at most two array elements can be
+read per clock cycle. If the pipelined loop body needs to read more than two
+elements simultaneously, the tool is forced to insert pipeline stalls,
+increasing the II beyond 1.
+
+\begin{lstlisting}[
+  caption = {ARRAY\_PARTITION directive splits the weight array across
+             multiple BRAMs, eliminating read-port bottlenecks.},
+  label   = {lst:array_partition}
+]
+// Without partitioning: single BRAM, 2 ports -> II > 1 for wide accesses
+// With cyclic factor=8: 8 BRAMs, each holding every 8th element
+#pragma HLS ARRAY_PARTITION variable=W cyclic factor=8 dim=2
+\end{lstlisting}
+
+\lipsum[2] % Replace with your array partitioning analysis
+
+\subsection{Loop Unrolling}
+\label{subsec:loop_unroll}
+
+\lipsum[3] % Replace with your loop unrolling strategy and trade-offs
+
+\section{RMSNorm Implementation}
+\label{sec:rmsnorm_impl}
+
+\lipsum[4] % Replace with your RMSNorm kernel code and analysis
+
+\section{Attention Kernel Implementation}
+\label{sec:attention_impl}
+
+\lipsum[5] % Replace with your attention kernel details
+
+\section{Host Software and XRT Driver Layer}
+\label{sec:host_software}
+
+The host application runs on the ARM Cortex-A53 and is responsible for
+loading the FPGA bitstream, allocating DMA-coherent buffers in DDR memory,
+marshalling the quantised weights and activation tensors into those buffers,
+and issuing kernel execution commands through the XRT API. The XRT
+\texttt{xrt::run} abstraction handles the AXI control register writes that
+start and poll the HLS kernels, abstracting away the raw memory-mapped I/O.
+
+\lipsum[6] % Replace with your XRT driver implementation details
+
+\section{Vivado Integration and Bitstream Generation}
+\label{sec:vivado}
+
+\lipsum[7] % Replace with your Vivado block design, AXI interconnect config, etc.

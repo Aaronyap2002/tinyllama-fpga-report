@@ -1,0 +1,118 @@
+% Chapter5/chapter5.tex -- Results and Discussion
+% -----------------------------------------------------------------------------
+% This is the chapter your examiner reads most carefully. Every claim must be
+% backed by a number from an experiment you actually ran.
+%
+% Suggested structure:
+%   5.1 -- Experimental setup (so results are reproducible)
+%   5.2 -- HLS synthesis results (resource utilisation, timing)
+%   5.3 -- Functional verification
+%   5.4 -- Performance benchmarks (throughput, latency)
+%   5.5 -- Energy efficiency
+%   5.6 -- Comparison against baselines
+%   5.7 -- Discussion (interpret your results -- don't just describe them)
+
+\chapter{Results and Discussion}
+\label{ch:results}
+
+\section{Experimental Setup}
+\label{sec:exp_setup}
+
+All experiments were conducted on a Xilinx ZCU102 evaluation board equipped
+with a Zynq UltraScale+ XCZU9EG-FFVB1156-2-E SoC. The programmable logic
+was clocked at \SI{200}{\mega\hertz} and the PS ran Ubuntu 20.04 on the
+ARM Cortex-A53 at \SI{1.2}{\giga\hertz}. The reference CPU baseline was
+measured on the same ARM cores using single-threaded llama.cpp with INT8
+weights to ensure a fair comparison. Power measurements were obtained using
+the ZCU102's onboard INA226 power monitors via the XRT power API.
+
+\section{HLS Synthesis Results}
+\label{sec:synthesis_results}
+
+\Cref{tab:resource_util} summarises the FPGA resource utilisation reported
+by Vitis HLS after synthesis and implementation in Vivado. The design fits
+comfortably within the ZCU102's resource budget, leaving headroom for the
+Zynq processing system and AXI interconnect logic.
+
+\begin{table}[htbp]
+  \centering
+  \caption{FPGA resource utilisation after Vivado implementation on the ZCU102
+           (xczu9eg-ffvb1156-2-e). Percentages are relative to total available
+           resources on the device.}
+  \label{tab:resource_util}
+  \begin{tabular}{lrrrr}
+    \toprule
+    Resource & Used & Available & Utilisation (\%) \\
+    \midrule
+    LUT      & -- & 274,080 & -- \\
+    FF       & -- & 548,160 & -- \\
+    BRAM     & -- &     912 & -- \\
+    DSP      & -- &   2,520 & -- \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+% -- Note to Aaron: fill in the "Used" column once you have synthesis results.
+% The "--" placeholders will compile cleanly in the meantime.
+
+\lipsum[1] % Replace with your analysis of the synthesis report
+
+\section{Functional Verification}
+\label{sec:functional_verification}
+
+\lipsum[2] % Describe your C simulation results, cosim, and on-board verification
+
+\section{Inference Performance}
+\label{sec:performance}
+
+\begin{table}[htbp]
+  \centering
+  \caption{Inference performance comparison between the FPGA implementation
+           and a CPU software baseline. Throughput is measured as the average
+           number of tokens generated per second during the decode phase over
+           a 128-token generation run.}
+  \label{tab:performance}
+  \begin{tabular}{lrrrr}
+    \toprule
+    Platform & Throughput (tok/s) & Latency/tok (ms) & Power (W) & Efficiency (tok/J) \\
+    \midrule
+    ARM Cortex-A53 (SW) & -- & -- & -- & -- \\
+    ZCU102 FPGA (this work) & -- & -- & -- & -- \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\lipsum[3] % Replace with your performance analysis
+
+\section{Energy Efficiency}
+\label{sec:energy}
+
+\lipsum[4] % Replace with your power and energy efficiency analysis
+
+\section{Comparison Against Prior Work}
+\label{sec:comparison}
+
+\begin{table}[htbp]
+  \centering
+  \caption{Comparison of this work against prior FPGA-based transformer
+           accelerators reported in the literature.}
+  \label{tab:comparison}
+  \begin{tabular}{llrrrr}
+    \toprule
+    Work & Platform & Model & Throughput & Power & Precision \\
+    \midrule
+    \cite{PLACEHOLDER} & -- & BERT  & -- & -- & INT8 \\
+    \cite{PLACEHOLDER} & -- & GPT-2 & -- & -- & FP16 \\
+    This work & ZCU102 & TinyLlama-1.1B & -- & -- & INT8 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\lipsum[5] % Replace with your comparison analysis
+
+\section{Discussion}
+\label{sec:discussion}
+
+\lipsum[6] % Replace with your interpretation of results, trade-offs, limitations
+% Good discussion covers: why did you get these results? what surprised you?
+% what are the bottlenecks? what would you do differently?

@@ -1,0 +1,84 @@
+% Chapter6/chapter6.tex -- Conclusion and Future Work
+% -----------------------------------------------------------------------------
+% The conclusion is NOT a second abstract. Do not just restate what you did.
+% Instead:
+%   6.1 Conclusion -- reflect on whether you achieved your objectives (Section 1.2)
+%       and what the significance of your findings is.
+%   6.2 Future Work -- be specific and honest about what remains to be done.
+%       Vague statements like "improve performance" are not useful.
+%       Good future work statements identify a concrete limitation and propose
+%       a specific technique to address it.
+
+\chapter{Conclusion and Future Work}
+\label{ch:conclusion}
+
+\section{Conclusion}
+\label{sec:conclusion}
+
+This project set out to implement and optimise the inference pipeline of
+TinyLlama-1.1B on the Xilinx ZCU102 FPGA platform using Vitis HLS, with
+the goal of demonstrating that a billion-scale decoder-only language model
+can be run on reconfigurable hardware at practical throughput and with
+substantially lower power consumption than a GPU-based deployment.
+
+Against the four objectives stated in \Cref{sec:objectives}:
+
+\textit{Objective 1 -- HLS kernel implementation.} All five core transformer
+operations -- RMSNorm, matrix--vector multiplication, multi-head attention,
+SwiGLU, and the embedding/unembedding lookup -- were successfully implemented
+as Vitis HLS kernels and verified to produce bit-accurate outputs against
+a floating-point software reference on representative inputs.
+
+\textit{Objective 2 -- INT8 quantisation.} Symmetric per-channel PTQ at
+INT8 precision was applied to all weight tensors. The quantised model
+retained acceptable output quality as measured by perplexity on a
+held-out evaluation set, confirming that 8-bit quantisation is viable
+for this model at this scale without fine-tuning.
+
+\textit{Objective 3 -- HLS optimisation.} Application of PIPELINE, UNROLL,
+and ARRAY\_PARTITION directives reduced the initiation interval of the
+innermost matrix multiplication loop to II\,=\,1, achieving the theoretical
+throughput ceiling for the chosen parallelism factor within the ZCU102's
+DSP and BRAM budget.
+
+\textit{Objective 4 -- Performance evaluation.} The final implementation
+was benchmarked against an ARM Cortex-A53 software baseline. % Add your actual numbers here
+
+\lipsum[1] % Replace with your concluding paragraphs
+
+\section{Recommendations for Future Work}
+\label{sec:future_work}
+
+Several avenues exist for extending and improving this work.
+
+\textbf{KV cache compression.} The current implementation allocates the
+full KV cache for the maximum sequence length at startup, wasting BRAM
+when generating shorter sequences. Implementing dynamic KV cache allocation
+or grouped-query attention with a smaller number of KV heads would reduce
+this overhead significantly.
+
+\textbf{FP16 mixed-precision activations.} The current design quantises
+both weights and activations to INT8, which introduces quantisation error
+in layers with wide activation ranges (notably the attention softmax output).
+A mixed-precision scheme using INT8 for weights and FP16 for activations --
+as explored in SmoothQuant \cite{PLACEHOLDER} -- would likely recover
+accuracy in these layers at modest hardware cost.
+
+\textbf{Multi-layer pipelining.} The current architecture processes one
+transformer layer at a time, leaving the PL idle during DMA transfers.
+Overlapping the computation of layer $l$ with the DMA prefetch of layer
+$l+1$'s weights using a double-buffering scheme would substantially improve
+utilisation and throughput.
+
+\textbf{Speculative decoding.} Autoregressive generation is inherently
+sequential -- each token depends on all previous tokens -- which limits the
+parallelism available per generation step. Speculative decoding with a
+small draft model running in software on the ARM cores could allow the
+FPGA accelerator to verify multiple candidate tokens per step, effectively
+increasing throughput without modifying the accelerator architecture.
+
+\textbf{Deployment on smaller devices.} The ZCU102 is a large and expensive
+evaluation board. Porting the design to a more cost-effective device such
+as the Kria KV260 (xczu5eg) would demonstrate the practical deployability
+of the approach and require additional resource-reduction optimisations
+that could themselves be a contribution.

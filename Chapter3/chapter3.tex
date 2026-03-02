@@ -1,0 +1,119 @@
+% Chapter3/chapter3.tex -- System Architecture and Design
+% -----------------------------------------------------------------------------
+% This chapter describes WHAT you built and WHY you designed it that way.
+% The Implementation chapter (Chapter 4) then explains HOW you built it in code.
+%
+% Good chapter structure for an architecture chapter:
+%   3.1 -- Top-level system overview (the big picture)
+%   3.2 -- Hardware/software partitioning decisions
+%   3.3 -- Individual component designs
+%   3.4 -- Data flow and memory architecture
+%   3.5 -- Quantisation scheme
+
+\chapter{System Architecture and Design}
+\label{ch:architecture}
+
+\section{Top-Level System Overview}
+\label{sec:system_overview}
+
+The complete inference system consists of two main subsystems that run
+concurrently on the ZCU102's heterogeneous architecture: a software host
+application running on the ARM Cortex-A53 processing system (PS), and a
+set of HLS-generated accelerator kernels executing in the Zynq UltraScale+
+programmable logic (PL). The PS handles tokenisation, orchestrates the
+overall autoregressive generation loop, and manages data transfers between
+DDR memory and the PL accelerators via the AXI interconnect. The PL
+accelerators perform the computationally intensive operations -- matrix
+multiplication, attention, and element-wise transformations -- in a pipelined
+hardware datapath.
+
+% -- Suggested figure: system block diagram ------------------------------------
+% \begin{figure}[htbp]
+%   \centering
+%   \includegraphics[width=0.9\linewidth]{Chapter3/media/system_block_diagram.png}
+%   \caption{Top-level system architecture showing the PS--PL partitioning
+%            on the ZCU102. The ARM Cortex-A53 runs the host application
+%            while the FPGA fabric hosts the HLS accelerator kernels.}
+%   \label{fig:system_block_diagram}
+% \end{figure}
+
+\lipsum[1] % Replace with your actual system overview
+
+\section{Hardware/Software Partitioning}
+\label{sec:hw_sw_partition}
+
+The decision of which operations to accelerate in hardware and which to
+run in software on the ARM core is driven by two criteria: computational
+intensity (operations per byte of memory accessed) and implementation
+complexity. Operations with low arithmetic intensity -- such as tokenisation,
+sampling (temperature scaling and argmax over the vocabulary), and residual
+stream additions -- are left on the CPU, where their low latency is not a
+bottleneck. The computationally dominant operations -- the matrix--vector
+multiplications in the attention and MLP blocks, which together account for
+over 95\% of all arithmetic -- are offloaded to the PL.
+
+\lipsum[2] % Replace with your justification of partitioning decisions
+
+\section{Transformer Layer Architecture}
+\label{sec:layer_architecture}
+
+Each of TinyLlama's 22 transformer layers follows an identical structure,
+which simplifies the hardware design considerably: a single universal
+kernel design can be time-multiplexed across all layers rather than requiring
+22 separate accelerators. Each layer consists of two sub-blocks in sequence:
+the multi-head attention (MHA) block and the feed-forward network (FFN) block,
+both preceded by RMSNorm layer normalisation.
+
+\subsection{RMSNorm}
+\label{subsec:rmsnorm}
+
+Root Mean Square Layer Normalisation (RMSNorm) normalises the activation
+vector $\mathbf{x} \in \mathbb{R}^{d_{\text{model}}}$ by its RMS magnitude:
+
+\begin{equation}
+  \text{RMSNorm}(\mathbf{x}) = \frac{\mathbf{x}}{\sqrt{\frac{1}{d}\sum_{i=1}^{d} x_i^2 + \epsilon}} \odot \mathbf{g}
+  \label{eq:rmsnorm}
+\end{equation}
+
+where $\mathbf{g} \in \mathbb{R}^d$ is a learned element-wise scale vector
+and $\epsilon$ is a small constant for numerical stability. Unlike the more
+common LayerNorm, RMSNorm omits the mean-centring step, reducing the number
+of passes required over the input vector from two to one -- a meaningful
+simplification for hardware implementation.
+
+\lipsum[3] % Replace with your RMSNorm hardware design description
+
+\subsection{Multi-Head Attention}
+\label{subsec:attention}
+
+\lipsum[4] % Replace with your MHA design description
+
+\subsection{SwiGLU Feed-Forward Network}
+\label{subsec:swiglu}
+
+\lipsum[5] % Replace with your FFN design description
+
+\section{Memory Architecture and Data Flow}
+\label{sec:memory_arch}
+
+\lipsum[6] % Replace with your memory tiling, ping-pong buffering, etc.
+
+\section{Quantisation Scheme}
+\label{sec:quant_scheme}
+
+All weight tensors are quantised to INT8 using symmetric per-channel
+post-training quantisation (PTQ). For a weight tensor $W$, the quantised
+representation $\hat{W}$ is computed as:
+
+\begin{equation}
+  \hat{W} = \text{clip}\!\left(\text{round}\!\left(\frac{W}{s}\right), -128, 127\right)
+  \label{eq:quantisation}
+\end{equation}
+
+where the per-channel scale factor $s = \max(|W|) / 127$ is chosen such
+that the maximum absolute value in the channel maps to the INT8 range
+$[-128, 127]$ without overflow. Activations are quantised dynamically at
+runtime using a running estimate of the activation range collected during
+a calibration pass over representative inputs.
+
+\lipsum[7] % Replace with your full quantisation analysis and justification
