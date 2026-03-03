@@ -13,20 +13,24 @@
 \chapter*{Abstract}
 \addcontentsline{toc}{chapter}{Abstract}
 
-Large language models (LLMs) such as TinyLlama have demonstrated strong
-natural language understanding capabilities but require substantial
-computational resources that limit their deployment in embedded and
-edge environments. Currently, large language models are mostly deployed on 
-Graphics Procesing Units (GPU), mostly from Nvidia and AMD, as they offer superior software support 
-for Machine Learning (ML) and Artificial Intelligence (AI) researchers and engineers with their respective 
-Compute Unified Device Architecture (CUDA) and Radeon Open Compute (ROCM) offerings. 
+Small Language Models (SLMs) such as TinyLlama have soared 
+in popularity in recent months as they have demonstrated strong
+natural language understanding capabilities without the large memory
+requirements of Large Language Models (LLMs) that prevented deployment on edge devices. 
+Yet, these SLMs still requires substantial computational resources that 
+limit their deployment in embedded and edge environments. 
+
+%, mostly from Nvidia and AMD, as they offer superior software support 
+%for Machine Learning (ML) and Artificial Intelligence (AI) researchers and engineers with their respective 
+%Compute Unified Device Architecture (CUDA) and Radeon Open Compute (ROCM) offerings. 
+Currently, these language models are mostly deployed on Graphics Procesing Units (GPU).
 However, GPU inference is energy-intensive and memory-bandwidth-bound, particularly 
 during the autoregressive decode phase since the time and memory complexity
 of self-attention are quadratic in sequence length.
 % May I should introduce the process of inference and its definition and its application
 % rather than talking about cuda to give more depth.
 
-Field-programmable gate arrays (FPGAs) offer a
+Field-programmable gate arrays (FPGAs) offer a 
 compelling alternative to GPU-based inference by providing reconfigurable
 hardware with low power consumption and predictable latency. But mapping a billion-parameter 
 transformer to resource-constrained FPGA fabric presents significant challenges 
