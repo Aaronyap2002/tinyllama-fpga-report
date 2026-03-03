@@ -16,16 +16,37 @@
 Large language models (LLMs) such as TinyLlama have demonstrated strong
 natural language understanding capabilities but require substantial
 computational resources that limit their deployment in embedded and
-edge environments. Field-programmable gate arrays (FPGAs) offer a
+edge environments. Currently, large language models are mostly deployed on 
+Graphics Procesing Units (GPU), mostly from Nvidia and AMD, as they offer superior software support 
+for Machine Learning (ML) and Artificial Intelligence (AI) researchers and engineers with their respective 
+Compute Unified Device Architecture (CUDA) and Radeon Open Compute (ROCM) offerings. 
+However, GPU inference is energy-intensive and memory-bandwidth-bound, particularly 
+during the autoregressive decode phase since the time and memory complexity
+of self-attention are quadratic in sequence length.
+% May I should introduce the process of inference and its definition and its application
+% rather than talking about cuda to give more depth.
+
+Field-programmable gate arrays (FPGAs) offer a
 compelling alternative to GPU-based inference by providing reconfigurable
-hardware with low power consumption and predictable latency.
+hardware with low power consumption and predictable latency. But mapping a billion-parameter 
+transformer to resource-constrained FPGA fabric presents significant challenges 
+in quantization, memory tiling, and hardware-software partitioning.
+
+This project starts off with a comprehensive profiling of a RTX4060 Laptop GPU 
+running a pytorch inference of the TinyLlama 1.1B model (based on Meta's Llama 3 architecture)
+from HuggingFace with default GPU kernel settings to observe for bottlenecks and 
+to measure propotion of wall-clock time required by the self-attention and 
+feed-forward layer during the forward pass. Based on the results, an 
+FPGA-based accelerator is proposed to accelerate the architecture of the Tinyllama model. 
+For this project, emphasis is placed on the hardware implementation and optimization of 
+the self attention layer and the feed-forward layer.
 
 This project implements and optimises the inference pipeline of TinyLlama-1.1B
 on the Xilinx ZCU102 FPGA platform using Vitis High-Level Synthesis (HLS).
 The core transformer components -- including RMSNorm, matrix--vector
 multiplication, multi-head attention, and the SwiGLU feed-forward network --
-were implemented as quantised INT8 HLS kernels with hardware-level pipeline
-and loop unrolling optimisations to minimise the initiation interval.
+were implemented as quantised INT8 HLS kernels. 
+ 
 
 % --- Replace this block with your actual results once available ---------------
 % Example of the kind of quantitative results you should report here:
@@ -36,7 +57,7 @@ and loop unrolling optimisations to minimise the initiation interval.
 %    ARM Cortex-A53 processor."
 % -----------------------------------------------------------------------------
 
-The results demonstrate that FPGA acceleration with INT8 quantisation
+(The results demonstrate that FPGA acceleration with INT8 quantisation
 achieves competitive inference performance while operating within the
 ZCU102's resource budget, validating the viability of transformer-based
-language model deployment on reconfigurable hardware.
+language model deployment on reconfigurable hardware.)

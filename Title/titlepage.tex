@@ -1,0 +1,73 @@
+% Title/titlepage.tex
+% -----------------------------------------------------------------------------
+% Cover page for the FYP report.
+% This file is \input{} from FYP.tex at the very start of the document,
+% before \frontmatter. It uses the titlepage environment so that LaTeX
+% automatically starts a new page after the cover and does not number it.
+%
+% To use this file you must have the NTU logo saved at:
+%   Title/ntu_logo.png
+% The logo is available from the NTU brand resources page.
+% -----------------------------------------------------------------------------
+
+\begin{titlepage}
+% Override the titlepage environment's default 'empty' page style.
+% Without this line, fancyhdr would be completely suppressed on this page
+% and nothing -- not even the project number -- would appear in the header.
+% The 'coverpage' style is defined in FYP.tex and shows only the project
+% number in the top-right, with no footer page number.
+\thispagestyle{coverpage}
+
+\vspace{1cm}
+
+% -- NTU logo -----------------------------------------------------------------
+% Centred horizontally. Uncomment once you have placed ntu_logo.png in
+% the Title/ folder. The width is set to roughly match Kang Howe's layout.
+\begin{center}
+    \includegraphics[width=0.45\textwidth]{Title/ntu_logo.png}
+\end{center}
+
+\vspace{1.5cm}
+
+% -- Report title -------------------------------------------------------------
+\begin{center}
+    \LARGE\textbf{TinyLlama Inference Acceleration on FPGA\\[0.3em]
+    Using High-Level Synthesis}
+\end{center}
+
+\vspace{1in}
+
+% -- Author -------------------------------------------------------------------
+\begin{center}
+    \textbf{Submitted by: Yap Chen Kit}\\[0.5in]
+\end{center}
+
+%\vspace{1in}
+
+% -- Supervision --------------------------------------------------------------
+\begin{center}
+    \textbf{Supervisor: Professor Chang Chip Hong}\\[0.5in]
+\end{center}
+
+%\vspace{0.5in}
+
+% -- Co-Supervision --------------------------------------------------------------
+\begin{center}
+    \textbf{Co-supervisor: Koca Nazim Altar}
+\end{center}
+\vspace{0.5in}
+% -- School -------------------------------------------------------------------
+\begin{center}
+    {School of Electrical and Electronic Engineering\\
+    A final year project report presented to Nanyang Technological University \\
+    in partial fulfilment of the requirements for the \\
+    Degree of Bachelor of Engineering}
+\end{center}
+
+\vspace{0.5in}
+
+% -- Year ---------------------------------------------------------------------
+\begin{center}
+    2026
+\end{center}
+\end{titlepage}

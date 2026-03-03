@@ -7,6 +7,9 @@
 %  FOLDER STRUCTURE:
 %    FYP.tex              <- this file (master document)
 %    references.bib       <- all BibTeX entries
+%    Title/
+%      titlepage.tex
+%      ntu_logo.png
 %    Front/
 %      abstract.tex
 %      acknowledgement.tex
@@ -32,7 +35,7 @@
 % We use 11pt as the closest available size to the NTU template's 10.5pt.
 % Unlike scrreprt (KOMA-Script), extreport behaves exactly like the standard
 % report class -- all standard packages work with it without conflicts.
-\documentclass[11pt, a4paper]{extreport}
+\documentclass[12pt, a4paper]{extreport}
 
 % -- Core font (Times New Roman) ----------------------------------------------
 % mathptmx switches both the text font and the math font to Times New Roman.
@@ -46,7 +49,8 @@
   right      = 3.0cm,
   top        = 3.0cm,
   bottom     = 3.0cm,
-  headheight = 14pt
+  headheight = 14pt,
+  headsep = 12pt
 ]{geometry}
 
 % -- Line spacing -------------------------------------------------------------
@@ -108,17 +112,37 @@
 % KOMA-Script's scrreprt, which has its own incompatible header/footer system.
 \usepackage{fancyhdr}
 \pagestyle{fancy}
-\fancyhf{}                                  % clear all header/footer fields
-\fancyhead[L]{\small\leftmark}              % chapter name on left of header
-\fancyfoot[C]{\thepage}                     % page number centred in footer
-\renewcommand{\headrulewidth}{0.4pt}        % thin rule below header
-\renewcommand{\footrulewidth}{0pt}          % no rule above footer
+\fancyhf{}                                   % clear all header/footer fields
+\fancyhead[L]{\small\leftmark}               % chapter name on left of header
+\fancyhead[R]{\small Project No: A2285-251} % project number on right of header
+\fancyfoot[C]{\thepage}                      % page number centred in footer
+\renewcommand{\headrulewidth}{0pt}           % no horizontal rule under header
+\renewcommand{\footrulewidth}{0pt}           % no horizontal rule above footer
 
-% Also apply fancy style to chapter opening pages (which default to 'plain')
+% Redefine the 'plain' style used on chapter-opening pages.
+% By default, 'plain' shows only a centred page number and nothing else.
+% We override it here so chapter-opening pages also show the project number,
+% keeping the header consistent throughout the document.
 \fancypagestyle{plain}{
   \fancyhf{}
+  \fancyhead[R]{\small Project No: A2285-251}
   \fancyfoot[C]{\thepage}
   \renewcommand{\headrulewidth}{0pt}
+  \renewcommand{\footrulewidth}{0pt}
+}
+
+% A minimal page style exclusively for the cover page.
+% It shows the project number in the top-right header (matching every other
+% page) but deliberately defines no footer, so no page number is printed.
+% The titlepage environment sets page style to 'empty' by default -- we
+% override that with \thispagestyle{coverpage} inside Title/titlepage.tex.
+\fancypagestyle{coverpage}{
+  \fancyhf{}                                   % start from a clean slate
+  \fancyhead[R]{\small Project No: A2285-251} % project number only
+  \renewcommand{\headrulewidth}{0pt}           % no rule
+  \renewcommand{\footrulewidth}{0pt}           % no rule
+  % No \fancyfoot line -- this is intentional. The absence means no page
+  % number is printed on the cover page.
 }
 
 % -- Chapter and section heading style (titlesec) -----------------------------
@@ -207,44 +231,35 @@
 \begin{document}
 
 % -- Cover page ---------------------------------------------------------------
-\begin{titlepage}
-  \centering
-  \vspace*{1cm}
-
-  % Uncomment once you have saved the NTU logo as Front/media/ntu_logo.png
-  % \includegraphics[width=0.4\textwidth]{Front/media/ntu_logo.png}\\[1cm]
-
-  {\Large\bfseries
-    TinyLlama Inference Acceleration on FPGA\\[0.5em]
-    Using High-Level Synthesis}\\[2cm]
-
-  {\large\bfseries Submitted by: Aaron}\\[0.5em]
-  \vspace{0.3cm}
-  {\large\bfseries Supervisor: Professor Chang Chip Hong}\\[0.5em]
-  \vspace{0.3cm}
-  {\large Co-supervisor: Koca Nazim Altar}\\[2cm]
-
-  \vfill
-
-  {\normalsize
-    School of Electrical \& Electronic Engineering\\[0.3em]
-    A final year project report presented to\\
-    Nanyang Technological University\\[0.5em]
-    in partial fulfilment of the requirements for the\\[0.3em]
-    Degree of Bachelor of Engineering\\[1cm]
-    2026}
-\end{titlepage}
+% The title page content lives in Title/titlepage.tex, following the same
+% pattern as Kang Howe's project where a dedicated Title/ folder holds the
+% cover page layout and the NTU logo image.
+% Make sure Title/ntu_logo.png exists before building.
+\input{Title/titlepage}
 
 % -- Front matter (roman numerals: i, ii, iii ...) ----------------------------
 \frontmatter
 
+% Table of Contents appears first per the NTU template order.
+% \tableofcontents reads the .toc file from the previous build pass, so it
+% correctly lists Abstract, Acknowledgement etc. even though those pages
+% are typeset afterwards in the same run -- this is normal LaTeX two-pass
+% behaviour and requires no special handling.
+\tableofcontents
+
+% Abstract through Symbols follow the TOC.
 \input{Front/abstract}
 \input{Front/acknowledgement}
 \input{Front/acronyms}
 \input{Front/symbols}
 
-\tableofcontents
+% List of Figures and List of Tables close out the front matter.
+% \addcontentsline manually inserts these into the TOC, since \listoffigures
+% and \listoftables do not do this automatically the way \chapter{} does.
+\addcontentsline{toc}{chapter}{List of Figures}
 \listoffigures
+
+\addcontentsline{toc}{chapter}{List of Tables}
 \listoftables
 
 % -- Main matter (arabic numerals: 1, 2, 3 ...) -------------------------------
@@ -268,7 +283,7 @@ engineering knowledge, problem-solving skills, and professional development.
 
 \chapter*{Acknowledging/Declaring the Use of GAI}
 \addcontentsline{toc}{chapter}{Acknowledging/Declaring the Use of GAI}
-
+ 
 Declare here any use of generative AI tools during the project. If no GAI
 was used, state this explicitly.
 
