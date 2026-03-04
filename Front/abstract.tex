@@ -13,12 +13,12 @@
 \chapter*{Abstract}
 \addcontentsline{toc}{chapter}{Abstract}
 
-Small Language Models (SLMs) such as TinyLlama have soared 
-in popularity in recent months as they have demonstrated strong
-natural language understanding capabilities without the large memory
-requirements of Large Language Models (LLMs) that prevented deployment on edge devices. 
-Yet, these SLMs still requires substantial computational resources that 
-limit their deployment in embedded and edge environments. 
+Small-scale large language models (LLMs) such as TinyLlama-1.1B have 
+emerged as a compelling class of compact transformer models that deliver 
+meaningful natural language understanding capabilities within a fraction 
+of the memory footprint of frontier models such as GPT-4. Yet even at 
+the billion-parameter scale, these models impose substantial computational 
+demands that limit their deployment in embedded and edge environments.
 
 %, mostly from Nvidia and AMD, as they offer superior software support 
 %for Machine Learning (ML) and Artificial Intelligence (AI) researchers and engineers with their respective 
@@ -37,7 +37,7 @@ transformer to resource-constrained FPGA fabric presents significant challenges
 in quantization, memory tiling, and hardware-software partitioning.
 
 This project starts off with a comprehensive profiling of a RTX4060 Laptop GPU 
-running a pytorch inference of the TinyLlama 1.1B model (based on Meta's Llama 3 architecture)
+running a pytorch inference of the Llama 2-based TinyLlama 1.1B model
 from HuggingFace with default GPU kernel settings to observe for bottlenecks and 
 to measure propotion of wall-clock time required by the self-attention and 
 feed-forward layer during the forward pass. Based on the results, an 

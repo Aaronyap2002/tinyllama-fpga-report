@@ -17,14 +17,14 @@
 Large language models (LLMs) have demonstrated remarkable capabilities
 across a wide range of natural language understanding and generation tasks,
 but their deployment in resource-constrained environments remains a
-significant challenge \cite{PLACEHOLDER}. State-of-the-art models such as
-GPT-4 and LLaMA require hundreds of gigabytes of memory and specialised
+significant challenge \cite{PLACEHOLDER}. State-of-the-art large language models (LLMs) 
+such as GPT-4 and LLaMA require tens or hundreds of gigabytes of memory and specialised
 GPU clusters to achieve practical inference throughput, making them
 inaccessible for embedded, edge, and real-time applications.
 
-TinyLlama-1.1B \cite{PLACEHOLDER} represents a class of compact LLMs that
-seek to balance capability with deployability. With only 1.1 billion
-parameters -- roughly two orders of magnitude smaller than frontier models --
+The llama 2-based TinyLlama-1.1B model \cite{PLACEHOLDER} represents a class of 
+small-scale LLMs that seek to balance capability with deployability. With only 1.1 billion
+parameters,
 TinyLlama retains competitive performance on common benchmarks while fitting
 within a much smaller memory footprint. Nevertheless, even at this scale,
 running inference on a conventional CPU is far too slow for real-time use,
@@ -34,39 +34,66 @@ Field-programmable gate arrays (FPGAs) offer a compelling alternative.
 Unlike fixed-function ASICs, FPGAs are reconfigurable: the hardware can be
 tailored precisely to the computational patterns of a specific model, enabling
 high-throughput, low-latency inference at a fraction of the power cost of a GPU
-\cite{PLACEHOLDER}. Recent advances in high-level synthesis (HLS) tools --
-particularly Xilinx Vitis HLS -- have substantially lowered the barrier to
-FPGA development by allowing engineers to describe hardware behaviour in C++
-and have the tool generate the corresponding RTL automatically.
+\cite{PLACEHOLDER}. Two structural inefficiencies of GPU-based inference motivate
+this choice. First, autoregressive decode is memory-bandwidth-bound: each decode
+step must reload the full model weights from DRAM to perform matrix--vector
+multiplications against a single token, yet profiling of TinyLlama-1.1B on an
+RTX~4060 Laptop GPU reveals low memory bandwidth utilisation as the 
+remainder is lost to kernel launch overhead and memory access latency between
+hundreds of fine-grained CUDA kernel invocations per step. Second, the GPU
+runtime cannot fuse operations across transformer sub-layers: RMSNorm,
+matrix--vector multiplication, and activation functions are dispatched as
+separate kernels, each incurring CPU-to-GPU scheduling latency and cache
+eviction between them. An FPGA accelerator eliminates both inefficiencies
+simultaneously: weight data flows directly through a statically scheduled
+pipeline without repeated DRAM round-trips, and the entire transformer
+sub-layer (normalisation, projection, and activation) can be implemented
+as a single fused datapath with no inter-kernel overhead. Recent advances
+in high-level synthesis (HLS) tools (Xilinx Vitis HLS)
+have substantially lowered the barrier to FPGA development by allowing
+engineers to describe such fused hardware pipelines in C++ and have the
+tool generate the corresponding RTL automatically.
 
 \section{Objectives and Scope}
 \label{sec:objectives}
+The general objective of this project is to implement an AI accelerator by
+implementing and optimizing the inference pipeline of
+TinyLlama-1.1B on the Xilinx ZCU102 evaluation board using Vitis HLS. Due to the 
+complexity of the ZCU102 board, we begin our initial kernel design by targeting the 
+KRIA KR260 FPGA board. Since the KRIA KR260 FPGA have insufficient resource to 
+implement the TinyLlama model, we decided to start with a scaled-down version of 
+the model's dimensions.
 
-This project aims to implement and optimise the inference pipeline of
-TinyLlama-1.1B on the Xilinx ZCU102 evaluation board using Vitis HLS and
-the Xilinx Runtime (XRT) framework. The primary objectives are as follows.
+To understand the bottleneck of AI model inference which will be targeted for acceleration, 
+literature review is performed and profiliers are used to obtain performance metrics from 
+Nvidia's RTX4060 Laptop GPU. Then, a simple matrix multiplication kernel is 
+first implemented with High-Level Synthesis (HLS). By the end of the project, 
+a fused kernel consisting of the self-attention and feed-forward layer of the TinyLlama 
+archietecture is implemented and synthesized on an FPGA. 
 
-\begin{enumerate}
-  \item Implement the core transformer components of TinyLlama -- including
-        RMSNorm, matrix--vector multiplication, multi-head attention (MHA),
-        and the SwiGLU feed-forward network -- as optimised HLS kernels.
+% The primary objectives are as follows.
 
-  \item Apply INT8 post-training quantisation (PTQ) to reduce memory bandwidth
-        requirements and exploit the ZCU102's DSP blocks efficiently, while
-        maintaining acceptable output quality.
+% \begin{enumerate}
+%   \item Implement the core transformer components of TinyLlama -- including
+%         RMSNorm, matrix--vector multiplication, multi-head attention (MHA),
+%         and the SwiGLU feed-forward network -- as optimised HLS kernels.
 
-  \item Apply HLS optimisation directives (PIPELINE, UNROLL, ARRAY\_PARTITION)
-        to minimise the initiation interval and achieve the target throughput
-        within the ZCU102's resource budget.
+%   \item Apply INT8 post-training quantisation (PTQ) to reduce memory bandwidth
+%         requirements and exploit the ZCU102's DSP blocks efficiently, while
+%         maintaining acceptable output quality.
 
-  \item Evaluate the final implementation against a CPU software baseline in
-        terms of inference throughput (tokens per second), latency per token,
-        and energy efficiency (tokens per joule).
-\end{enumerate}
+%   \item Apply HLS optimisation directives (PIPELINE, UNROLL, ARRAY\_PARTITION)
+%         to minimise the initiation interval and achieve the target throughput
+%         within the ZCU102's resource budget.
 
-The scope of this project is limited to autoregressive token generation
-(i.e., the decode phase of inference). Prefill-phase optimisation and
-training are out of scope.
+%   \item Evaluate the final implementation against a CPU software baseline in
+%         terms of inference throughput (tokens per second), latency per token,
+%         and energy efficiency (tokens per joule).
+% \end{enumerate}
+
+% The scope of this project is limited to autoregressive token generation
+% (i.e., the decode phase of inference). Prefill-phase optimisation and
+% training are out of scope.
 
 \section{Organisation of Report}
 \label{sec:organisation}
