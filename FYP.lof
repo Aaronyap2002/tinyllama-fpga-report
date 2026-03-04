@@ -1,5 +1,7 @@
 \addvspace {10\p@ }
 \addvspace {10\p@ }
+\contentsline {figure}{\numberline {2.1}{\ignorespaces Pipeline characteristics showing latency $L$, initiation interval $I$, and total cycle count $C = L + I(N-1)$ for $N$ inputs \blx@tocontentsinit {0}\cite {PLACEHOLDER}.}}{12}{figure.caption.40}%
+\contentsline {figure}{\numberline {2.2}{\ignorespaces Horizontal unrolling, vertical unrolling, and dataflow as means to increase parallelism. Rectangles represent buffer space such as registers or on-chip RAM. (a)~Before any transformation. (b)~Horizontal unrolling: four independent inputs processed in parallel. (c)~Vertical unrolling: one input combined with multiple buffered values. (d)~Dataflow: input or partial results streamed through a pipeline rather than broadcast \blx@tocontentsinit {0}\cite {PLACEHOLDER}.}}{12}{figure.caption.42}%
 \addvspace {10\p@ }
 \addvspace {10\p@ }
 \addvspace {10\p@ }

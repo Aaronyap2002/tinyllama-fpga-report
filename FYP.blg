@@ -2,15 +2,15 @@
 [0] Config.pm:331> INFO - Logfile is 'FYP.blg'
 [72] biber-MSWIN64:342> INFO - === 
 [98] Biber.pm:421> INFO - Reading 'FYP.bcf'
-[168] Biber.pm:1002> INFO - Found 1 citekeys in bib section 0
-[178] Biber.pm:4487> INFO - Processing section 0
-[186] Biber.pm:4678> INFO - Looking for bibtex file 'references.bib' for section 0
-[190] UCollate.pm:68> INFO - Overriding locale 'en-US' defaults 'normalization = NFD' with 'normalization = prenormalized'
-[190] UCollate.pm:68> INFO - Overriding locale 'en-US' defaults 'variable = shifted' with 'variable = non-ignorable'
-[190] Biber.pm:4307> INFO - Sorting list 'none/global//global/global/global' of type 'entry' with template 'none' and locale 'en-US'
-[190] Biber.pm:4313> INFO - No sort tailoring available for locale 'en-US'
-[190] bbl.pm:676> INFO - Writing 'FYP.bbl' with encoding 'UTF-8'
-[190] bbl.pm:779> INFO - Output to FYP.bbl
-[191] Biber.pm:132> WARN - Data source 'references.bib' is empty, ignoring
-[191] Biber.pm:132> WARN - I didn't find a database entry for 'PLACEHOLDER' (section 0)
-[191] Biber.pm:134> INFO - WARNINGS: 2
+[172] Biber.pm:1002> INFO - Found 1 citekeys in bib section 0
+[181] Biber.pm:4487> INFO - Processing section 0
+[189] Biber.pm:4678> INFO - Looking for bibtex file 'references.bib' for section 0
+[193] UCollate.pm:68> INFO - Overriding locale 'en-US' defaults 'variable = shifted' with 'variable = non-ignorable'
+[193] UCollate.pm:68> INFO - Overriding locale 'en-US' defaults 'normalization = NFD' with 'normalization = prenormalized'
+[193] Biber.pm:4307> INFO - Sorting list 'none/global//global/global/global' of type 'entry' with template 'none' and locale 'en-US'
+[193] Biber.pm:4313> INFO - No sort tailoring available for locale 'en-US'
+[193] bbl.pm:676> INFO - Writing 'FYP.bbl' with encoding 'UTF-8'
+[193] bbl.pm:779> INFO - Output to FYP.bbl
+[194] Biber.pm:132> WARN - Data source 'references.bib' is empty, ignoring
+[194] Biber.pm:132> WARN - I didn't find a database entry for 'PLACEHOLDER' (section 0)
+[194] Biber.pm:134> INFO - WARNINGS: 2

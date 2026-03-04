@@ -14,24 +14,473 @@
 \section{Transformer Model Architecture}
 \label{sec:transformer_arch}
 
-The transformer architecture, introduced by Vaswani et al.\ \cite{PLACEHOLDER},
-forms the computational backbone of all modern LLMs including TinyLlama.
-Unlike recurrent networks, transformers process sequences in parallel through
-a mechanism called self-attention, which allows every token to directly attend
-to every other token in the sequence. While this parallelism enables efficient
-training on GPUs, it creates a challenging memory-access pattern for hardware
-accelerators: the attention computation scales quadratically with sequence
-length, and the weight matrices must be repeatedly loaded from external DRAM
-during inference.
+The transformer, introduced by Vaswani et al.\ \cite{PLACEHOLDER}, departed
+from the recurrent architectures that had dominated sequence modelling by
+replacing recurrence entirely with a mechanism called self-attention. In the
+original formulation, the model consisted of two stacks. An encoder that
+reads the full input sequence in parallel, and a decoder that generates the
+output sequence one token at a time while attending to the encoder's
+representations. This encoder--decoder design was well-suited to tasks such
+as machine translation, where input and output are distinct sequences.
 
-The TinyLlama-1.1B model \cite{PLACEHOLDER} uses the LLaMA-2 architecture with
-grouped-query attention (GQA) and the SwiGLU activation function in place of
-the standard ReLU. GQA reduces the number of key and value heads relative to
-query heads, substantially decreasing the KV cache size during autoregressive
-generation -- a particularly important optimisation for memory-constrained
-hardware like the ZCU102.
+For language modelling and text generation, however, subsequent work
+established that the decoder stack alone is sufficient \cite{PLACEHOLDER}.
+In a decoder-only transformer, the model is trained to predict the next
+token given all previous tokens. At inference time, this means the model
+operates autoregressively, where it processes a prompt, generates one token,
+appends that token to its context, and repeats until the desired output
+length is reached. TinyLlama follows this decoder-only paradigm.
 
-\lipsum[2] % Replace with your actual survey of transformer variants
+The flow of data through a single decoder-only forward pass proceeds as
+follows. An input sequence of tokens is first mapped to continuous vector
+representations by an embedding lookup, yielding a matrix
+$\mathbf{X} \in \mathbb{R}^{T \times d_{\text{model}}}$ where $T$ is the
+sequence length and $d_{\text{model}}$ is the hidden dimension. Positional
+information is then injected, either through a fixed sinusoidal encoding as
+in the original transformer or through a learned rotary scheme as used in
+TinyLlama. This embedding matrix is then passed through $L$ identical
+transformer layers stacked in sequence. Within each layer, the
+representation first passes through a normalisation step, then through
+a multi-head self-attention (MHA) sub-layer, with a residual connection
+adding the layer's input back to its output. The result is normalised again
+and passed through a feed-forward network (FFN) sub-layer, again with a
+residual connection. After all $L$ layers, the final hidden states are
+projected to the vocabulary dimension by a linear layer called the language
+model (LM) head, and a softmax function converts the resulting logits to a
+probability distribution over the vocabulary. The token with the highest
+probability (or a sampled token) becomes the next output.
+
+The self-attention mechanism is what gives the transformer its expressive
+power, but it also creates the dominant challenge for hardware accelerators.
+During the prefill phase, when the model processes the full input prompt in
+one pass, the computation is dense and GPU-friendly, as all sequence positions
+are processed in parallel, achieving high arithmetic throughput. During the
+autoregressive decode phase, however, the model processes a single new
+token per step while attending over all previously generated tokens stored
+in a key--value (KV) cache. This single-token operation is
+memory-bandwidth-bound rather than compute-bound. The GPU must load the
+full model weight matrices from DRAM on every step despite performing only
+a small fraction of the arithmetic those weights could theoretically support.
+
+\section{TinyLlama Model Architecture}
+\label{sec:tinyllama_arch}
+
+TinyLlama-1.1B \cite{PLACEHOLDER} is a compact, open-source, decoder-only
+language model developed by Zhang et al.\ at the Singapore University of
+Technology and Design. It was pretrained on approximately 3 trillion tokens. 
+Despite its relatively small parameter count of 1.1 billion,
+TinyLlama achieves competitive performance on commonsense reasoning and
+problem-solving benchmarks against larger models such as OPT-1.3B and
+Pythia-1.4B \cite{PLACEHOLDER}.
+
+TinyLlama adopts the LLaMA-2 architecture \cite{PLACEHOLDER} with several
+modifications over the original transformer. Table~\ref{tab:tinyllama_arch}
+summarises the key architectural hyperparameters. The model uses a hidden
+dimension $d_{\text{model}} = 2048$, an intermediate feed-forward dimension
+of 5632, 32 transformer layers, and a vocabulary of 32{,}000 tokens. Four
+architectural choices distinguish TinyLlama from the vanilla transformer
+described in \cref{sec:transformer_arch}: rotary positional embeddings
+(RoPE), pre-normalisation with RMSNorm, the SwiGLU activation function in
+the feed-forward sub-layer, and grouped-query attention (GQA). Each of
+these is briefly introduced here and examined in detail in the subsections
+that follow.
+
+\begin{table}[h]
+  \centering
+  \caption{TinyLlama-1.1B architectural hyperparameters
+           \cite{PLACEHOLDER}.}
+  \label{tab:tinyllama_arch}
+  \begin{tabular}{ll}
+    \toprule
+    Hyperparameter          & Value  \\
+    \midrule
+    Parameters              & 1.1B   \\
+    Hidden dimension $d_{\text{model}}$ & 2{,}048 \\
+    FFN intermediate dim    & 5{,}632 \\
+    Number of layers $L$    & 22     \\
+    Query heads             & 32     \\
+    KV head groups (GQA)    & 4      \\
+    Context length          & 2{,}048 tokens \\
+    Vocabulary size         & 32{,}000 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\noindent\textbf{Rotary Positional Embedding (RoPE).} Unlike the absolute
+sinusoidal positional encodings added to the input embeddings in the
+original transformer, RoPE \cite{PLACEHOLDER} encodes positional information
+by rotating the query and key vectors in the attention computation. This
+approach has the advantage of naturally encoding relative rather than
+absolute positions, which improves generalisation to sequence lengths not
+seen during training.
+
+\noindent\textbf{Pre-normalisation with RMSNorm.} The original transformer
+applied layer normalisation after each sub-layer (post-norm). TinyLlama,
+following LLaMA-2, applies normalisation before each sub-layer (pre-norm).
+Pre-norm training is more stable at large scales because the residual stream
+is never passed through an unnormalised non-linearity. The normalisation
+function used is RMSNorm \cite{PLACEHOLDER}, a simplified variant of
+LayerNorm that omits the mean-centring step, reducing the number of passes
+over the input vector and lowering hardware implementation complexity.
+
+\noindent\textbf{SwiGLU Feed-Forward Network.} The feed-forward sub-layer
+in TinyLlama replaces the standard two-layer ReLU MLP with the SwiGLU
+variant \cite{PLACEHOLDER}, which introduces a gating mechanism. The input
+is projected into two parallel streams, one of which is passed through the
+Swish activation function and then element-wise multiplied with the other.
+This gating structure has been shown to improve model quality at the same
+parameter count.
+
+\noindent\textbf{Grouped-Query Attention (GQA).} Standard multi-head
+attention computes separate key and value projections for each of the 32
+query heads, resulting in a KV cache that grows as $O(L \cdot H \cdot T
+\cdot d_k)$ with sequence length $T$. TinyLlama reduces this overhead by
+sharing key and value representations across groups of query heads, using
+only 4 KV head groups for 32 query heads \cite{PLACEHOLDER}. This reduces
+the KV cache size by a factor of 8, which is significant for memory-
+constrained FPGA deployment.
+
+\subsection{Token Embeddings}
+\label{subsec:embeddings}
+
+The first operation in every forward pass converts discrete token indices
+into continuous vector representations. The model maintains an embedding
+matrix $\mathbf{E} \in \mathbb{R}^{V \times d_{\text{model}}}$, where $V$
+is the vocabulary size and $d_{\text{model}}$ is the hidden dimension. For
+TinyLlama, $V = 32{,}000$ and $d_{\text{model}} = 2{,}048$. Given an input
+sequence of $T$ token indices $[t_1, t_2, \ldots, t_T]$, the embedding
+lookup produces:
+
+\begin{equation}
+  \mathbf{X} = \begin{bmatrix}
+    \mathbf{e}_{t_1} \\
+    \mathbf{e}_{t_2} \\
+    \vdots \\
+    \mathbf{e}_{t_T}
+  \end{bmatrix} \in \mathbb{R}^{T \times d_{\text{model}}}
+  \label{eq:embedding}
+\end{equation}
+
+\noindent where $\mathbf{e}_{t_i}$ denotes the $t_i$-th row of
+$\mathbf{E}$. Each row is a $d_{\text{model}}$-dimensional dense vector
+learned during pretraining that positions semantically similar tokens close
+together in the embedding space.
+
+\noindent\textbf{Space complexity.} The embedding matrix requires
+$V \times d_{\text{model}}$ parameters. In FP32 this amounts to
+$32{,}000 \times 2{,}048 \times 4 = 262$\,MB. This is one of the larger
+weight tensors in the model and is a candidate for quantisation since its
+access pattern during inference, consisting of one row lookup per generated
+token, is entirely memory-bound.
+
+\noindent\textbf{Time complexity.} The lookup itself is $\mathcal{O}(T)$
+since it is a table index operation with no arithmetic; however, the
+subsequent layers treat $\mathbf{X}$ as a dense matrix and all downstream
+costs scale with $T \times d_{\text{model}}$.
+
+
+\subsection{Rotary Positional Embedding}
+\label{subsec:rope}
+
+Because the self-attention mechanism is permutation-invariant, treating
+the input as a set of vectors with no inherent order, the model must be
+given some means of distinguishing position $m$ from position $n$. The
+original transformer achieved this by adding a fixed sinusoidal vector to
+each token embedding before the first layer. TinyLlama instead uses Rotary
+Positional Embedding (RoPE) \cite{PLACEHOLDER}, which encodes position by
+rotating the query and key vectors inside each attention head rather than
+modifying the input embeddings. This has the advantage of encoding relative
+rather than absolute positions, which improves the model's ability to
+generalise beyond the training context length.
+
+For a query or key vector $\mathbf{q} \in \mathbb{R}^{d_k}$ at sequence
+position $m$, RoPE applies a block-diagonal rotation matrix
+$\mathbf{R}_m \in \mathbb{R}^{d_k \times d_k}$:
+
+\begin{equation}
+  \mathbf{R}_m =
+  \begin{bmatrix}
+    \cos m\theta_1 & -\sin m\theta_1 & & & \\
+    \sin m\theta_1 &  \cos m\theta_1 & & & \\
+    & & \cos m\theta_2 & -\sin m\theta_2 & \\
+    & & \sin m\theta_2 &  \cos m\theta_2 & \\
+    & & & & \ddots
+  \end{bmatrix}
+  \label{eq:rope_matrix}
+\end{equation}
+
+\noindent where $\theta_i = 10000^{-2(i-1)/d_k}$ for $i = 1, \ldots,
+d_k/2$ are base frequencies that decrease geometrically, allowing
+different pairs of dimensions to encode position at different scales. The
+rotated query is then $\tilde{\mathbf{q}}_m = \mathbf{R}_m \mathbf{q}_m$.
+A key property is that the inner product between a rotated query at
+position $m$ and a rotated key at position $n$ depends only on the
+relative offset $m - n$:
+
+\begin{equation}
+  \tilde{\mathbf{q}}_m^\top \tilde{\mathbf{k}}_n
+  = \mathbf{q}_m^\top \mathbf{R}_m^\top \mathbf{R}_n \mathbf{k}_n
+  = \mathbf{q}_m^\top \mathbf{R}_{n-m} \mathbf{k}_n
+  \label{eq:rope_relative}
+\end{equation}
+
+\noindent In practice, the block-diagonal structure of $\mathbf{R}_m$
+means the rotation is implemented efficiently as element-wise
+multiplication with precomputed $\cos$ and $\sin$ tables, avoiding any
+explicit matrix-matrix product.
+
+\noindent\textbf{Space complexity.} The only parameters are the
+precomputed $\cos$ and $\sin$ tables of shape
+$T_{\max} \times d_k/2$, which for TinyLlama
+($T_{\max} = 2{,}048$, $d_k = 64$) requires $2 \times 2{,}048 \times 32
+\times 4 = 0.5$\,MB in FP32, which is negligible relative to the weight matrices.
+No learned parameters are introduced by RoPE.
+
+\noindent\textbf{Time complexity.} Applying RoPE to all query and key
+vectors across all heads costs $\mathcal{O}(T \times H \times d_k)$ per
+layer, where $H$ is the number of heads. This is linear in sequence length
+and dominated in practice by the attention computation that follows.
+
+
+\subsection{RMSNorm}
+\label{subsec:rmsnorm}
+
+Normalisation is applied before each sub-layer in TinyLlama (pre-norm),
+stabilising the gradient magnitudes during training and ensuring the
+residual stream entering each sub-layer has consistent scale. TinyLlama
+uses Root Mean Square Layer Normalisation (RMSNorm)
+\cite{PLACEHOLDER}, which normalises by the RMS of the input vector rather
+than by mean and variance as in the original LayerNorm. Omitting the
+mean-centring step reduces the number of sequential reductions over the
+input dimension from two to one, which simplifies the hardware
+implementation.
+
+For an input vector $\mathbf{x} \in \mathbb{R}^{d_{\text{model}}}$,
+RMSNorm computes:
+
+\begin{equation}
+  \text{RMS}(\mathbf{x}) = \sqrt{\frac{1}{d_{\text{model}}}
+    \sum_{i=1}^{d_{\text{model}}} x_i^2 + \epsilon}
+  \label{eq:rms}
+\end{equation}
+
+\begin{equation}
+  \text{RMSNorm}(\mathbf{x}) = \frac{\mathbf{x}}{\text{RMS}(\mathbf{x})}
+    \odot \mathbf{g}
+  \label{eq:rmsnorm}
+\end{equation}
+
+\noindent where $\mathbf{g} \in \mathbb{R}^{d_{\text{model}}}$ is a
+learned element-wise scale vector and $\epsilon$ is a small constant for
+numerical stability. Applied to the full sequence matrix
+$\mathbf{X} \in \mathbb{R}^{T \times d_{\text{model}}}$, RMSNorm is
+applied independently to each row:
+
+\begin{equation}
+  \text{RMSNorm}(\mathbf{X}) =
+  \begin{bmatrix}
+    \dfrac{\mathbf{x}_1}{\text{RMS}(\mathbf{x}_1)} \\[8pt]
+    \dfrac{\mathbf{x}_2}{\text{RMS}(\mathbf{x}_2)} \\[4pt]
+    \vdots \\[4pt]
+    \dfrac{\mathbf{x}_T}{\text{RMS}(\mathbf{x}_T)}
+  \end{bmatrix} \odot \mathbf{1}_T \mathbf{g}^\top
+  \label{eq:rmsnorm_matrix}
+\end{equation}
+
+\noindent\textbf{Space complexity.} Each RMSNorm layer stores one scale
+vector $\mathbf{g}$ of length $d_{\text{model}} = 2{,}048$. With $2L = 44$
+normalisation layers across 22 transformer layers (one before attention,
+one before FFN), the total RMSNorm parameter count is
+$44 \times 2{,}048 \times 4 = 0.36$\,MB in FP32, which is negligible. The
+intermediate squared accumulation during the RMS computation must be
+performed at sufficient precision to avoid overflow, which in FP32 poses no
+issue but becomes a consideration under INT8 quantisation.
+
+\noindent\textbf{Time complexity.} Computing RMSNorm for a single token
+vector requires one pass over $d_{\text{model}}$ elements for the squared
+sum, a square root, and one element-wise multiply, giving
+$\mathcal{O}(d_{\text{model}})$ operations per token and
+$\mathcal{O}(T \times d_{\text{model}})$ for a full sequence. The data dependency, specifically that the normalisation factor cannot be
+computed until all $d_{\text{model}}$ elements have been read, means that
+RMSNorm introduces a
+reduction bottleneck that limits pipeline depth in hardware.
+
+
+\subsection{Grouped-Query Self-Attention}
+\label{subsec:gqa}
+
+Self-attention is the mechanism that allows each token representation to
+gather information from all other tokens in the sequence. In the standard
+multi-head attention (MHA) formulation \cite{PLACEHOLDER}, the input
+$\mathbf{X} \in \mathbb{R}^{T \times d_{\text{model}}}$ is linearly
+projected into $H$ sets of query, key, and value vectors:
+
+\begin{equation}
+  \mathbf{Q} = \mathbf{X}\mathbf{W}_Q, \quad
+  \mathbf{K} = \mathbf{X}\mathbf{W}_K, \quad
+  \mathbf{V} = \mathbf{X}\mathbf{W}_V
+  \label{eq:qkv_proj}
+\end{equation}
+
+\noindent where $\mathbf{W}_Q \in \mathbb{R}^{d_{\text{model}} \times
+d_{\text{model}}}$, $\mathbf{W}_K \in \mathbb{R}^{d_{\text{model}} \times
+d_{\text{model}}}$, and $\mathbf{W}_V \in \mathbb{R}^{d_{\text{model}}
+\times d_{\text{model}}}$ in the standard MHA case. Each of the $H = 32$
+heads operates on a $d_k = d_{\text{model}} / H = 64$-dimensional slice.
+The attention output for head $h$ is:
+
+\begin{equation}
+  \text{Attention}(\mathbf{Q}_h, \mathbf{K}_h, \mathbf{V}_h)
+  = \text{softmax}\!\left(
+      \frac{\mathbf{Q}_h \mathbf{K}_h^\top}{\sqrt{d_k}}
+      + \mathbf{M}
+    \right) \mathbf{V}_h
+  \label{eq:attention}
+\end{equation}
+
+\noindent where $\mathbf{M} \in \mathbb{R}^{T \times T}$ is the causal
+mask that sets future positions to $-\infty$ before the softmax, enforcing
+the autoregressive constraint that position $i$ may only attend to
+positions $\leq i$. The outputs of all $H$ heads are concatenated and
+projected back to $d_{\text{model}}$ via an output weight matrix
+$\mathbf{W}_O \in \mathbb{R}^{d_{\text{model}} \times d_{\text{model}}}$:
+
+\begin{equation}
+  \mathbf{Y}_{\text{attn}} =
+    \text{Concat}(\text{head}_1, \ldots, \text{head}_H)\,\mathbf{W}_O
+  \label{eq:mha_output}
+\end{equation}
+
+TinyLlama replaces standard MHA with Grouped-Query Attention (GQA)
+\cite{PLACEHOLDER}. Rather than maintaining $H$ independent key and value
+projections, GQA uses $G = 4$ KV head groups shared across the $H = 32$
+query heads, meaning every 8 query heads share the same key and value
+representations. The KV projection matrices are therefore reduced:
+
+\begin{equation}
+  \mathbf{W}_K, \mathbf{W}_V \in
+    \mathbb{R}^{d_{\text{model}} \times (G \cdot d_k)}
+  = \mathbb{R}^{2048 \times 256}
+  \label{eq:gqa_kv_weight}
+\end{equation}
+
+During autoregressive generation, the key and value tensors for all past
+positions must be stored in a KV cache so they are not recomputed on every
+decode step. In standard MHA the cache grows as
+$2 \times L \times T \times H \times d_k$ per sequence. GQA reduces this
+by the ratio $H/G = 8$, giving a KV cache of size
+$2 \times L \times T \times G \times d_k$ elements. For TinyLlama at the
+maximum context length ($L = 22$, $T = 2{,}048$, $G = 4$, $d_k = 64$) in
+FP32, this amounts to:
+
+\begin{equation}
+  2 \times 22 \times 2{,}048 \times 4 \times 64 \times 4\,\text{bytes}
+  = 90.2\,\text{MB}
+  \label{eq:kv_cache_size}
+\end{equation}
+
+\noindent compared to $721.8$\,MB that full MHA would require, which represents an
+$8\times$ reduction that is critical for on-chip buffering in FPGA
+deployment.
+
+\noindent\textbf{Space complexity.} The four attention weight matrices
+$(\mathbf{W}_Q, \mathbf{W}_K, \mathbf{W}_V, \mathbf{W}_O)$ per layer
+total $(d_{\text{model}}^2 + 2 \cdot d_{\text{model}} \cdot G d_k
++ d_{\text{model}}^2)$ parameters. For TinyLlama per layer:
+$(2048^2 + 2 \times 2048 \times 256 + 2048^2) \times 4 = 42.5$\,MB in
+FP32 per layer, or $935$\,MB across all 22 layers.
+
+\noindent\textbf{Time complexity.} The Q, K, V projections each require
+$\mathcal{O}(T \times d_{\text{model}}^2)$ operations during prefill.
+The scaled dot-product $\mathbf{Q}_h \mathbf{K}_h^\top$ costs
+$\mathcal{O}(T^2 \times d_k)$ per head and
+$\mathcal{O}(H \times T^2 \times d_k) = \mathcal{O}(T^2 \times
+d_{\text{model}})$ in total, which is the quadratic-in-$T$ cost that
+makes long-context inference expensive. During decode (single new token
+$t = 1$), the projection costs reduce to
+$\mathcal{O}(d_{\text{model}}^2)$, and the attention reduces to
+$\mathcal{O}(T_{\text{cache}} \times d_{\text{model}})$ where
+$T_{\text{cache}}$ is the current KV cache length.
+
+
+\subsection{SwiGLU Feed-Forward Network}
+\label{subsec:swiglu}
+
+Each transformer layer contains a position-wise feed-forward network (FFN)
+applied independently to each token's representation after the attention
+sub-layer. In the original transformer this was a two-layer MLP with a
+ReLU activation. TinyLlama instead uses the SwiGLU variant
+\cite{PLACEHOLDER}, which replaces the single hidden projection with two parallel streams. One
+passes through the Swish activation function and the other acts as a
+multiplicative gate, with both combined before the output projection. Concretely, for a token vector
+$\mathbf{x} \in \mathbb{R}^{d_{\text{model}}}$:
+
+\begin{equation}
+  \text{Swish}(\mathbf{z}) = \mathbf{z} \odot \sigma(\mathbf{z})
+  \label{eq:swish}
+\end{equation}
+
+\begin{equation}
+  \text{FFN}_{\text{SwiGLU}}(\mathbf{x})
+  = \Bigl(\text{Swish}(\mathbf{x}\mathbf{W}_1) \odot \mathbf{x}\mathbf{W}_3\Bigr)
+    \mathbf{W}_2
+  \label{eq:swiglu}
+\end{equation}
+
+\noindent where $\sigma(\cdot)$ is the sigmoid function,
+$\mathbf{W}_1, \mathbf{W}_3 \in \mathbb{R}^{d_{\text{model}} \times
+d_{\text{ff}}}$ are the gate and up projection matrices respectively, and
+$\mathbf{W}_2 \in \mathbb{R}^{d_{\text{ff}} \times d_{\text{model}}}$ is
+the down projection. For TinyLlama, $d_{\text{ff}} = 5{,}632$. Applied to
+the full sequence in matrix form:
+
+\begin{equation}
+  \mathbf{Y}_{\text{ffn}}
+  = \Bigl(
+      \underbrace{
+        \bigl(\mathbf{X}\mathbf{W}_1\bigr)
+        \odot \sigma\bigl(\mathbf{X}\mathbf{W}_1\bigr)
+      }_{\text{Swish gate}: T \times d_{\text{ff}}}
+      \odot
+      \underbrace{
+        \mathbf{X}\mathbf{W}_3
+      }_{\text{up proj}: T \times d_{\text{ff}}}
+    \Bigr)
+    \underbrace{
+      \mathbf{W}_2
+    }_{d_{\text{ff}} \times d_{\text{model}}}
+  \label{eq:swiglu_matrix}
+\end{equation}
+
+The element-wise gating in Equation~\ref{eq:swiglu_matrix} means that
+the effective hidden representation at each position is modulated by a
+learned sigmoid gate, which has been shown empirically to improve model
+quality compared to ReLU at the same parameter budget \cite{PLACEHOLDER}.
+Note that SwiGLU introduces three weight matrices per FFN layer rather than
+two, which increases the parameter count but allows $d_{\text{ff}}$ to be
+set smaller than in a standard two-layer MLP to maintain comparable total
+parameter count.
+
+\noindent\textbf{Space complexity.} The three FFN weight matrices per layer
+total $2 \times d_{\text{model}} \times d_{\text{ff}} + d_{\text{ff}}
+\times d_{\text{model}} = 3 \times d_{\text{model}} \times d_{\text{ff}}$
+parameters. For TinyLlama: $3 \times 2{,}048 \times 5{,}632 \times 4
+= 138.4$\,MB per layer in FP32, or $3{,}045$\,MB across all 22 layers.
+The FFN layers collectively constitute the largest weight component of the
+model, making them the highest-priority target for INT8 quantisation.
+
+\noindent\textbf{Time complexity.} Each of the three matrix multiplications
+costs $\mathcal{O}(T \times d_{\text{model}} \times d_{\text{ff}})$
+operations. During prefill the total FFN cost is
+$\mathcal{O}(T \times d_{\text{model}} \times d_{\text{ff}})$ per layer,
+and during decode ($T = 1$) it reduces to
+$\mathcal{O}(d_{\text{model}} \times d_{\text{ff}})$, reducing to a
+matrix-vector multiply rather than a matrix-matrix multiply. This decode-phase
+matrix-vector regime is where the memory-bandwidth bottleneck
+identified in the GPU profiling of \cref{sec:motivations} arises. The full
+$d_{\text{model}} \times d_{\text{ff}}$ weight matrix must be loaded from
+DRAM on every decode step regardless of how few arithmetic operations it
+supports since the batch size is one.
 
 \section{FPGA Acceleration of Neural Networks}
 \label{sec:fpga_acceleration}
@@ -41,19 +490,14 @@ the mid-2010s. Early work such as \cite{PLACEHOLDER} demonstrated that FPGAs
 could outperform CPUs on convolutional neural network (CNN) inference by
 exploiting data-level parallelism and on-chip memory buffering. The key insight
 is that FPGAs allow the designer to co-optimise the compute pipeline and the
-memory hierarchy simultaneously -- something that is fixed in GPU silicon.
+memory hierarchy simultaneously, a degree of flexibility that is unavailable
+in fixed GPU silicon.
 
 For transformer models specifically, the dominant challenge is memory bandwidth
-rather than raw arithmetic throughput. A single forward pass of TinyLlama-1.1B
-moves approximately 2.2\,GB of weight data from DRAM, yet performs only around
-2.2\,GFLOP of arithmetic -- giving a compute-to-memory ratio of roughly
-1\,FLOP/byte, which is far below what modern FPGAs can sustain at their
-arithmetic peak. This memory-bound characteristic means that the primary
+rather than raw arithmetic throughput. This memory-bound characteristic means that the primary
 optimisation target is minimising redundant DRAM accesses through on-chip
 weight buffering and tiling, rather than maximising multiply-accumulate
 throughput.
-
-\lipsum[3] % Replace with your survey of FPGA transformer acceleration papers
 
 \section{Quantisation for Efficient Inference}
 \label{sec:quantisation}
@@ -63,9 +507,7 @@ activations from the standard 32-bit floating point (FP32) to lower-precision
 integer representations, trading a small amount of model accuracy for
 substantial reductions in memory footprint, bandwidth, and arithmetic cost.
 For FPGAs in particular, fixed-point integer arithmetic is significantly more
-resource-efficient than floating-point: a single-precision floating-point
-multiplier requires roughly 3$\times$ as many LUTs as an equivalent INT8
-multiplier on Xilinx UltraScale+ devices \cite{PLACEHOLDER}.
+resource-efficient than floating-point \cite{PLACEHOLDER}.
 
 Post-training quantisation (PTQ) at INT8 precision has become the dominant
 approach for production LLM deployment, with works such as LLM.int8()
@@ -74,7 +516,6 @@ approach for production LLM deployment, with works such as LLM.int8()
 accuracy degradation on standard benchmarks when applied with appropriate
 per-channel scaling factors.
 
-\lipsum[4] % Replace with your survey of quantisation methods
 
 \section{HLS-Based Hardware Design}
 \label{sec:hls_design}
@@ -84,30 +525,76 @@ C/C++ and synthesisable RTL, dramatically reducing the design iteration cycle
 compared to manual HDL development. Vitis HLS, the primary tool used in this
 project, translates annotated C++ functions into pipelined hardware modules
 whose behaviour is controlled through pragma directives embedded in the source
-code \cite{PLACEHOLDER}.
+code \cite{PLACEHOLDER}. The most critical directives for throughput
+optimisation are \texttt{PIPELINE}, \texttt{UNROLL}, and
+\texttt{ARRAY\_PARTITION}, which control loop pipelining, spatial
+parallelism, and on-chip memory port availability respectively.
 
-The most critical HLS directives for throughput optimisation are PIPELINE
-(which enables concurrent execution of successive loop iterations, characterised
-by the initiation interval II), UNROLL (which replicates loop body logic to
-increase parallelism), and ARRAY\_PARTITION (which splits arrays into multiple
-memory banks to eliminate memory-port bottlenecks). Prior work on HLS-based
-transformer acceleration \cite{PLACEHOLDER} has shown that achieving II\,=\,1
-on the innermost matrix multiplication loop is the single most impactful
-optimisation, as it determines the fundamental throughput ceiling of the
-entire pipeline.
+\subsection{Pipelining and the Initiation Interval}
+\label{subsec:pipelining}
 
-\lipsum[5] % Replace with your survey of HLS-based ML accelerator papers
+The performance of a pipelined hardware loop is characterised by its initiation
+interval $I$, the number of clock cycles before the pipeline can accept the
+next iteration, and its latency $L$. For a loop processing $N$ iterations,
+the total cycle count is \cite{PLACEHOLDER}:
 
-\section{Summary and Research Gap}
-\label{sec:research_gap}
+\begin{equation}
+  C = L + I \cdot (N - 1)
+  \label{eq:pipeline}
+\end{equation}
 
-Existing FPGA accelerators for transformer inference have largely focused on
-encoder-only models (BERT and its variants) for classification tasks, where
-the sequence length is fixed and the computational graph is static. Accelerators
-for autoregressive decoder-only models like TinyLlama face an additional
-challenge: each generation step produces a single token and must update the KV
-cache, creating a highly sequential data dependency that is difficult to
-pipeline across time steps. To the best of the author's knowledge, no published
-work has demonstrated a full end-to-end implementation of a 1B+ parameter
-decoder-only LLM on the ZCU102 platform using Vitis HLS with INT8 quantisation.
-This project addresses that gap.
+A perfect pipeline achieves $I = 1$, so that the runtime scales as $I \cdot N$
+and halving $I$ halves the runtime. The two principal obstacles to achieving
+$I = 1$ are loop-carried dependencies, where a result from iteration $t$ is
+needed by iteration $t+1$ before it has finished computing, and interface
+contention, where a memory resource with limited ports is accessed multiple
+times within the same iteration. These are resolved through accumulation
+interleaving and array partitioning respectively \cite{PLACEHOLDER}, both of
+which are applied extensively in this project.
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.55\textwidth]{Chapter2/media/hls_pipeline.png}
+  \caption{Pipeline characteristics showing latency $L$, initiation interval
+           $I$, and total cycle count $C = L + I(N-1)$ for $N$ inputs
+           \cite{PLACEHOLDER}.}
+  \label{fig:pipeline}
+\end{figure}
+
+\subsection{Scaling Transformations: Unrolling and Dataflow}
+\label{subsec:scaling}
+
+Once a loop achieves $I = 1$, performance is increased further by reducing
+the number of iterations $N$ through unrolling \cite{PLACEHOLDER}. Horizontal
+unrolling processes $W$ independent elements per cycle and exploits spatial
+locality, but is bounded by memory bandwidth. Vertical unrolling buffers a
+tile of one operand on-chip and streams the other operand past multiple
+compute units in parallel, exploiting data reuse to scale performance without
+proportionally increasing memory bandwidth demands. The \texttt{DATAFLOW}
+pragma decomposes a design into independently scheduled processing elements
+connected by FIFO streams, allowing pipeline stages to execute concurrently.
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.85\textwidth]{Chapter2/media/hls_unrolling.png}
+  \caption{Horizontal unrolling, vertical unrolling, and dataflow as means to
+           increase parallelism. Rectangles represent buffer space such as
+           registers or on-chip RAM. (a)~Before any transformation. (b)~Horizontal
+           unrolling: four independent inputs processed in parallel. (c)~Vertical
+           unrolling: one input combined with multiple buffered values.
+           (d)~Dataflow: input or partial results streamed through a pipeline
+           rather than broadcast \cite{PLACEHOLDER}.}
+  \label{fig:unrolling}
+\end{figure}
+
+\subsection{Memory Transformations}
+\label{subsec:memory_transforms}
+
+When compute throughput has been maximised, the remaining bottleneck is
+typically memory bandwidth. Memory access extraction separates load and store
+operations into dedicated pipeline stages that issue long DRAM bursts
+independently of the compute logic, maximising bandwidth utilisation
+\cite{PLACEHOLDER}. Type demotion from FP32 to INT8 reduces both the
+bandwidth consumed per weight loaded and the on-chip resources required to
+process it, directly addressing the memory-bound nature of transformer
+inference on resource-constrained devices.
