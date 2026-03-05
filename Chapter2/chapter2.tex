@@ -20,13 +20,11 @@ replacing recurrence entirely with a mechanism called self-attention. In the
 original formulation, the model consisted of two stacks. An encoder that
 reads the full input sequence in parallel, and a decoder that generates the
 output sequence one token at a time while attending to the encoder's
-representations. This encoder--decoder design was well-suited to tasks such
-as machine translation, where input and output are distinct sequences.
+representations.
 
-For language modelling and text generation, however, subsequent work
-established that the decoder stack alone is sufficient \cite{PLACEHOLDER}.
+For language modelling and text generation, the decoder stack alone is sufficient.
 In a decoder-only transformer, the model is trained to predict the next
-token given all previous tokens. At inference time, this means the model
+token given all previous tokens. At inference time, the model
 operates autoregressively, where it processes a prompt, generates one token,
 appends that token to its context, and repeats until the desired output
 length is reached. TinyLlama follows this decoder-only paradigm.
@@ -55,7 +53,7 @@ power, but it also creates the dominant challenge for hardware accelerators.
 During the prefill phase, when the model processes the full input prompt in
 one pass, the computation is dense and GPU-friendly, as all sequence positions
 are processed in parallel, achieving high arithmetic throughput. During the
-autoregressive decode phase, however, the model processes a single new
+autoregressive decode phase, the model processes a single new
 token per step while attending over all previously generated tokens stored
 in a key--value (KV) cache. This single-token operation is
 memory-bandwidth-bound rather than compute-bound. The GPU must load the
@@ -67,11 +65,11 @@ a small fraction of the arithmetic those weights could theoretically support.
 
 TinyLlama-1.1B \cite{PLACEHOLDER} is a compact, open-source, decoder-only
 language model developed by Zhang et al.\ at the Singapore University of
-Technology and Design. It was pretrained on approximately 3 trillion tokens. 
+Technology and Design.
+%  It was pretrained on approximately 3 trillion tokens. 
 Despite its relatively small parameter count of 1.1 billion,
 TinyLlama achieves competitive performance on commonsense reasoning and
-problem-solving benchmarks against larger models such as OPT-1.3B and
-Pythia-1.4B \cite{PLACEHOLDER}.
+problem-solving benchmarks.
 
 TinyLlama adopts the LLaMA-2 architecture \cite{PLACEHOLDER} with several
 modifications over the original transformer. Table~\ref{tab:tinyllama_arch}
@@ -109,17 +107,15 @@ that follow.
 \noindent\textbf{Rotary Positional Embedding (RoPE).} Unlike the absolute
 sinusoidal positional encodings added to the input embeddings in the
 original transformer, RoPE \cite{PLACEHOLDER} encodes positional information
-by rotating the query and key vectors in the attention computation. This
-approach has the advantage of naturally encoding relative rather than
-absolute positions, which improves generalisation to sequence lengths not
-seen during training.
+by rotating the query and key vectors in the attention computation. 
 
 \noindent\textbf{Pre-normalisation with RMSNorm.} The original transformer
 applied layer normalisation after each sub-layer (post-norm). TinyLlama,
 following LLaMA-2, applies normalisation before each sub-layer (pre-norm).
-Pre-norm training is more stable at large scales because the residual stream
-is never passed through an unnormalised non-linearity. The normalisation
-function used is RMSNorm \cite{PLACEHOLDER}, a simplified variant of
+% Pre-norm training is more stable at large scales because the residual stream
+% is never passed through an unnormalised non-linearity. 
+The normalisation function used is RMSNorm \cite{PLACEHOLDER}, 
+a simplified variant of
 LayerNorm that omits the mean-centring step, reducing the number of passes
 over the input vector and lowering hardware implementation complexity.
 
@@ -128,8 +124,6 @@ in TinyLlama replaces the standard two-layer ReLU MLP with the SwiGLU
 variant \cite{PLACEHOLDER}, which introduces a gating mechanism. The input
 is projected into two parallel streams, one of which is passed through the
 Swish activation function and then element-wise multiplied with the other.
-This gating structure has been shown to improve model quality at the same
-parameter count.
 
 \noindent\textbf{Grouped-Query Attention (GQA).} Standard multi-head
 attention computes separate key and value projections for each of the 32
@@ -184,14 +178,16 @@ costs scale with $T \times d_{\text{model}}$.
 
 Because the self-attention mechanism is permutation-invariant, treating
 the input as a set of vectors with no inherent order, the model must be
-given some means of distinguishing position $m$ from position $n$. The
-original transformer achieved this by adding a fixed sinusoidal vector to
-each token embedding before the first layer. TinyLlama instead uses Rotary
+given some means of distinguishing position $m$ from position $n$. 
+% The
+% original transformer achieved this by adding a fixed sinusoidal vector to
+% each token embedding before the first layer. 
+TinyLlama uses Rotary
 Positional Embedding (RoPE) \cite{PLACEHOLDER}, which encodes position by
-rotating the query and key vectors inside each attention head rather than
-modifying the input embeddings. This has the advantage of encoding relative
-rather than absolute positions, which improves the model's ability to
-generalise beyond the training context length.
+rotating the query and key vectors inside each attention head. 
+% This has the advantage of encoding relative
+% rather than absolute positions, which improves the model's ability to
+% generalise beyond the training context length.
 
 For a query or key vector $\mathbf{q} \in \mathbb{R}^{d_k}$ at sequence
 position $m$, RoPE applies a block-diagonal rotation matrix
@@ -245,15 +241,9 @@ and dominated in practice by the attention computation that follows.
 \subsection{RMSNorm}
 \label{subsec:rmsnorm}
 
-Normalisation is applied before each sub-layer in TinyLlama (pre-norm),
-stabilising the gradient magnitudes during training and ensuring the
-residual stream entering each sub-layer has consistent scale. TinyLlama
-uses Root Mean Square Layer Normalisation (RMSNorm)
-\cite{PLACEHOLDER}, which normalises by the RMS of the input vector rather
-than by mean and variance as in the original LayerNorm. Omitting the
-mean-centring step reduces the number of sequential reductions over the
-input dimension from two to one, which simplifies the hardware
-implementation.
+Normalisation is applied before each sub-layer in TinyLlama (pre-norm). 
+TinyLlama uses Root Mean Square Layer Normalisation (RMSNorm)
+\cite{PLACEHOLDER}, which normalises by the RMS of the input vector. 
 
 For an input vector $\mathbf{x} \in \mathbb{R}^{d_{\text{model}}}$,
 RMSNorm computes:
@@ -408,9 +398,8 @@ $T_{\text{cache}}$ is the current KV cache length.
 
 Each transformer layer contains a position-wise feed-forward network (FFN)
 applied independently to each token's representation after the attention
-sub-layer. In the original transformer this was a two-layer MLP with a
-ReLU activation. TinyLlama instead uses the SwiGLU variant
-\cite{PLACEHOLDER}, which replaces the single hidden projection with two parallel streams. One
+sub-layer. TinyLlama uses the SwiGLU variant \cite{PLACEHOLDER}, 
+which replaces the single hidden projection with two parallel streams. One
 passes through the Swish activation function and the other acts as a
 multiplicative gate, with both combined before the output projection. Concretely, for a token vector
 $\mathbf{x} \in \mathbb{R}^{d_{\text{model}}}$:
@@ -454,9 +443,7 @@ the full sequence in matrix form:
 
 The element-wise gating in Equation~\ref{eq:swiglu_matrix} means that
 the effective hidden representation at each position is modulated by a
-learned sigmoid gate, which has been shown empirically to improve model
-quality compared to ReLU at the same parameter budget \cite{PLACEHOLDER}.
-Note that SwiGLU introduces three weight matrices per FFN layer rather than
+learned sigmoid gate. Note that SwiGLU introduces three weight matrices per FFN layer rather than
 two, which increases the parameter count but allows $d_{\text{ff}}$ to be
 set smaller than in a standard two-layer MLP to maintain comparable total
 parameter count.
@@ -485,11 +472,9 @@ supports since the batch size is one.
 \section{FPGA Acceleration of Neural Networks}
 \label{sec:fpga_acceleration}
 
-FPGA-based neural network acceleration has been an active research area since
-the mid-2010s. Early work such as \cite{PLACEHOLDER} demonstrated that FPGAs
-could outperform CPUs on convolutional neural network (CNN) inference by
-exploiting data-level parallelism and on-chip memory buffering. The key insight
-is that FPGAs allow the designer to co-optimise the compute pipeline and the
+FPGA-based neural network acceleration has been an active research area for many years. 
+It works by exploiting data-level parallelism and on-chip memory buffering. 
+FPGAs allow the designer to co-optimise the compute pipeline and the
 memory hierarchy simultaneously, a degree of flexibility that is unavailable
 in fixed GPU silicon.
 
@@ -521,13 +506,13 @@ per-channel scaling factors.
 \label{sec:hls_design}
 
 High-level synthesis tools bridge the gap between algorithmic descriptions in
-C/C++ and synthesisable RTL, dramatically reducing the design iteration cycle
+C/C++ and synthesisable RTL, reducing the design iteration cycle
 compared to manual HDL development. Vitis HLS, the primary tool used in this
 project, translates annotated C++ functions into pipelined hardware modules
-whose behaviour is controlled through pragma directives embedded in the source
-code \cite{PLACEHOLDER}. The most critical directives for throughput
-optimisation are \texttt{PIPELINE}, \texttt{UNROLL}, and
-\texttt{ARRAY\_PARTITION}, which control loop pipelining, spatial
+whose behaviour is controlled through pragma directives \cite{PLACEHOLDER}. 
+The important directives used to improve performance are 
+\texttt{PIPELINE}, \texttt{UNROLL}, and \texttt{ARRAY\_PARTITION}, 
+which control loop pipelining, spatial
 parallelism, and on-chip memory port availability respectively.
 
 \subsection{Pipelining and the Initiation Interval}

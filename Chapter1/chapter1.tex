@@ -14,7 +14,7 @@
 \section{Motivations}
 \label{sec:motivations}
 
-Large language models (LLMs) have demonstrated remarkable capabilities
+Large language models (LLMs) have demonstrated excellent capabilities
 across a wide range of natural language understanding and generation tasks,
 but their deployment in resource-constrained environments remains a
 significant challenge \cite{PLACEHOLDER}. State-of-the-art large language models (LLMs) 
@@ -26,33 +26,39 @@ The llama 2-based TinyLlama-1.1B model \cite{PLACEHOLDER} represents a class of
 small-scale LLMs that seek to balance capability with deployability. With only 1.1 billion
 parameters,
 TinyLlama retains competitive performance on common benchmarks while fitting
-within a much smaller memory footprint. Nevertheless, even at this scale,
+within a much smaller memory footprint. But even at this scale,
 running inference on a conventional CPU is far too slow for real-time use,
 and GPUs consume too much power for battery-operated or always-on deployments.
 
 Field-programmable gate arrays (FPGAs) offer a compelling alternative.
-Unlike fixed-function ASICs, FPGAs are reconfigurable: the hardware can be
-tailored precisely to the computational patterns of a specific model, enabling
+Unlike ASICs, FPGAs are reconfigurable. The hardware can be
+modified precisely to the computational patterns of a specific model, enabling
 high-throughput, low-latency inference at a fraction of the power cost of a GPU
-\cite{PLACEHOLDER}. Two structural inefficiencies of GPU-based inference motivate
-this choice. First, autoregressive decode is memory-bandwidth-bound: each decode
+\cite{PLACEHOLDER}. 
+
+There are two inefficiencies of GPU-based inference. 
+First, autoregressive decode is memory-bandwidth-bound. Each decode
 step must reload the full model weights from DRAM to perform matrix--vector
 multiplications against a single token, yet profiling of TinyLlama-1.1B on an
 RTX~4060 Laptop GPU reveals low memory bandwidth utilisation as the 
 remainder is lost to kernel launch overhead and memory access latency between
 hundreds of fine-grained CUDA kernel invocations per step. Second, the GPU
-runtime cannot fuse operations across transformer sub-layers: RMSNorm,
-matrix--vector multiplication, and activation functions are dispatched as
+runtime cannot fuse operations across transformer sub-layers. RMSNorm,
+matrix--vector multiplication, and activation functions are peformed as
 separate kernels, each incurring CPU-to-GPU scheduling latency and cache
-eviction between them. An FPGA accelerator eliminates both inefficiencies
-simultaneously: weight data flows directly through a statically scheduled
+eviction between them. 
+
+An FPGA accelerator eliminates both inefficiencies
+simultaneously. The weight data flows directly through a statically scheduled
 pipeline without repeated DRAM round-trips, and the entire transformer
 sub-layer (normalisation, projection, and activation) can be implemented
-as a single fused datapath with no inter-kernel overhead. Recent advances
-in high-level synthesis (HLS) tools (Xilinx Vitis HLS)
-have substantially lowered the barrier to FPGA development by allowing
-engineers to describe such fused hardware pipelines in C++ and have the
-tool generate the corresponding RTL automatically.
+as a single fused datapath with no inter-kernel overhead. 
+
+% Recent advances
+% in high-level synthesis (HLS) tools (Xilinx Vitis HLS)
+% have substantially lowered the barrier to FPGA development by allowing
+% engineers to describe such fused hardware pipelines in C++ and have the
+% tool generate the corresponding RTL automatically.
 
 \section{Objectives and Scope}
 \label{sec:objectives}
