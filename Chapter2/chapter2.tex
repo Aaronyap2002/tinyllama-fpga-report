@@ -469,6 +469,135 @@ $d_{\text{model}} \times d_{\text{ff}}$ weight matrix must be loaded from
 DRAM on every decode step regardless of how few arithmetic operations it
 supports since the batch size is one.
 
+\section{Efficient Attention Mechanisms}
+\label{sec:efficient_attention}
+
+The self-attention mechanism described in \cref{sec:transformer_arch}
+requires computing pairwise interactions between all $T$ tokens in a
+sequence, incurring $\mathcal{O}(T^2)$ time and memory complexity per
+layer. For the moderate context lengths used in TinyLlama this cost is
+manageable, but it represents the dominant algorithmic bottleneck and has
+motivated a substantial body of work on efficient attention variants. These
+approaches fall into two broad families: structural methods that preserve
+exact softmax attention over a restricted set of token pairs, and algebraic
+methods that replace the softmax kernel entirely with a decomposable
+approximation. The four models surveyed here are representative of both
+families and inform the design space for hardware-efficient inference.
+
+\subsection{Sparse Transformer}
+\label{subsec:sparse_transformer}
+
+Child et al.\ \cite{PLACEHOLDER} reduce the number of attention connections
+per layer from $\mathcal{O}(T^2)$ to $\mathcal{O}(T^{3/2})$ by restricting
+each token to attend only to a small, structured subset of other tokens
+rather than the full sequence. Two complementary sparsity patterns are
+interleaved across successive attention layers: a local pattern in which
+each token attends to its $w$ nearest neighbours, and a strided pattern in
+which each token attends to one token every $w$ positions, as illustrated in
+\cref{fig:sparse_transformer_patterns}. By choosing $w = \mathcal{O}(\sqrt{T})$,
+every token can reach every other within two hops, and Yun et al.\
+\cite{PLACEHOLDER} subsequently prove formally that such sparse patterns
+preserve the universal approximation property of dense attention. Because
+the non-zero entries remain contiguous blocks, the computation reduces to
+dense sub-matrix multiplications that map well onto pipelined hardware
+datapaths. Crucially for decoder models, the sparsity patterns can be
+applied directly under a causal mask without modification, making the Sparse
+Transformer natively compatible with autoregressive generation.
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.85\textwidth]{Chapter2/media/sparse_transformer_patterns.png}
+  \caption{Connectivity matrices for full attention (a), Sparse Transformer
+           with strided pattern (b), and Sparse Transformer with fixed pattern
+           (c). In (b) and (c), full connectivity between all elements is
+           preserved when the two attention heads are computed sequentially,
+           while sparsity in each individual head leads to significantly
+           reduced computation \cite{PLACEHOLDER}.}
+  \label{fig:sparse_transformer_patterns}
+\end{figure}
+
+\subsection{BlockBERT}
+\label{subsec:blockbert}
+
+Qiu et al.\ \cite{PLACEHOLDER} take a complementary structural approach by
+partitioning the $T \times T$ attention matrix into an $n \times n$ grid of
+equal-sized blocks and restricting each attention head to computing attention
+within exactly one block, determined by a cyclic permutation of the block
+indices. This reduces the $\mathcal{O}(T^2)$ memory cost by a factor of
+$n$, since each block has size $\frac{T}{n} \times \frac{T}{n}$ and only
+$n$ such blocks are evaluated in total. Different heads are assigned
+different permutations, so that the model collectively covers both local
+(identity permutation) and cross-block long-range interactions across the
+head ensemble. Because the retained entries form dense sub-matrices rather
+than scattered sparse entries, the method requires no custom sparse kernels
+and maps directly onto efficient dense matrix operations available in
+standard deep learning frameworks. Empirically, BlockBERT with $n = 2$
+achieves an 18.7\% reduction in activation memory and a 12.0\% reduction in
+training time compared to RoBERTa, while matching or exceeding its accuracy
+on several question-answering benchmarks \cite{PLACEHOLDER}.
+
+\subsection{Performer}
+\label{subsec:performer}
+
+Choromanski et al.\ \cite{PLACEHOLDER} reformulate attention algebraically
+by expressing the softmax kernel as a product of lower-dimensional random
+feature maps, $K(Q_i, K_j) \approx \phi(Q_i)^\top \phi(K_j)$, where $\phi$
+is constructed from a random matrix $\mathbf{W} \in \mathbb{R}^{M \times d}$
+whose rows are drawn orthogonally to reduce approximation variance. This
+decomposition, known as FAVOR\texttt{+} (Fast Attention Via Orthogonal
+Random Features), permits the matrix product order to be rearranged as shown
+in Equation~\ref{eq:favor}: rather than first forming the $T \times T$
+attention matrix and multiplying by $\mathbf{V}$, one computes
+$\mathbf{K}^{\prime\top}\mathbf{V}$ first, an $M \times d$ matrix, and then
+multiplies by $\mathbf{Q}^\prime$, reducing complexity to $\mathcal{O}(TMd)$
+which is linear in $T$ when $M \ll T$.
+
+\begin{equation}
+  \mathbf{Y} = \hat{\mathbf{D}}^{-1}\Bigl(
+    \mathbf{Q}^\prime\bigl({\mathbf{K}^\prime}^\top \mathbf{V}\bigr)
+  \Bigr), \quad
+  \hat{\mathbf{D}} = \operatorname{diag}\Bigl(
+    \mathbf{Q}^\prime\bigl({\mathbf{K}^\prime}^\top \mathbf{1}_T\bigr)
+  \Bigr)
+  \label{eq:favor}
+\end{equation}
+
+\noindent where $\mathbf{Q}^\prime = \phi(\mathbf{Q})$ and
+$\mathbf{K}^\prime = \phi(\mathbf{K})$ are the random-feature projections of
+the query and key matrices respectively, and $\hat{\mathbf{D}}$ is a
+diagonal normalisation matrix that plays the role of the softmax row-sum.
+The approximation quality is controlled by $M$ and can be made arbitrarily
+accurate at the cost of a larger constant. A significant practical
+limitation, however, is that efficient causal masking cannot be applied
+within the FAVOR\texttt{+} framework during training: doing so would require
+materialising the $d \times d$ matrix $\mathbf{K}^{\prime\top}\mathbf{V}$
+at every timestep, recovering quadratic cost and making autoregressive
+training with teacher forcing prohibitively slow \cite{PLACEHOLDER}.
+
+\subsection{Linear Transformer}
+\label{subsec:linear_transformer}
+
+Katharopoulos et al.\ \cite{PLACEHOLDER} achieve linear complexity through
+the same kernel decomposition principle as the Performer, but replace the
+softmax similarity with a deterministic feature map
+$\text{sim}(q, k) := \phi(q)^\top\phi(k)$, where $\phi$ is a simple
+element-wise function such as $\text{ELU}(x) + 1$. In the bidirectional
+case, the cumulative statistics $\mathbf{S}_N = \sum_j
+\phi(K_j)\mathbf{V}_j^\top$ and $\mathbf{z}_N = \sum_j \phi(K_j)$ need
+only be computed once and reused across all query positions, yielding
+$\mathcal{O}(Nd^2)$ complexity per layer. More significantly for
+autoregressive decoding, the causal variant reduces naturally to a
+constant-memory recurrent formulation in which the state is updated
+incrementally as $\mathbf{S}_i = \mathbf{S}_{i-1} +
+\phi(K_i)\mathbf{V}_i^\top$ at each new token, without any sequential
+dependency on $T$. This recurrent structure is particularly well-suited to
+FPGA deployment, where a fixed $d \times d$ accumulation datapath can be
+instantiated once and reused across all decode steps at constant resource
+cost. The principal accuracy trade-off relative to standard softmax
+attention is that the chosen $\phi$ does not guarantee strictly positive
+attention weights everywhere, which can introduce training instability in
+some configurations \cite{PLACEHOLDER}.
+
 \section{FPGA Acceleration of Neural Networks}
 \label{sec:fpga_acceleration}
 

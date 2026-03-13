@@ -1,7 +1,8 @@
 \addvspace {10\p@ }
 \addvspace {10\p@ }
-\contentsline {figure}{\numberline {2.1}{\ignorespaces Pipeline characteristics showing latency $L$, initiation interval $I$, and total cycle count $C = L + I(N-1)$ for $N$ inputs \blx@tocontentsinit {0}\cite {PLACEHOLDER}.}}{11}{figure.caption.40}%
-\contentsline {figure}{\numberline {2.2}{\ignorespaces Horizontal unrolling, vertical unrolling, and dataflow as means to increase parallelism. Rectangles represent buffer space such as registers or on-chip RAM. (a)~Before any transformation. (b)~Horizontal unrolling: four independent inputs processed in parallel. (c)~Vertical unrolling: one input combined with multiple buffered values. (d)~Dataflow: input or partial results streamed through a pipeline rather than broadcast \blx@tocontentsinit {0}\cite {PLACEHOLDER}.}}{12}{figure.caption.42}%
+\contentsline {figure}{\numberline {2.1}{\ignorespaces Connectivity matrices for full attention (a), Sparse Transformer with strided pattern (b), and Sparse Transformer with fixed pattern (c). In (b) and (c), full connectivity between all elements is preserved when the two attention heads are computed sequentially, while sparsity in each individual head leads to significantly reduced computation \blx@tocontentsinit {0}\cite {PLACEHOLDER}.}}{11}{figure.caption.37}%
+\contentsline {figure}{\numberline {2.2}{\ignorespaces Pipeline characteristics showing latency $L$, initiation interval $I$, and total cycle count $C = L + I(N-1)$ for $N$ inputs \blx@tocontentsinit {0}\cite {PLACEHOLDER}.}}{14}{figure.caption.47}%
+\contentsline {figure}{\numberline {2.3}{\ignorespaces Horizontal unrolling, vertical unrolling, and dataflow as means to increase parallelism. Rectangles represent buffer space such as registers or on-chip RAM. (a)~Before any transformation. (b)~Horizontal unrolling: four independent inputs processed in parallel. (c)~Vertical unrolling: one input combined with multiple buffered values. (d)~Dataflow: input or partial results streamed through a pipeline rather than broadcast \blx@tocontentsinit {0}\cite {PLACEHOLDER}.}}{14}{figure.caption.49}%
 \addvspace {10\p@ }
 \addvspace {10\p@ }
 \addvspace {10\p@ }

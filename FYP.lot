@@ -2,11 +2,13 @@
 \addvspace {10\p@ }
 \contentsline {table}{\numberline {2.1}{\ignorespaces TinyLlama-1.1B architectural hyperparameters \blx@tocontentsinit {0}\cite {PLACEHOLDER}.}}{4}{table.caption.15}%
 \addvspace {10\p@ }
+\contentsline {table}{\numberline {3.1}{\ignorespaces Hardware/software partitioning of the TinyLlama inference pipeline. Operations marked PL are executed in the programmable logic accelerator kernel; operations marked PS run on the ARM Cortex-A53.}}{18}{table.caption.54}%
+\contentsline {table}{\numberline {3.2}{\ignorespaces Memory hierarchy of the TinyLlama inference accelerator on the ZCU102. Weight and KV cache sizes are after INT8 quantisation. On-chip buffers are reused across all 22 layers.}}{20}{table.caption.56}%
 \addvspace {10\p@ }
 \addvspace {10\p@ }
-\contentsline {table}{\numberline {5.1}{\ignorespaces FPGA resource utilisation after Vivado implementation on the ZCU102 (xczu9eg-ffvb1156-2-e). Percentages are relative to total available resources on the device.}}{21}{table.caption.89}%
-\contentsline {table}{\numberline {5.2}{\ignorespaces Inference performance comparison between the FPGA implementation and a CPU software baseline. Throughput is measured as the average number of tokens generated per second during the decode phase over a 128-token generation run.}}{22}{table.caption.92}%
-\contentsline {table}{\numberline {5.3}{\ignorespaces Comparison of this work against prior FPGA-based transformer accelerators reported in the literature.}}{23}{table.caption.95}%
+\contentsline {table}{\numberline {5.1}{\ignorespaces FPGA resource utilisation after Vivado implementation on the ZCU102 (xczu9eg-ffvb1156-2-e). Percentages are relative to total available resources on the device.}}{26}{table.caption.94}%
+\contentsline {table}{\numberline {5.2}{\ignorespaces Inference performance comparison between the FPGA implementation and a CPU software baseline. Throughput is measured as the average number of tokens generated per second during the decode phase over a 128-token generation run.}}{27}{table.caption.97}%
+\contentsline {table}{\numberline {5.3}{\ignorespaces Comparison of this work against prior FPGA-based transformer accelerators reported in the literature.}}{28}{table.caption.100}%
 \addvspace {10\p@ }
 \addvspace {10\p@ }
 \addvspace {10\p@ }
