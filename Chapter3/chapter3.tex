@@ -148,7 +148,7 @@ these far exceed the on-chip memory available on any FPGA device, so the
 weights must remain in DDR and be streamed into the compute pipeline one
 layer at a time. The access pattern
 is sequential and read-only during inference, which is well-matched to the
-burst transfer capability of the DDR memory controller.
+burst transfer capability of the DDR memory controller. A key physical constraint on all DDR buffers shared between the PS and PL is that they must occupy a contiguous region of physical memory, which is enforced through the Linux Contiguous Memory Allocator (CMA) managed transparently by XRT on the ZCU102.
 
 The KV cache must also reside in DDR because its size grows linearly with
 sequence length and it must persist across every decode step. Unlike the
