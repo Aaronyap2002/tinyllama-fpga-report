@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.28 (TeX Live 2025) (preloaded format=pdflatex 2026.3.1)  13 MAR 2026 16:20
+This is pdfTeX, Version 3.141592653-2.6-1.40.28 (TeX Live 2025) (preloaded format=pdflatex 2026.3.1)  14 MAR 2026 18:56
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -879,7 +879,7 @@ File: translations-basic-dictionary-english.trsl (english translation file `tran
 )
 Package translations Info: loading dictionary `translations-basic-dictionary' for `english'. on input line 232.
  (./Title/titlepage.tex
-<Title/ntu_logo.png, id=247, 815.6874pt x 306.6657pt>
+<Title/ntu_logo.png, id=271, 815.6874pt x 306.6657pt>
 File: Title/ntu_logo.png Graphic file (type png)
 <use Title/ntu_logo.png>
 Package pdftex.def Info: Title/ntu_logo.png  used on input line 27.
@@ -951,7 +951,7 @@ Overfull \hbox (4.35934pt too wide) in paragraph at lines 6--6
  []
 
 
-Overfull \hbox (1.19098pt too wide) in paragraph at lines 9--9
+Overfull \hbox (1.19098pt too wide) in paragraph at lines 10--10
  [][] [][][]\OT1/ptm/m/n/12 FPGA re-source util-i-sa-tion af-ter Vi-vado im-ple-men-ta-tion on the ZCU102 
  []
 
@@ -1054,212 +1054,256 @@ Overfull \hbox (55.63078pt too wide) in paragraph at lines 344--349
  []
 
 [8]
-
-LaTeX Warning: Citation 'PLACEHOLDER' on page 9 undefined on input line 401.
+Overfull \hbox (10.47935pt too wide) in paragraph at lines 423--428
+\OT1/ptm/m/n/12 Since the sub-tracted con-stant can-cels be-tween nu-mer-a-tor and de-nom-i-na-tor, Equa-tion [][]2.13[][]
+ []
 
 [9]
 
-LaTeX Warning: Citation 'PLACEHOLDER' on page 10 undefined on input line 490.
+LaTeX Warning: Citation 'PLACEHOLDER' on page 10 undefined on input line 463.
 
 
-LaTeX Warning: Citation 'PLACEHOLDER' on page 10 undefined on input line 499.
+LaTeX Warning: Citation 'PLACEHOLDER' on page 10 undefined on input line 473.
 
-<Chapter2/media/sparse_transformer_patterns.png, id=470, 823.27576pt x 410.7345pt>
+[10]
+
+LaTeX Warning: Citation 'PLACEHOLDER' on page 11 undefined on input line 562.
+
+
+LaTeX Warning: Citation 'PLACEHOLDER' on page 11 undefined on input line 571.
+
+[11]
+<Chapter2/media/sparse_transformer_patterns.png, id=516, 823.27576pt x 410.7345pt>
 File: Chapter2/media/sparse_transformer_patterns.png Graphic file (type png)
 <use Chapter2/media/sparse_transformer_patterns.png>
-Package pdftex.def Info: Chapter2/media/sparse_transformer_patterns.png  used on input line 509.
+Package pdftex.def Info: Chapter2/media/sparse_transformer_patterns.png  used on input line 581.
 (pdftex.def)             Requested size: 350.68274pt x 174.95782pt.
 
-LaTeX Warning: Citation 'PLACEHOLDER' on page 10 undefined on input line 515.
+
+LaTeX Warning: Citation 'PLACEHOLDER' on page 12 undefined on input line 587.
 
 
-LaTeX Warning: Citation 'PLACEHOLDER' on page 10 undefined on input line 515.
+LaTeX Warning: Citation 'PLACEHOLDER' on page 12 undefined on input line 587.
+
+
+LaTeX Warning: Citation 'PLACEHOLDER' on page 12 undefined on input line 594.
+
+
+LaTeX Warning: Citation 'PLACEHOLDER' on page 12 undefined on input line 609.
+
+[12 <./Chapter2/media/sparse_transformer_patterns.png>]
+
+LaTeX Warning: Citation 'PLACEHOLDER' on page 13 undefined on input line 614.
+
+LaTeX Font Info:    Trying to load font information for OT1+zi4 on input line 619.
+(c:/texlive/2025/texmf-dist/tex/latex/inconsolata/ot1zi4.fd
+File: ot1zi4.fd 2018/01/14 OT1/zi4 (Inconsolata)
+)
+LaTeX Font Info:    Font shape `OT1/zi4/m/n' will be
+(Font)              scaled to size 12.0pt on input line 619.
+
+
+LaTeX Warning: Citation 'PLACEHOLDER' on page 13 undefined on input line 647.
+
+
+LaTeX Warning: Citation 'PLACEHOLDER' on page 13 undefined on input line 652.
+
+
+LaTeX Warning: Citation 'PLACEHOLDER' on page 13 undefined on input line 671.
+
+
+Overfull \hbox (2.54436pt too wide) in paragraph at lines 652--672
+[]\OT1/ptm/m/n/12 Katharopoulos et al. [] achieve lin-ear com-plex-ity through the same
+ []
+
+[13{c:/texlive/2025/texmf-dist/fonts/enc/dvips/inconsolata/i4-ot1-0.enc}]
+
+LaTeX Warning: Citation 'PLACEHOLDER' on page 14 undefined on input line 696.
+
+
+Overfull \hbox (8.73834pt too wide) in paragraph at lines 691--697
+\OT1/ptm/m/n/12 arith-metic is sig-nif-i-cantly more resource-efficient than floating-point []. 
+ []
+
+
+LaTeX Warning: Citation 'PLACEHOLDER' on page 14 undefined on input line 700.
+
+
+LaTeX Warning: Citation 'PLACEHOLDER' on page 14 undefined on input line 700.
+
+
+Overfull \hbox (23.43922pt too wide) in paragraph at lines 698--704
+\OT1/ptm/m/n/12 proach for pro-duc-tion LLM de-ploy-ment, with works such as LLM.int8() []
+ []
+
+
+LaTeX Warning: Citation 'PLACEHOLDER' on page 14 undefined on input line 713.
+
+
+Overfull \hbox (4.16345pt too wide) in paragraph at lines 709--718
+[]\OT1/ptm/m/n/12 High-level syn-the-sis tools bridge the gap be-tween al-go-rith-mic de-scrip-tions in C/C++
+ []
+
+
+LaTeX Warning: Citation 'PLACEHOLDER' on page 14 undefined on input line 725.
+
+[14]
+
+LaTeX Warning: Citation 'PLACEHOLDER' on page 15 undefined on input line 738.
+
+<Chapter2/media/hls_pipeline.png, id=533, 259.56975pt x 111.41624pt>
+File: Chapter2/media/hls_pipeline.png Graphic file (type png)
+<use Chapter2/media/hls_pipeline.png>
+Package pdftex.def Info: Chapter2/media/hls_pipeline.png  used on input line 743.
+(pdftex.def)             Requested size: 226.91199pt x 97.40056pt.
+
+LaTeX Warning: Citation 'PLACEHOLDER' on page 15 undefined on input line 746.
+
+
+LaTeX Warning: Citation 'PLACEHOLDER' on page 15 undefined on input line 746.
+
+
+LaTeX Warning: Citation 'PLACEHOLDER' on page 15 undefined on input line 754.
+
+<Chapter2/media/hls_unrolling.png, id=534, 604.05675pt x 86.12175pt>
+File: Chapter2/media/hls_unrolling.png Graphic file (type png)
+<use Chapter2/media/hls_unrolling.png>
+Package pdftex.def Info: Chapter2/media/hls_unrolling.png  used on input line 765.
+(pdftex.def)             Requested size: 350.68274pt x 49.99927pt.
+
+LaTeX Warning: Citation 'PLACEHOLDER' on page 15 undefined on input line 772.
+
+
+LaTeX Warning: Citation 'PLACEHOLDER' on page 15 undefined on input line 772.
 
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
 
-LaTeX Warning: Citation 'PLACEHOLDER' on page 10 undefined on input line 522.
+LaTeX Warning: Citation 'PLACEHOLDER' on page 15 undefined on input line 783.
 
-
-LaTeX Warning: Citation 'PLACEHOLDER' on page 10 undefined on input line 537.
-
-[10]
-
-LaTeX Warning: Citation 'PLACEHOLDER' on page 11 undefined on input line 542.
-
-LaTeX Font Info:    Trying to load font information for OT1+zi4 on input line 547.
-(c:/texlive/2025/texmf-dist/tex/latex/inconsolata/ot1zi4.fd
-File: ot1zi4.fd 2018/01/14 OT1/zi4 (Inconsolata)
-)
-LaTeX Font Info:    Font shape `OT1/zi4/m/n' will be
-(Font)              scaled to size 12.0pt on input line 547.
- [11 <./Chapter2/media/sparse_transformer_patterns.png>]
-
-LaTeX Warning: Citation 'PLACEHOLDER' on page 12 undefined on input line 575.
-
-
-LaTeX Warning: Citation 'PLACEHOLDER' on page 12 undefined on input line 580.
-
-
-LaTeX Warning: Citation 'PLACEHOLDER' on page 12 undefined on input line 599.
-
-
-Overfull \hbox (2.54436pt too wide) in paragraph at lines 580--600
-[]\OT1/ptm/m/n/12 Katharopoulos et al. [] achieve lin-ear com-plex-ity through the same
- []
-
-[12{c:/texlive/2025/texmf-dist/fonts/enc/dvips/inconsolata/i4-ot1-0.enc}]
-
-LaTeX Warning: Citation 'PLACEHOLDER' on page 13 undefined on input line 624.
-
-
-Overfull \hbox (8.73834pt too wide) in paragraph at lines 619--625
-\OT1/ptm/m/n/12 arith-metic is sig-nif-i-cantly more resource-efficient than floating-point []. 
- []
-
-
-LaTeX Warning: Citation 'PLACEHOLDER' on page 13 undefined on input line 628.
-
-
-LaTeX Warning: Citation 'PLACEHOLDER' on page 13 undefined on input line 628.
-
-
-Overfull \hbox (23.43922pt too wide) in paragraph at lines 626--632
-\OT1/ptm/m/n/12 proach for pro-duc-tion LLM de-ploy-ment, with works such as LLM.int8() []
- []
-
-
-LaTeX Warning: Citation 'PLACEHOLDER' on page 13 undefined on input line 641.
-
-
-Overfull \hbox (4.16345pt too wide) in paragraph at lines 637--646
-[]\OT1/ptm/m/n/12 High-level syn-the-sis tools bridge the gap be-tween al-go-rith-mic de-scrip-tions in C/C++
- []
-
-
-LaTeX Warning: Citation 'PLACEHOLDER' on page 13 undefined on input line 653.
-
-
-LaTeX Warning: Citation 'PLACEHOLDER' on page 13 undefined on input line 666.
-
-[13]
-<Chapter2/media/hls_pipeline.png, id=492, 259.56975pt x 111.41624pt>
-File: Chapter2/media/hls_pipeline.png Graphic file (type png)
-<use Chapter2/media/hls_pipeline.png>
-Package pdftex.def Info: Chapter2/media/hls_pipeline.png  used on input line 671.
-(pdftex.def)             Requested size: 226.91199pt x 97.40056pt.
-
-
-LaTeX Warning: Citation 'PLACEHOLDER' on page 14 undefined on input line 674.
-
-
-LaTeX Warning: Citation 'PLACEHOLDER' on page 14 undefined on input line 674.
-
-
-LaTeX Warning: Citation 'PLACEHOLDER' on page 14 undefined on input line 682.
-
-<Chapter2/media/hls_unrolling.png, id=493, 604.05675pt x 86.12175pt>
-File: Chapter2/media/hls_unrolling.png Graphic file (type png)
-<use Chapter2/media/hls_unrolling.png>
-Package pdftex.def Info: Chapter2/media/hls_unrolling.png  used on input line 693.
-(pdftex.def)             Requested size: 350.68274pt x 49.99927pt.
-
-LaTeX Warning: Citation 'PLACEHOLDER' on page 14 undefined on input line 700.
-
-
-LaTeX Warning: Citation 'PLACEHOLDER' on page 14 undefined on input line 700.
-
-
-LaTeX Warning: Citation 'PLACEHOLDER' on page 14 undefined on input line 711.
-
-) (./Chapter3/chapter3.tex [14 <./Chapter2/media/hls_pipeline.png> <./Chapter2/media/hls_unrolling.png>] [15]
+) (./Chapter3/chapter3.tex [15 <./Chapter2/media/hls_pipeline.png>] [16 <./Chapter2/media/hls_unrolling.png>]
 Chapter 3.
-[16
+[17
 
 ]
 Overfull \hbox (12.50726pt too wide) in paragraph at lines 97--116
  [][] 
  []
 
-[17] [18]
+[18] [19]
 Overfull \hbox (70.55664pt too wide) in paragraph at lines 186--198
  [][] 
  []
 
-[19]
+[20]
 
-LaTeX Warning: Citation 'PLACEHOLDER' on page 20 undefined on input line 245.
+LaTeX Warning: Citation 'PLACEHOLDER' on page 21 undefined on input line 245.
 
-[20]) (./Chapter4/chapter4.tex [21]
+[21]) (./Chapter4/chapter4.tex [22]
 Chapter 4.
 
-Overfull \hbox (56.23183pt too wide) in paragraph at lines 20--28
-[]\OT1/ptm/m/n/12 All HLS ker-nels were de-vel-oped us-ing Vi-tis HLS 2022.2 tar-get-ing the \OT1/zi4/m/n/12 xczu9eg-ffvb1156-2-e
+Overfull \hbox (58.7322pt too wide) in paragraph at lines 61--72
+\OT1/ptm/m/n/12 the di-men-sion con-stants de-clared in \OT1/zi4/m/n/12 config.h\OT1/ptm/m/n/12 . The foun-da-tional type is \OT1/zi4/m/n/12 QuantizedTensor<SIZE>\OT1/ptm/m/n/12 ,
  []
 
-Package hyperref Info: bookmark level for unknown lstlisting defaults to 0 on input line 44.
+[23
+
+]
+Package hyperref Info: bookmark level for unknown lstlisting defaults to 0 on input line 78.
 LaTeX Font Info:    Font shape `OT1/zi4/m/n' will be
-(Font)              scaled to size 10.95pt on input line 44.
+(Font)              scaled to size 10.95pt on input line 78.
 LaTeX Font Info:    Font shape `OT1/zi4/b/n' will be
-(Font)              scaled to size 10.95pt on input line 45.
+(Font)              scaled to size 10.95pt on input line 79.
+
 
 LaTeX Font Warning: Font shape `OT1/zi4/m/it' undefined
-(Font)              using `OT1/zi4/m/n' instead on input line 46.
+(Font)              using `OT1/zi4/m/n' instead on input line 81.
 
 LaTeX Font Info:    Font shape `OT1/zi4/m/it' will be
-(Font)              scaled to size 10.95pt on input line 46.
-[22
+(Font)              scaled to size 10.95pt on input line 81.
+[24] [25]
+Overfull \hbox (0.19641pt too wide) in paragraph at lines 182--190
+\OT1/zi4/m/n/12 matmul1 \OT1/ptm/m/n/12 and \OT1/zi4/m/n/12 matmul2 \OT1/ptm/m/n/12 weight-loading loops are com-mented out in the pro-to-type. With-
+ []
 
-] [23] [24]) (./Chapter5/chapter5.tex [25]
+[26]
+Overfull \hbox (33.56584pt too wide) in paragraph at lines 252--261
+[]\OT1/ptm/m/n/12 The to-ken em-bed-ding is loaded by a di-rect \OT1/zi4/m/n/12 memcpy \OT1/ptm/m/n/12 from the float \OT1/zi4/m/n/12 token[]embedding[]table
+ []
+
+[27] [28]
+
+LaTeX Warning: Citation 'PLACEHOLDER' on page 29 undefined on input line 334.
+
+
+Overfull \hbox (9.46074pt too wide) in paragraph at lines 340--350
+\OT1/ptm/m/n/12 and the $[]$ query el-e-ments are quan-tised into a lo-cal \OT1/zi4/m/n/12 int8[]t q[]int8[head[]size]
+ []
+
+[29] [30] [31] [32]
+
+LaTeX Warning: Citation 'PLACEHOLDER' on page 33 undefined on input line 580.
+
+[33] [34]
+Overfull \hbox (50.63231pt too wide) in paragraph at lines 647--653
+\OT1/ptm/m/n/12 ker-nel's con-trol reg-is-ter block and as-serts \OT1/zi4/m/n/12 ap[]start\OT1/ptm/m/n/12 . The host then blocks on \OT1/zi4/m/n/12 xrt::run::wait()\OT1/ptm/m/n/12 ,
+ []
+
+
+Overfull \hbox (8.31587pt too wide) in paragraph at lines 654--666
+[]\OT1/ptm/m/n/12 After the ker-nel com-pletes, the out-put buffer con-tains the $\OML/ztmcm/m/it/12 d[] \OT1/ztmcm/m/n/12 = 2[]048$\OT1/ptm/m/n/12 -dimensional
+ []
+
+) (./Chapter5/chapter5.tex [35]
 Chapter 5.
-[26
+[36
 
 ]
 Overfull \hbox (87.96349pt too wide) in paragraph at lines 75--83
  [][] 
  []
 
-[27]
+[37]
 
-LaTeX Warning: Citation 'PLACEHOLDER' on page 28 undefined on input line 104.
+LaTeX Warning: Citation 'PLACEHOLDER' on page 38 undefined on input line 104.
 
 
-LaTeX Warning: Citation 'PLACEHOLDER' on page 28 undefined on input line 105.
+LaTeX Warning: Citation 'PLACEHOLDER' on page 38 undefined on input line 105.
 
 
 Overfull \hbox (4.86462pt too wide) in paragraph at lines 100--109
  [][] 
  []
 
-) (./Chapter6/chapter6.tex [28]
+) (./Chapter6/chapter6.tex [38]
 Chapter 6.
-[29
+[39
 
 ]
 
-LaTeX Warning: Citation 'PLACEHOLDER' on page 30 undefined on input line 64.
+LaTeX Warning: Citation 'PLACEHOLDER' on page 40 undefined on input line 64.
 
-) [30] [31
+) [40] [41
 
 
 ]
 
 LaTeX Warning: Empty bibliography on input line 291.
 
-(./Appendices/appendix.tex [32
+(./Appendices/appendix.tex [42
 
 ]
 Appendix A.
-[33
+[43
 
 ]
 Appendix B.
-[34
+[44
 
 ]
 Appendix C.
-) [35
+) [45
 
 ] (./FYP.aux)
  ***********
@@ -1274,7 +1318,7 @@ LaTeX Font Warning: Some font shapes were not available, defaults substituted.
 LaTeX Warning: There were undefined references.
 
 Package rerunfilecheck Info: File `FYP.out' has not changed.
-(rerunfilecheck)             Checksum: B4CDEC7609D2CC5FF6C4E572263E68CF;10571.
+(rerunfilecheck)             Checksum: 02605FE128424F92AC1692E2226D670B;11922.
 
 Package biblatex Warning: Please (re)run Biber on the file:
 (biblatex)                FYP
@@ -1285,18 +1329,18 @@ Package logreq Info: Writing requests to 'FYP.run.xml'.
 
  ) 
 Here is how much of TeX's memory you used:
- 29503 strings out of 467533
- 569204 string characters out of 5423669
- 1547526 words of memory out of 5000000
- 57863 multiletter control sequences out of 15000+600000
- 662525 words of font info for 110 fonts, out of 8000000 for 9000
+ 29709 strings out of 467533
+ 571948 string characters out of 5423669
+ 1539016 words of memory out of 5000000
+ 57999 multiletter control sequences out of 15000+600000
+ 663355 words of font info for 114 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 63i,13n,97p,1266b,1464s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 63i,13n,97p,1266b,2660s stack positions out of 10000i,1000n,20000p,200000b,200000s
 <c:/texlive/2025/texmf-dist/fonts/type1/public/inconsolata/Inconsolata-zi4b.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/inconsolata/Inconsolata-zi4r.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/rsfs/rsfs10.pfb><c:/texlive/2025/texmf-dist/fonts/type1/urw/symbol/usyr.pfb><c:/texlive/2025/texmf-dist/fonts/type1/urw/symbol/usyr.pfb><c:/texlive/2025/texmf-dist/fonts/type1/urw/times/utmb8a.pfb><c:/texlive/2025/texmf-dist/fonts/type1/urw/times/utmr8a.pfb><c:/texlive/2025/texmf-dist/fonts/type1/urw/times/utmri8a.pfb>
-Output written on FYP.pdf (45 pages, 552324 bytes).
+Output written on FYP.pdf (55 pages, 587882 bytes).
 PDF statistics:
- 718 PDF objects out of 1000 (max. 8388607)
- 630 compressed objects within 7 object streams
- 155 named destinations out of 1000 (max. 500000)
- 509 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 878 PDF objects out of 1000 (max. 8388607)
+ 779 compressed objects within 8 object streams
+ 223 named destinations out of 1000 (max. 500000)
+ 557 words of extra memory for PDF output out of 10000 (max. 10000000)
 

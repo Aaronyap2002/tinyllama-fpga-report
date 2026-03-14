@@ -1,127 +1,669 @@
 % Chapter4/chapter4.tex -- Implementation
 % -----------------------------------------------------------------------------
-% This chapter explains HOW you built what Chapter 3 described.
-% It should be detailed enough that a competent engineer could reproduce
-% your work. Include key code snippets for the most important decisions.
+% Chapter 4 is organised in two sections:
+%   4.1 -- Prototype kernel: scaled-down configuration
+%   4.2 -- Full TinyLlama kernel development (baseline → update2 → update3)
 %
-% Suggested structure:
-%   4.1 -- HLS kernel implementation
-%   4.2 -- Pragma optimisation strategy
-%   4.3 -- Quantisation implementation
-%   4.4 -- Host software and XRT driver
-%   4.5 -- Vivado integration and bitstream generation
+% Section 4.1 content will be filled once small-configuration source files are
+% provided. Inline comments mark every location that requires specific code
+% listings or synthesis numbers.
 
 \chapter{Implementation}
 \label{ch:implementation}
 
-\section{HLS Kernel Development Environment}
-\label{sec:hls_env}
+% =============================================================================
+\section{Prototype Kernel: Scaled-Down Configuration}
+\label{sec:proto_kernel}
+% =============================================================================
 
-All HLS kernels were developed using Vitis HLS 2022.2 targeting the
-\texttt{xczu9eg-ffvb1156-2-e} device on the ZCU102 evaluation board.
-The design clock was set to \SI{200}{\mega\hertz} (\SI{5}{\nano\second}
-period), consistent with the ZCU102's recommended operating frequency for
-the PL fabric. Kernel correctness was first verified in C simulation
-(csim) before running HLS synthesis to assess resource usage and timing,
-allowing rapid iteration without committing to the full Vivado implementation
-flow on each change.
+Before targeting the full TinyLlama model dimensions, a scaled-down
+configuration was developed to establish the kernel structure, verify the HLS
+build flow, and confirm functional correctness in C-simulation without the
+lengthy synthesis times and large on-chip resource requirements of the full
+model. Table~\ref{tab:small_config} lists the configuration parameters used
+for this prototype phase alongside the corresponding TinyLlama values.
 
-\section{Matrix--Vector Multiplication Kernel}
-\label{sec:matvec_kernel}
+\begin{table}[H]
+  \centering
+  \caption{Comparison of prototype and full TinyLlama configuration parameters.}
+  \label{tab:small_config}
+  \begin{tabular}{lrr}
+    \toprule
+    Parameter & Prototype & TinyLlama-1.1B \\
+    \midrule
+    Hidden dimension $d_{\text{model}}$ & 8      & 2{,}048 \\
+    FFN hidden dimension $d_{\text{ff}}$ & 32    & 5{,}632 \\
+    Number of layers $L$                 & 1      & 22      \\
+    Query heads $H$                      & 4      & 32      \\
+    KV heads $G$                         & 2      & 4       \\
+    Vocabulary size $V$                  & 128    & 32{,}000 \\
+    Maximum sequence length              & 16     & 2{,}048 \\
+    Quantisation group size GS           & 4      & 64      \\
+    \bottomrule
+  \end{tabular}
+\end{table}
 
-The matrix--vector multiplication $\mathbf{y} = W\mathbf{x}$ forms the
-computational kernel of both the attention projection layers and the FFN
-block. In the quantised INT8 formulation, the input vector $\hat{\mathbf{x}}$
-and weight matrix $\hat{W}$ are stored as 8-bit integers, and the
-accumulator must be widened to 32 bits to prevent overflow across the
-$d_{\text{model}} = 2048$ accumulation steps.
+The prototype dimensions were chosen to keep array sizes small enough that
+HLS C-simulation completes in seconds and that synthesised design reports are
+straightforward to inspect. The group size $GS = 4$ is constrained to be no
+larger than the hidden dimension, since quantising into groups of 64 elements
+is meaningless when only 8 elements exist. With $d_{\text{model}} = 8$ and
+$GS = 4$, each quantised vector contains exactly two groups, making
+scale-factor indexing arithmetic easy to verify by hand against the
+simulation output. The prototype uses $G = H = 2$, which means the KV
+sharing multiplier $\text{kv\_mul} = H/G = 1$: every query head has its own
+dedicated key and value head, which simplifies the attention indexing logic
+at this stage.
+
+\subsection{Data Structures}
+\label{subsec:proto_structs}
+
+All kernel data types are defined in \texttt{typedefs.h} as C++ templates
+parameterised on the dimension constants declared in \texttt{config.h}.
+The foundational type is \texttt{QuantizedTensor<SIZE>}, shown in
+Listing~\ref{lst:quantized_tensor}, which bundles an array of INT8 quantised
+values with a parallel array of FP32 scale factors. The scale array is
+declared with the same length \texttt{SIZE} as the quantised array,
+though only $\texttt{SIZE}/GS$ entries are populated during quantisation,
+one scale per group of \texttt{GS} elements. The over-allocation simplifies
+index arithmetic: a quantised element at index $i$ always retrieves its scale
+as \texttt{s[i/GS]}, which works identically whether the scale array has
+\texttt{SIZE} or \texttt{SIZE/GS} entries.
 
 \begin{lstlisting}[
-  caption = {INT8 matrix--vector multiplication kernel with HLS pipeline pragma.
-             The PIPELINE directive on the inner loop achieves II\,=\,1,
-             meaning one multiply-accumulate operation completes per clock cycle.},
-  label   = {lst:matvec}
+  caption = {\texttt{QuantizedTensor<SIZE>} struct from \texttt{typedefs.h}.
+             Each group of \texttt{GS} quantised values shares one FP32
+             scale factor, accessed at index \texttt{i/GS}.},
+  label   = {lst:quantized_tensor}
 ]
-void matvec_int8(
-    const int8_t  W[D_OUT][D_IN],   // weight matrix, row-major
-    const int8_t  x[D_IN],          // input activation vector
-    int32_t       y[D_OUT],          // output accumulator (INT32)
-    const int     d_in,
-    const int     d_out)
-{
-    for (int i = 0; i < d_out; i++) {
-        #pragma HLS PIPELINE II=1    // unroll this loop's iterations in time
-        int32_t acc = 0;
-        for (int j = 0; j < d_in; j++) {
-            acc += (int32_t)W[i][j] * (int32_t)x[j];
-        }
-        y[i] = acc;
+template <int SIZE>
+struct QuantizedTensor {
+    int8_t q[SIZE];  // quantized values (INT8)
+    float  s[SIZE];  // scale factors (only SIZE/GS entries populated)
+};
+\end{lstlisting}
+
+The model weights are stored in a \texttt{TransformerWeights} struct that is
+also fully parameterised by the same template arguments, so the compiler
+knows the size of every array at synthesis time. The struct holds the token
+embedding table in two forms: \texttt{q\_tokens} as a \texttt{QuantizedTensor}
+and \texttt{token\_embedding\_table} as a raw float array. This duality exists
+because the checkpoint file format retains both representations for backwards
+compatibility. Only one of them is actually populated by the host checkpoint
+loader, a distinction that becomes significant when discussing the embedding
+lookup bug in \cref{subsec:embedding_fix}. The remaining weight fields follow
+the TinyLlama architecture: RMSNorm scale vectors, quantised projection
+matrices \texttt{wq}, \texttt{wk}, \texttt{wv}, \texttt{wo} per layer, and
+three quantised FFN matrices \texttt{w1}, \texttt{w2}, \texttt{w3} per layer.
+The top-level \texttt{Transformer} struct wraps the \texttt{Config} and
+\texttt{TransformerWeights} into a single object that is passed to the kernel
+as a single AXI pointer argument.
+
+\subsection{Kernel Helper Functions}
+\label{subsec:proto_helpers}
+
+Five template functions declared in \texttt{forward.h} implement the
+computational primitives called by the top-level kernel.
+
+\noindent\textbf{RMSNorm.} The \texttt{rmsnorm<S>} function takes an input
+vector, an element-wise learned weight vector, and writes the normalised
+output. Rather than operating on the arguments in place, it first copies both
+inputs into local arrays \texttt{x\_buff} and \texttt{weight\_buff}. This
+copy is necessary because Vitis HLS can only apply \texttt{ARRAY\_PARTITION}
+to arrays that it controls the storage of; arrays passed in as pointer
+arguments may alias external memory and cannot be freely partitioned. The
+function then executes two loops: a reduction loop that accumulates the sum
+of squares with \texttt{PIPELINE} and \texttt{UNROLL factor=4}, and a
+normalisation loop that applies the reciprocal RMS and element-wise weight
+with \texttt{PIPELINE} and \texttt{UNROLL factor=64}. The high unroll factor
+on the second loop is chosen because the normalisation is entirely
+data-parallel once the RMS scalar is available, so a wide unroll directly
+reduces latency without introducing dependencies.
+
+\noindent\textbf{Quantise and dequantise.} The \texttt{quantize<S>} function
+processes the input float vector in groups of \texttt{GS} elements. For each
+group, it first scans the group to find the maximum absolute value, computes
+the scale as $\text{wmax} / 127.0$, and then converts each element by
+dividing by the scale and rounding to the nearest INT8 value. The
+\texttt{dequantize<S>} function reverses this by multiplying each INT8 value
+by \texttt{s[i/GS]}, reconstructing an approximation of the original float.
+Both functions use the global compile-time constant \texttt{GS} rather than
+the runtime parameter for group indexing, exploiting the fact that GS is a
+power of two to allow the compiler to replace division and modulo operations
+with bitwise shifts.
+
+\noindent\textbf{Softmax.} The \texttt{softmax<MAXSIZE>} function implements
+the standard numerically stable softmax: it first scans for the maximum
+value, subtracts it from all inputs before computing the exponentials, then
+normalises by the sum. The \texttt{MAXSIZE} template parameter sets the
+buffer size for compile-time allocation, while a runtime \texttt{size}
+argument controls how many elements are processed. This variable-length
+behaviour requires \texttt{loop\_tripcount} hints on every loop so that HLS
+can estimate II and latency during synthesis without knowing the actual
+runtime value.
+
+\noindent\textbf{Matrix--vector multiplication.} The \texttt{matmul<N,D>}
+template is the most resource-intensive function and the primary consumer of
+DSP blocks. It computes $\mathbf{y} = \hat{W}\hat{\mathbf{x}}$ in the
+INT8 quantised domain, accumulating into a 32-bit integer accumulator to
+prevent overflow before dequantising. The implementation is structured in
+three stages, as shown in Listing~\ref{lst:matmul}. In the first stage, the
+input activation vector \texttt{xq} and its scale array \texttt{xs} are
+copied into local buffers partitioned with \texttt{ARRAY\_PARTITION cyclic
+factor=16} and \texttt{factor=4} respectively, enabling 16 simultaneous
+reads per cycle in the compute stage. In the second stage, the outer loop
+over the $D$ output rows is pipelined with \texttt{PIPELINE}, and per-row
+weight data is loaded into inner local buffers \texttt{w\_buffer} and
+\texttt{ws\_buffer}, partitioned with \texttt{factor=32}. In the third
+stage, the innermost accumulation iterates over groups of \texttt{GS}
+elements, accumulating into an \texttt{int32\_t} to preserve precision, and
+then dequantises by multiplying by both the weight scale and the activation
+scale before accumulating into the float output.
+
+\begin{lstlisting}[
+  caption = {Group-quantised accumulation in \texttt{matmul<N,D>} from
+             \texttt{forward.h}. Each group of \texttt{GS} INT8
+             multiply-accumulate results is dequantised before being added
+             to the float output, preventing INT32 overflow across groups.},
+  label   = {lst:matmul}
+]
+for (j = 0; j <= N - GS; j += GS) {
+    int32_t ival = 0;
+    for (int k = 0; k < GS; k++) {        // INT8 dot product per group
+        ival += (int32_t)x_buffer[j + k]
+              * (int32_t)w_buffer[j + k];
     }
+    // dequantise group: multiply by both activation and weight scales
+    val += (float)ival * ws_buffer[j/GS] * xs_buffer[j/GS];
+}
+xout[i] = val;
+\end{lstlisting}
+
+One consequence of this structure is that the innermost \texttt{UNROLL}
+pragmas on the \texttt{matmul1} and \texttt{matmul2} weight-loading loops
+are commented out in the prototype. Without unrolling these loads, each row
+of the weight matrix is fetched sequentially before the accumulation begins.
+This is acceptable for the prototype given the small dimensions ($N = 8$),
+but at full scale ($N = 2048$) these loads would become a significant
+bottleneck, motivating the array partitioning refinements made in the full
+TinyLlama versions.
+
+\subsection{Top-Level Kernel}
+\label{subsec:proto_toplevel}
+
+The top-level function \texttt{forward()} in \texttt{forward.cpp} is the
+hardware kernel boundary that Vitis HLS synthesises into the AXI-interfaced
+IP core. Its signature accepts a pointer to the full \texttt{Transformer}
+weight struct, a scalar token index, a scalar sequence position, two
+floating-point KV cache arrays, and a float output pointer.
+
+\noindent\textbf{AXI interface configuration.} The prototype assigns all
+memory-mapped ports across two AXI bundles, as shown in
+Listing~\ref{lst:proto_axi}. The weight struct pointer, the key cache, and
+the value cache all share \texttt{gmem0}, while the output pointer occupies
+\texttt{gmem1} exclusively. Sharing three large arrays on a single bundle
+means all three compete for the same AXI master adapter and its
+outstanding-transaction queue. At the small prototype dimensions this
+causes no observable problem, but it represents the same structural issue
+that causes a deadlock at full scale when the attention loop floods the
+shared queue with interleaved requests, as discussed in
+\cref{subsec:axi_deadlock}. The KV cache is stored as float32 at this
+stage rather than INT8, eliminating the quantise-on-write and
+dequantise-on-read steps that are added in the full TinyLlama kernel to
+reduce memory bandwidth.
+
+\begin{lstlisting}[
+  caption = {AXI interface pragma declarations in the prototype kernel.
+             Three large arrays share \texttt{gmem0}; the output occupies
+             \texttt{gmem1}. The \texttt{depth} parameter is required by
+             C-simulation to size the simulated memory.},
+  label   = {lst:proto_axi}
+]
+#pragma HLS INTERFACE m_axi port=transformer  offset=slave bundle=gmem0
+#pragma HLS INTERFACE m_axi port=key_cache    offset=slave bundle=gmem0 \
+    depth=(n_layers * seq_len * ((dim * n_kv_heads) / n_heads))
+#pragma HLS INTERFACE m_axi port=value_cache  offset=slave bundle=gmem0 \
+    depth=(n_layers * seq_len * ((dim * n_kv_heads) / n_heads))
+#pragma HLS INTERFACE m_axi port=out          offset=slave bundle=gmem1
+\end{lstlisting}
+
+\noindent\textbf{On-chip buffer layout.} All intermediate activation arrays
+are declared as \texttt{static} local variables so that Vitis HLS allocates
+them in on-chip BRAM rather than spilling them to DDR. Each buffer is
+annotated with \texttt{ARRAY\_PARTITION variable=... cyclic factor=16},
+splitting the underlying BRAM into 16 independently addressable banks so
+that 16 elements can be read or written simultaneously per clock cycle,
+matching the parallelism exposed by a corresponding unroll factor of 16 in
+the compute loops. The buffers \texttt{hb} and \texttt{hb2}, which hold
+the FFN hidden-dimension activations, are declared and partitioned at this
+stage even though the FFN is not yet implemented; this ensures the pragma
+infrastructure is in place when the FFN is uncommented in later versions.
+
+\noindent\textbf{Computation pipeline.} The main computation is structured
+as a loop over $L = 2$ transformer layers. At the top of each layer
+iteration, the input activation vector \texttt{x} is normalised by
+\texttt{rmsnorm} into \texttt{xb}, then quantised into \texttt{xq}. Three
+calls to \texttt{matmul} project \texttt{xq} into the query vector
+\texttt{q}, the key vector \texttt{k}, and the value vector \texttt{v}. The
+key and value vectors are then written to the float KV cache via
+\texttt{std::memcpy}, recording the current token's representations at the
+current sequence position for future decode steps to attend over.
+
+The token embedding is loaded by a direct \texttt{memcpy} from the float
+\texttt{token\_embedding\_table} in the weight struct, reading the row
+corresponding to the current token index. As noted in
+\cref{subsec:proto_structs}, the host checkpoint loader populates only the
+quantised \texttt{q\_tokens} field, leaving the float table uninitialised.
+This means that in a real deployment the embedding lookup would always
+return zeros. During C-simulation, the float table can be populated
+directly by the testbench, so the bug does not surface in simulation and
+requires on-board testing to observe.
+
+The multihead attention loop processes $H = 2$ heads sequentially. For
+each head, the score computation iterates over all past positions, as shown
+in Listing~\ref{lst:proto_attn}. The \texttt{PIPELINE} pragma is applied
+to the outer position loop \texttt{iterate}, which causes HLS to attempt to
+start a new position iteration every clock cycle. To satisfy this schedule,
+HLS must unroll the inner \texttt{head\_size}-element dot-product loop
+completely, issuing all element reads in parallel. At the prototype scale
+(\texttt{head\_size} = $d_{\text{model}}/H = 4$), only four parallel reads
+are generated, which the shared AXI adapter can service without
+congestion. At full scale (\texttt{head\_size} = 64), the same pragma
+generates 64 simultaneous requests, a behaviour that contributes to the
+deadlock described in \cref{subsec:axi_deadlock}. Following score
+computation, the \texttt{softmax} helper normalises the scores in place,
+and the value accumulation loop aggregates the weighted value vectors into
+\texttt{xb}.
+
+\begin{lstlisting}[
+  caption = {Attention score computation loop from \texttt{forward.cpp}.
+             The \texttt{PIPELINE} pragma on the outer position loop forces
+             the inner dot-product loop to be unrolled, which is harmless
+             at prototype scale but causes AXI deadlock at full scale.},
+  label   = {lst:proto_attn}
+]
+iterate:
+for (int t = 0; t <= pos; t++) {
+#pragma HLS PIPELINE
+#pragma HLS loop_tripcount min=1 max=16 avg=8
+    const int key_offset = loff + t * kv_dim + (h / kv_mul) * head_size;
+    float score = 0.0f;
+    for (int i = 0; i < head_size; i++) {
+#pragma HLS unroll
+        score += q[i + q_offset] * key_cache[i + key_offset];
+    }
+    score /= sqrtf(head_size);
+    att[t + att_offset] = score;
 }
 \end{lstlisting}
 
-The \texttt{PIPELINE II=1} pragma on the outer loop instructs Vitis HLS to
-schedule successive iterations of the outer loop to begin every clock cycle,
-achieving maximum throughput. The inner loop over $d_{\text{in}}$ is then
-fully unrolled by the synthesiser to expose the accumulation chain as a
-tree of parallel additions, which is the critical path for timing closure.
+\noindent\textbf{Omitted components.} The output projection matrix
+$\mathbf{W}_O$, which in the full transformer concatenates and re-projects
+the multi-head attention outputs, is explicitly disabled in the prototype.
+A comment in the source notes that the attention output dimension already
+matches \texttt{dim} after the accumulation loop, so the residual
+connection can be applied directly without the projection. The FFN
+sub-layer, the final RMSNorm, and the LM head classifier are all commented
+out, and the main layer loop is closed immediately after the residual
+addition. The output of the prototype kernel is therefore the hidden state
+after the attention sub-layer of each of the two layers, without FFN
+processing. This scoped implementation deliberately prioritises
+establishing a working attention pipeline and HLS build flow over
+producing correct language model outputs.
 
-\lipsum[1] % Replace with your detailed analysis of the synthesis results
+\subsection{Per-Head Attention Quantisation}
+\label{subsec:proto_attn_quant}
 
-\section{Pragma Optimisation Strategy}
-\label{sec:pragma_strategy}
+A second iteration of the prototype kernel was developed with the same
+configuration parameters as the baseline. The helper functions, data
+structures, and AXI interface arrangement were left entirely unchanged.
+The single focused change is the attention computation: the floating-point
+dot products used to compute attention scores and aggregate value vectors
+are replaced with per-head INT8 arithmetic throughout.
 
-\subsection{Array Partitioning}
-\label{subsec:array_partition}
+The motivation for this change arises from a limitation of the standard
+\texttt{quantize()} helper used for the weight matrix multiplications. That
+function computes one scale factor per group of $GS$ consecutive elements
+across the full hidden dimension. Applied naively to the query vector
+\texttt{q} before the attention loop, it would compute a single scale
+covering all $H$ heads' worth of values simultaneously. If one head
+happens to contain an activation with a large magnitude, the resulting
+scale compresses the values in all other heads toward zero, degrading their
+representational precision. This is the outlier sensitivity problem that
+motivates per-channel and per-head quantisation strategies in the
+quantisation literature \cite{PLACEHOLDER}. To avoid it, the revised kernel
+explicitly does not call \texttt{quantize()} on \texttt{q}, \texttt{k}, or
+\texttt{v}, as the commented-out lines in the source note. Instead, each
+head computes its own scale derived only from the values belonging to that
+head.
 
-A common pitfall when first applying \texttt{PIPELINE II=1} is that the
-synthesiser reports an achieved II larger than 1 due to memory port conflicts.
-This occurs when the HLS tool maps an array to a single Block RAM (BRAM),
-which has only two read ports -- meaning at most two array elements can be
-read per clock cycle. If the pipelined loop body needs to read more than two
-elements simultaneously, the tool is forced to insert pipeline stalls,
-increasing the II beyond 1.
+The revised attention computation proceeds in three steps. In the first
+step, shown in Listing~\ref{lst:per_head_q}, the query slice for the
+current head is scanned for the maximum absolute value before the position
+loop. A single scale $s_Q = \text{max\_val}/127$ is computed for the head,
+the inverse scale is precomputed to replace per-element division with a
+multiply, and the $\texttt{head\_size}$ query elements are quantised into
+a local \texttt{int8\_t q\_int8[head\_size]} buffer. The inverse scale
+precomputation avoids issuing a hardware divider in each quantisation
+step, replacing it with one division outside the loop and a cheaper
+multiply inside.
 
 \begin{lstlisting}[
-  caption = {ARRAY\_PARTITION directive splits the weight array across
-             multiple BRAMs, eliminating read-port bottlenecks.},
-  label   = {lst:array_partition}
+  caption = {Per-head query quantisation in the revised prototype. The
+             global \texttt{quantize()} helper is not used because its
+             group-based scaling would mix values from different heads,
+             causing outlier values in one head to suppress precision in
+             all others.},
+  label   = {lst:per_head_q}
 ]
-// Without partitioning: single BRAM, 2 ports -> II > 1 for wide accesses
-// With cyclic factor=8: 8 BRAMs, each holding every 8th element
-#pragma HLS ARRAY_PARTITION variable=W cyclic factor=8 dim=2
+float max_val = 0.0f;
+for (int i = 0; i < head_size; i++) {
+    #pragma HLS PIPELINE
+    float val = std::fabs(q[i + q_offset]);
+    if (val > max_val) max_val = val;
+}
+float q_scale_val = (max_val == 0.0f) ? 1.0f : max_val / 127.0f;
+float q_inv_scale = 1.0f / q_scale_val;
+
+int8_t q_int8[head_size];
+for (int i = 0; i < head_size; i++) {
+    #pragma HLS UNROLL
+    q_int8[i] = (int8_t)round(q[i + q_offset] * q_inv_scale);
+}
 \end{lstlisting}
 
-\lipsum[2] % Replace with your array partitioning analysis
+In the second step, inside the position loop, each cached key vector is
+loaded into a local \texttt{float k\_buffer[head\_size]}, scanned for
+max absolute value, and quantised to a local \texttt{int8\_t k\_int8}
+buffer using a per-timestep scale $s_K$. The two-pass structure
+--- load all elements first, then quantise --- avoids reading the same
+DRAM location twice, which would double the AXI read traffic. The
+attention score is then computed as an INT32 accumulation of INT8 products
+and dequantised at the end using the combined scale:
 
-\subsection{Loop Unrolling}
-\label{subsec:loop_unroll}
+\begin{equation}
+  \text{score} = \left(\sum_{i} q^{(8)}_i \cdot k^{(8)}_i \right)
+    \cdot s_Q \cdot s_K \cdot \frac{1}{\sqrt{d_k}}
+  \label{eq:int8_score}
+\end{equation}
 
-\lipsum[3] % Replace with your loop unrolling strategy and trade-offs
+\noindent where superscript $(8)$ denotes the INT8 representation. This
+approach preserves the same result as floating-point computation up to the
+quantisation rounding error on $q$ and $k$, which is bounded by
+$\tfrac{1}{2} s_Q$ and $\tfrac{1}{2} s_K$ per element respectively.
 
-\section{RMSNorm Implementation}
-\label{sec:rmsnorm_impl}
+In the third step, the value accumulation loop also moves to INT8. After
+the softmax, each probability value in $[0, 1]$ is mapped to INT8 by
+multiplying by 127, then the value vector for that timestep is loaded,
+scanned, and quantised to INT8 with a per-timestep scale $s_V$. The
+weighted contribution is computed as an INT32 product and immediately
+dequantised:
 
-\lipsum[4] % Replace with your RMSNorm kernel code and analysis
+\begin{equation}
+  \Delta\mathbf{x}_b^{(i)} = \left( p^{(8)} \cdot v^{(8)}_i \right)
+    \cdot \frac{1}{127} \cdot s_V
+  \label{eq:int8_value_acc}
+\end{equation}
 
-\section{Attention Kernel Implementation}
-\label{sec:attention_impl}
+\noindent Contributions are accumulated into a local
+\texttt{float xb\_accum[head\_size]} buffer declared with
+\texttt{ARRAY\_PARTITION complete}, which maps it entirely into
+registers rather than BRAM and allows all \texttt{head\_size} elements to
+be read and written in the same clock cycle. After the position loop, the
+accumulator is written back to the main \texttt{xb} buffer.
 
-\lipsum[5] % Replace with your attention kernel details
+One further change is that the \texttt{softmax} call uses the template
+parameter 257 rather than 16. The template parameter controls only the
+compile-time buffer allocation inside \texttt{softmax}; the runtime
+\texttt{size} argument still equals \texttt{pos+1}. The value 257 is chosen
+to accommodate sequence lengths beyond the prototype's $T_{\max} = 16$
+without requiring a code change when the kernel is later scaled to full
+TinyLlama dimensions, where \texttt{pos} can reach 2{,}047.
 
-\section{Host Software and XRT Driver Layer}
+\subsection{C-Simulation Results}
+\label{subsec:proto_csim}
+
+% Add csim pass/fail status, what the testbench exercises, and
+% any numerical checks against a software reference.
+
+\subsection{HLS Synthesis Results}
+\label{subsec:proto_csyn}
+
+% Add resource utilisation table (LUT, FF, BRAM, DSP) and
+% achieved II values from the prototype csyn report.
+
+
+% =============================================================================
+\section{Full TinyLlama Kernel Development}
+\label{sec:full_kernel}
+% =============================================================================
+
+With the kernel structure validated on the prototype configuration, development
+moved to the full TinyLlama dimensions. Three successive kernel versions were
+produced, each addressing specific correctness and performance issues
+discovered during synthesis and on-board testing. The versions are referred to
+as the \emph{baseline kernel}, \emph{update~2}, and \emph{update~3}
+throughout this section.
+
+\subsection{Baseline Kernel: Attention-Only Implementation}
+\label{subsec:baseline_kernel}
+
+The baseline kernel implements the attention sub-layer of the transformer
+only; the SwiGLU feed-forward network is omitted at this stage to reduce
+design complexity and allow the attention pipeline to be validated in
+isolation. The kernel signature accepts a pointer to the full quantised
+weight struct, the current token index and position, four pointers to the
+INT8 key and value caches and their associated scale arrays, and a float
+output pointer.
+
+The baseline kernel assigns all six pointer arguments to a single AXI
+bundle, \texttt{gmem0}, which maps to one HP port on the ZCU102 PS. This
+single-bundle arrangement was the simplest possible interface configuration
+and served as a starting point for understanding how Vitis HLS maps
+\texttt{m\_axi} ports to the platform's physical memory interfaces. The
+attention computation follows the structure described in
+\cref{subsec:gqa}: the input embedding is read from the floating-point
+\texttt{token\_embedding\_table}, normalised with RMSNorm, quantised to
+INT8, projected into query, key, and value vectors, and the dot-product
+attention scores are computed across the KV cache before the weighted
+value sum is written to the output buffer.
+
+The baseline also contained the pragma configuration that would later be
+identified as the root cause of the kernel hang observed during on-board
+testing. The \texttt{PIPELINE II=1} directive was applied to the outer loop
+over past sequence positions in both the score computation and value
+aggregation phases. The implications of this placement are discussed in
+\cref{subsec:axi_deadlock}.
+
+\subsection{AXI Bundle Separation and PIPELINE Deadlock}
+\label{subsec:axi_deadlock}
+
+On-board testing of the baseline bitstream produced a reproducible kernel
+hang in which the ZCU102 zocl driver reported a \texttt{CU(0) hangs}
+error after approximately 49\,ms, indicating that the kernel had started
+execution but never asserted its \texttt{ap\_done} signal. The hang was
+deterministic across different input tokens and positions, ruling out
+timing-dependent race conditions.
+
+The root cause was identified as an AXI transaction queue deadlock
+arising from the \texttt{PIPELINE II=1} pragma applied to the outer
+attention loop. When HLS pipelines an outer loop that contains an
+inner loop over memory-bound data, it must either serialise the outer
+loop (violating the II=1 request) or fully unroll the inner loop to
+expose parallel accesses that satisfy the pipeline schedule. HLS chose
+the latter: the inner loop that loads \texttt{kv\_dim = 256} key elements
+per position was unrolled, generating 256 simultaneous read requests in
+every outer pipeline iteration. With four arrays (\texttt{key\_cache},
+\texttt{key\_scales}, \texttt{value\_cache}, \texttt{value\_scales})
+all sharing the same \texttt{gmem0} AXI adapter, the 16-to-32-slot
+outstanding-transaction queue filled rapidly with interleaved requests
+for different arrays. Once full, the adapter asserted backpressure by
+deasserting \texttt{ARREADY}, stalling the pipeline. The stall itself
+was not the deadlock; the deadlock arose because the kernel was
+waiting for responses from \texttt{key\_scales} before it could advance,
+while the adapter's response queue was occupied by data from
+\texttt{key\_cache}, creating a circular wait that no external signal
+could break.
+
+Two changes were made in update~2 to eliminate the deadlock. First,
+the four KV cache and scale pointers were moved to separate AXI bundles,
+\texttt{gmem1} and \texttt{gmem2}, with \texttt{gmem3} dedicated to the
+output pointer and \texttt{gmem0} retaining the weight struct. Each bundle
+maps to an independent HP port (HP0 through HP3) on the ZCU102 PS, giving
+each array its own outstanding-transaction queue with no possibility of
+cross-array circular dependencies. Second, the \texttt{PIPELINE II=1}
+pragma was moved from the outer position loop to the inner element-loading
+loops, as shown in Listing~\ref{lst:pipeline_fix}. This change directs
+HLS to pipeline individual cache-load operations without unrolling them,
+producing efficient sequential AXI burst transfers rather than a flood
+of parallel requests.
+
+\begin{lstlisting}[
+  caption = {Corrected PIPELINE pragma placement in the attention score
+             computation loop. The outer position loop is left unpipelined;
+             pipelining the inner load loop generates a clean sequential burst
+             without flooding the AXI transaction queue.},
+  label   = {lst:pipeline_fix}
+]
+// Buggy (baseline): PIPELINE on outer loop forces unrolling of inner load
+// for (int t = 0; t <= pos; t++) {
+//   #pragma HLS PIPELINE II=1   // <-- causes deadlock
+//   for (int i = 0; i < kv_dim; i++) { ... }
+// }
+
+// Fixed (update 2): PIPELINE on inner load loop only
+for (int t = 0; t <= pos; t++) {          // outer: unpipelined
+    for (int i = 0; i < kv_dim; i++) {    // inner: pipelined burst
+        #pragma HLS PIPELINE II=1
+        k_local[i] = key_cache[loff + t * kv_dim + i];
+    }
+    // ... compute dot product with k_local ...
+}
+\end{lstlisting}
+
+\subsection{Embedding Lookup Correction}
+\label{subsec:embedding_fix}
+
+A second bug in the baseline kernel caused every generated token to be
+identical regardless of the input prompt. Investigation revealed that the
+kernel read the input token's vector from the floating-point
+\texttt{token\_embedding\_table} field of the weight struct. However, the
+host-side checkpoint loader (\texttt{memory\_map\_weights()}) populates
+only the quantised \texttt{q\_tokens} field; the float table is never
+written. As a result, every embedding lookup returned a zero vector,
+and all subsequent computation produced the same output regardless of the
+token index.
+
+The fix in update~2 replaces the direct float table read with an
+on-the-fly dequantisation from \texttt{q\_tokens}. The kernel reads the
+INT8 quantised row for the requested token, applies the corresponding
+per-group scale factors, and reconstructs the float embedding vector
+before the first RMSNorm layer. This is arithmetically identical to
+storing pre-dequantised floats but requires no change to the checkpoint
+file format or the host loader, and it reduces the memory consumed by
+the embedding lookup from 262\,MB (the full float table) to the
+70\,MB quantised representation.
+
+\subsection{SwiGLU Feed-Forward Network and I-BERT Softmax}
+\label{subsec:ffn_impl}
+
+Update~2 also introduces the SwiGLU feed-forward sub-layer, completing
+the full transformer block. As described in \cref{subsec:swiglu},
+the SwiGLU FFN evaluates two parallel projections of the normalised
+residual stream, applies the Swish activation to the gate branch, and
+combines the two branches element-wise before the down projection. The
+Swish activation $\sigma(z) = z \cdot \text{sigmoid}(z)$ requires
+evaluating a sigmoid function for each of the $d_{\text{ff}} = 5{,}632$
+intermediate elements per token. To avoid the hardware cost of computing
+true exponentials at this scale, the sigmoid is approximated using a
+lookup table, following the I-BERT fixed-point approximation
+strategy \cite{PLACEHOLDER}. The table stores pre-computed sigmoid values
+at uniform intervals, and intermediate inputs are mapped to the nearest
+table entry. This approximation introduces a small quantisation error in
+the activation values but avoids the multi-cycle latency of a floating-point
+exponential unit.
+
+The attention softmax applies the same lookup-table strategy. A 128-entry
+table stores $\exp(-x)$ for $x \in [0, 12.7]$ at steps of 0.1. Before
+the lookup, the maximum attention score is subtracted from all scores
+for numerical stability, and scores are represented as \texttt{int32\_t}
+throughout to avoid floating-point accumulation in the score buffer.
+
+% Replace: add code listing for the SwiGLU kernel body showing
+           % the three matmul calls, Swish LUT application, element-wise gate,
+           % and the UNROLL pragmas on the gate and residual addition loops.
+
+\subsection{Full-Scale Consolidation: Update~3}
+\label{subsec:update3}
+
+Update~3 consolidates the corrections from update~2 and scales all
+configuration parameters to the full TinyLlama dimensions
+($d_{\text{model}} = 2{,}048$, $d_{\text{ff}} = 5{,}632$,
+$L = 22$, sequence length 2{,}048). In addition to the dimension change,
+three refinements were made to improve consistency and resource usage.
+
+First, the \texttt{UNROLL} factor across all inner loops was standardised
+to 16 throughout the kernel, matching the \texttt{PARALLEL\_MACS=16}
+constant used in the quantised matrix--vector multiply helper. The
+prototype and update~2 kernels used a mix of factors (4, 16, and 64 in
+different loops), which produced uneven resource utilisation across
+compute stages. Standardising to factor 16 aligns the parallelism
+of the FFN gate loop, residual addition loops, and activation buffer
+operations with the parallelism already assumed by the memory partitioning
+pragmas applied to the on-chip activation arrays.
+
+Second, the per-head attention buffer was reduced from an
+$H \times T_{\max}$ allocation (holding scores for all heads
+simultaneously) to a single $T_{\max}$-element buffer reused
+sequentially for each head. Since the 32 heads are processed
+sequentially in the decode loop, there is no correctness requirement to
+retain scores from a previous head when computing the next. The
+reduced allocation saves $31 \times T_{\max} \times 4$ bytes of
+on-chip BRAM per layer, a meaningful saving given the ZCU102's
+912-block BRAM budget.
+
+Third, a block comment was added at the top of the file documenting
+every design decision and its rationale, ensuring that the mapping from
+source code to hardware intent is unambiguous for future readers and
+for the synthesis tool when interpreting pragma directives.
+
+% Replace: add the AXI interface pragma block from update3 showing
+           % the four-bundle layout (gmem0 weights, gmem1 key, gmem2 value,
+           % gmem3 output) and cross-reference to the link_config.cfg
+           % connectivity directives that map each bundle to HP0-HP3.
+
+\subsection{Host Software and LM Head Projection}
 \label{sec:host_software}
 
-The host application runs on the ARM Cortex-A53 and is responsible for
-loading the FPGA bitstream, allocating DMA-coherent buffers in DDR memory,
-marshalling the quantised weights and activation tensors into those buffers,
-and issuing kernel execution commands through the XRT API. The XRT
-\texttt{xrt::run} abstraction handles the AXI control register writes that
-start and poll the HLS kernels, abstracting away the raw memory-mapped I/O.
+The host application runs on the ARM Cortex-A53 under Ubuntu 20.04 and
+is responsible for checkpoint loading, buffer allocation, kernel
+invocation, and the final vocabulary projection. At startup, the host
+reads the 1.4\,GB quantised checkpoint file and memory-maps the weight
+struct directly into an XRT buffer object allocated through the CMA pool.
+This zero-copy approach avoids a separate DMA transfer by placing the
+weights directly in the physically contiguous region that the FPGA kernel
+addresses through its \texttt{gmem0} AXI port.
 
-\lipsum[6] % Replace with your XRT driver implementation details
+For each decode step, the host calls \texttt{xrt::run} with the current
+token index, sequence position, and buffer handles. The XRT library writes
+these arguments to the kernel's control register block and asserts
+\texttt{ap\_start}. The host then blocks on \texttt{xrt::run::wait()},
+which suspends the calling thread until the zocl interrupt handler signals
+\texttt{ap\_done}.
 
-\section{Vivado Integration and Bitstream Generation}
-\label{sec:vivado}
+After the kernel completes, the output buffer contains the
+$d_{\text{model}} = 2{,}048$-dimensional hidden state for the current
+position. The language model head projection --- a matrix--vector
+multiply of this hidden state against the $32{,}000 \times 2{,}048$
+vocabulary weight matrix --- is performed in software on the ARM cores.
+This CPU-side projection was chosen as a deliberate simplification to
+keep the FPGA kernel focused on the 22-layer transformer body. It avoids
+allocating on-chip resources for the LM head and eliminates the need to
+transfer the full 70\,MB vocabulary matrix to the PL on every decode step.
+The ARM NEON SIMD units can execute this projection in software in a
+fraction of a millisecond, which is negligible relative to the kernel
+execution time.
 
-\lipsum[7] % Replace with your Vivado block design, AXI interconnect config, etc.
+% Replace: include key host code snippets -- buffer allocation with
+           % xrt::bo, kernel argument setting, run/wait loop, and the
+           % cpu_lm_head() function with its NEON or naive implementation.

@@ -15,47 +15,53 @@
 \contentsline {subsection}{\numberline {2.2.2}Rotary Positional Embedding}{6}{subsection.18}%
 \contentsline {subsection}{\numberline {2.2.3}RMSNorm}{7}{subsection.21}%
 \contentsline {subsection}{\numberline {2.2.4}Grouped-Query Self-Attention}{7}{subsection.25}%
-\contentsline {subsection}{\numberline {2.2.5}SwiGLU Feed-Forward Network}{9}{subsection.31}%
-\contentsline {section}{\numberline {2.3}Efficient Attention Mechanisms}{10}{section.35}%
-\contentsline {subsection}{\numberline {2.3.1}Sparse Transformer}{10}{subsection.36}%
-\contentsline {subsection}{\numberline {2.3.2}BlockBERT}{11}{subsection.38}%
-\contentsline {subsection}{\numberline {2.3.3}Performer}{11}{subsection.39}%
-\contentsline {subsection}{\numberline {2.3.4}Linear Transformer}{12}{subsection.41}%
-\contentsline {section}{\numberline {2.4}FPGA Acceleration of Neural Networks}{12}{section.42}%
-\contentsline {section}{\numberline {2.5}Quantisation for Efficient Inference}{13}{section.43}%
-\contentsline {section}{\numberline {2.6}HLS-Based Hardware Design}{13}{section.44}%
-\contentsline {subsection}{\numberline {2.6.1}Pipelining and the Initiation Interval}{13}{subsection.45}%
-\contentsline {subsection}{\numberline {2.6.2}Scaling Transformations: Unrolling and Dataflow}{14}{subsection.48}%
-\contentsline {subsection}{\numberline {2.6.3}Memory Transformations}{15}{subsection.50}%
-\contentsline {chapter}{\numberline {3}System Architecture and Design}{16}{chapter.51}%
-\contentsline {section}{\numberline {3.1}Top-Level System Overview}{16}{section.52}%
-\contentsline {section}{\numberline {3.2}Hardware/Software Partitioning}{17}{section.53}%
-\contentsline {section}{\numberline {3.3}Memory Architecture}{18}{section.55}%
-\contentsline {section}{\numberline {3.4}Quantisation Scheme}{20}{section.57}%
-\contentsline {chapter}{\numberline {4}Implementation}{22}{chapter.60}%
-\contentsline {section}{\numberline {4.1}HLS Kernel Development Environment}{22}{section.61}%
-\contentsline {section}{\numberline {4.2}Matrix--Vector Multiplication Kernel}{22}{section.62}%
-\contentsline {section}{\numberline {4.3}Pragma Optimisation Strategy}{23}{section.80}%
-\contentsline {subsection}{\numberline {4.3.1}Array Partitioning}{23}{subsection.81}%
-\contentsline {subsection}{\numberline {4.3.2}Loop Unrolling}{24}{subsection.86}%
-\contentsline {section}{\numberline {4.4}RMSNorm Implementation}{24}{section.87}%
-\contentsline {section}{\numberline {4.5}Attention Kernel Implementation}{24}{section.88}%
-\contentsline {section}{\numberline {4.6}Host Software and XRT Driver Layer}{25}{section.89}%
-\contentsline {section}{\numberline {4.7}Vivado Integration and Bitstream Generation}{25}{section.90}%
-\contentsline {chapter}{\numberline {5}Results and Discussion}{26}{chapter.91}%
-\contentsline {section}{\numberline {5.1}Experimental Setup}{26}{section.92}%
-\contentsline {section}{\numberline {5.2}HLS Synthesis Results}{26}{section.93}%
-\contentsline {section}{\numberline {5.3}Functional Verification}{27}{section.95}%
-\contentsline {section}{\numberline {5.4}Inference Performance}{27}{section.96}%
-\contentsline {section}{\numberline {5.5}Energy Efficiency}{27}{section.98}%
-\contentsline {section}{\numberline {5.6}Comparison Against Prior Work}{28}{section.99}%
-\contentsline {section}{\numberline {5.7}Discussion}{28}{section.101}%
-\contentsline {chapter}{\numberline {6}Conclusion and Future Work}{29}{chapter.102}%
-\contentsline {section}{\numberline {6.1}Conclusion}{29}{section.103}%
-\contentsline {section}{\numberline {6.2}Recommendations for Future Work}{30}{section.104}%
-\contentsline {chapter}{Reflection on Learning Outcome Attainment}{31}{chapter*.105}%
-\contentsline {chapter}{Acknowledging/Declaring the Use of GAI}{32}{chapter*.106}%
-\contentsline {chapter}{References}{32}{chapter*.106}%
-\contentsline {chapter}{\numberline {A}HLS Kernel Source Code}{33}{appendix.107}%
-\contentsline {chapter}{\numberline {B}Vivado Synthesis and Implementation Reports}{34}{appendix.108}%
-\contentsline {chapter}{\numberline {C}Quantisation Calibration Data}{35}{appendix.109}%
+\contentsline {subsection}{\numberline {2.2.5}Softmax}{9}{subsection.31}%
+\contentsline {subsection}{\numberline {2.2.6}SwiGLU Feed-Forward Network}{10}{subsection.34}%
+\contentsline {section}{\numberline {2.3}Efficient Attention Mechanisms}{11}{section.38}%
+\contentsline {subsection}{\numberline {2.3.1}Sparse Transformer}{11}{subsection.39}%
+\contentsline {subsection}{\numberline {2.3.2}BlockBERT}{12}{subsection.41}%
+\contentsline {subsection}{\numberline {2.3.3}Performer}{13}{subsection.42}%
+\contentsline {subsection}{\numberline {2.3.4}Linear Transformer}{13}{subsection.44}%
+\contentsline {section}{\numberline {2.4}FPGA Acceleration of Neural Networks}{14}{section.45}%
+\contentsline {section}{\numberline {2.5}Quantisation for Efficient Inference}{14}{section.46}%
+\contentsline {section}{\numberline {2.6}HLS-Based Hardware Design}{14}{section.47}%
+\contentsline {subsection}{\numberline {2.6.1}Pipelining and the Initiation Interval}{15}{subsection.48}%
+\contentsline {subsection}{\numberline {2.6.2}Scaling Transformations: Unrolling and Dataflow}{15}{subsection.51}%
+\contentsline {subsection}{\numberline {2.6.3}Memory Transformations}{16}{subsection.53}%
+\contentsline {chapter}{\numberline {3}System Architecture and Design}{17}{chapter.54}%
+\contentsline {section}{\numberline {3.1}Top-Level System Overview}{17}{section.55}%
+\contentsline {section}{\numberline {3.2}Hardware/Software Partitioning}{18}{section.56}%
+\contentsline {section}{\numberline {3.3}Memory Architecture}{19}{section.58}%
+\contentsline {section}{\numberline {3.4}Quantisation Scheme}{21}{section.60}%
+\contentsline {chapter}{\numberline {4}Implementation}{23}{chapter.63}%
+\contentsline {section}{\numberline {4.1}Prototype Kernel: Scaled-Down Configuration}{23}{section.64}%
+\contentsline {subsection}{\numberline {4.1.1}Data Structures}{24}{subsection.66}%
+\contentsline {subsection}{\numberline {4.1.2}Kernel Helper Functions}{24}{subsection.73}%
+\contentsline {subsection}{\numberline {4.1.3}Top-Level Kernel}{26}{subsection.85}%
+\contentsline {subsection}{\numberline {4.1.4}Per-Head Attention Quantisation}{29}{subsection.107}%
+\contentsline {subsection}{\numberline {4.1.5}C-Simulation Results}{31}{subsection.125}%
+\contentsline {subsection}{\numberline {4.1.6}HLS Synthesis Results}{31}{subsection.126}%
+\contentsline {section}{\numberline {4.2}Full TinyLlama Kernel Development}{31}{section.127}%
+\contentsline {subsection}{\numberline {4.2.1}Baseline Kernel: Attention-Only Implementation}{31}{subsection.128}%
+\contentsline {subsection}{\numberline {4.2.2}AXI Bundle Separation and PIPELINE Deadlock}{32}{subsection.129}%
+\contentsline {subsection}{\numberline {4.2.3}Embedding Lookup Correction}{33}{subsection.145}%
+\contentsline {subsection}{\numberline {4.2.4}SwiGLU Feed-Forward Network and I-BERT Softmax}{33}{subsection.146}%
+\contentsline {subsection}{\numberline {4.2.5}Full-Scale Consolidation: Update~3}{34}{subsection.147}%
+\contentsline {subsection}{\numberline {4.2.6}Host Software and LM Head Projection}{35}{subsection.148}%
+\contentsline {chapter}{\numberline {5}Results and Discussion}{36}{chapter.149}%
+\contentsline {section}{\numberline {5.1}Experimental Setup}{36}{section.150}%
+\contentsline {section}{\numberline {5.2}HLS Synthesis Results}{36}{section.151}%
+\contentsline {section}{\numberline {5.3}Functional Verification}{37}{section.153}%
+\contentsline {section}{\numberline {5.4}Inference Performance}{37}{section.154}%
+\contentsline {section}{\numberline {5.5}Energy Efficiency}{37}{section.156}%
+\contentsline {section}{\numberline {5.6}Comparison Against Prior Work}{38}{section.157}%
+\contentsline {section}{\numberline {5.7}Discussion}{38}{section.159}%
+\contentsline {chapter}{\numberline {6}Conclusion and Future Work}{39}{chapter.160}%
+\contentsline {section}{\numberline {6.1}Conclusion}{39}{section.161}%
+\contentsline {section}{\numberline {6.2}Recommendations for Future Work}{40}{section.162}%
+\contentsline {chapter}{Reflection on Learning Outcome Attainment}{41}{chapter*.163}%
+\contentsline {chapter}{Acknowledging/Declaring the Use of GAI}{42}{chapter*.164}%
+\contentsline {chapter}{References}{42}{chapter*.164}%
+\contentsline {chapter}{\numberline {A}HLS Kernel Source Code}{43}{appendix.165}%
+\contentsline {chapter}{\numberline {B}Vivado Synthesis and Implementation Reports}{44}{appendix.166}%
+\contentsline {chapter}{\numberline {C}Quantisation Calibration Data}{45}{appendix.167}%

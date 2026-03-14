@@ -393,6 +393,78 @@ $\mathcal{O}(T_{\text{cache}} \times d_{\text{model}})$ where
 $T_{\text{cache}}$ is the current KV cache length.
 
 
+\subsection{Softmax}
+\label{subsec:softmax}
+
+Within the scaled dot-product attention computation, the raw attention
+scores produced by the query--key dot products must be converted into a
+probability distribution over the sequence positions before they can be
+used to weight the value vectors. This conversion is performed by the
+softmax function. For a vector of scores
+$\mathbf{a} \in \mathbb{R}^{T}$, softmax is defined element-wise as:
+
+\begin{equation}
+  \text{softmax}(\mathbf{a})_t = \frac{\exp(a_t)}{\sum_{t'=1}^{T} \exp(a_{t'})}
+  \label{eq:softmax}
+\end{equation}
+
+\noindent The output is strictly positive and sums to one, making it a
+valid probability distribution. In practice, Equation~\ref{eq:softmax}
+is not computed directly because exponentials of large positive values
+overflow in finite-precision arithmetic. The numerically stable variant
+subtracts the maximum score from all elements before exponentiation:
+
+\begin{equation}
+  \text{softmax}(\mathbf{a})_t =
+    \frac{\exp(a_t - \max_j a_j)}{\sum_{t'=1}^{T} \exp(a_{t'} - \max_j a_j)}
+  \label{eq:softmax_stable}
+\end{equation}
+
+\noindent Since the subtracted constant cancels between numerator and
+denominator, Equation~\ref{eq:softmax_stable} is mathematically identical
+to Equation~\ref{eq:softmax} but constrains all exponent arguments to
+$(-\infty, 0]$, preventing overflow while preserving underflow behaviour
+that is benign in practice.
+
+\noindent\textbf{Causal masking.} In autoregressive decode, the model must
+not attend to future positions. This is enforced by adding a mask
+$\mathbf{M}$ to the scores before softmax, where $M_{ij} = -\infty$ for
+$j > i$ and $0$ otherwise. Positions set to $-\infty$ produce
+$\exp(-\infty) = 0$ after exponentiation, effectively zeroing out future
+positions in the probability distribution without requiring any change to
+the softmax function itself.
+
+\noindent\textbf{Space complexity.} Softmax introduces no learned
+parameters. The only storage required is the score buffer
+$\mathbf{a} \in \mathbb{R}^{T_{\text{cache}}}$ per head, which during
+decode has length equal to the current KV cache size. This buffer must
+be held in on-chip memory throughout the computation since two passes are
+required: one to find the maximum and one to compute the normalised
+exponentials.
+
+\noindent\textbf{Time complexity.} Computing softmax for a single
+attention head during decode requires
+$\mathcal{O}(T_{\text{cache}})$ operations: one pass to find the maximum,
+one pass to compute and sum the exponentials, and one pass to normalise.
+All three passes are sequential due to the reduction dependencies between
+them, meaning the total latency is $3T_{\text{cache}}$ operations rather
+than $T_{\text{cache}}$ operations with three-way parallelism. This
+sequential dependency between passes is the primary reason softmax
+introduces a pipeline stall in hardware implementations.
+
+\noindent\textbf{Hardware implementation challenge.} The exponential
+function $\exp(\cdot)$ is a transcendental operation that requires either
+a multi-cycle floating-point unit or a lookup table approximation in
+hardware. A floating-point exponential typically requires 10 to 20 clock
+cycles to produce a result, which directly multiplies the per-token
+softmax latency. For this reason, hardware-efficient inference systems
+commonly replace the true exponential with a piecewise-linear or
+lookup-table approximation. The I-BERT quantisation framework
+\cite{PLACEHOLDER} proposes such an approximation that bounds the
+relative error while operating entirely in integer arithmetic, and this
+strategy is adopted in the kernel implementation described in
+\cref{subsec:ffn_impl}.
+
 \subsection{SwiGLU Feed-Forward Network}
 \label{subsec:swiglu}
 
