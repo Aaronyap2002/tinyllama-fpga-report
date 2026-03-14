@@ -158,33 +158,579 @@ factor=4} partitioning applied to all three local buffers.
 \subsection{C-Simulation Results}
 \label{subsec:rmsnorm_csim}
 
-% Add csim pass/fail, testbench description, and numerical
-% comparison against a software reference implementation.
+C-simulation was performed by compiling \texttt{rmsnorm\_top} together
+with a software testbench using GCC on the x86 host. The testbench
+supplied a fixed eight-element input vector and a corresponding weight
+vector, then compared the kernel output element by element against a
+pure software reference implementation of RMSNorm. The reference
+computes the sum of squares sequentially, derives the reciprocal RMS,
+and applies the element-wise scaling in the same order as the
+mathematical definition in \cref{subsec:rmsnorm}, with no HLS pragmas
+or unrolling.
+
+Table~\ref{tab:rmsnorm_csim} shows the output from both the kernel and
+the software reference for each element of the test vector.
+
+\begin{table}[H]
+  \centering
+  \caption{C-simulation output for \texttt{rmsnorm} with input
+           $\mathbf{x} = [1, -2, 3, -4, 5, -6, 7, -8]$ and weight
+           $\mathbf{g} = [0.5, 1.0, 1.5, 2.0, 0.5, 1.0, 1.5, 2.0]$.
+           All eight elements match the software reference exactly.}
+  \label{tab:rmsnorm_csim}
+  \begin{tabular}{rrrr}
+    \toprule
+    Index & HW output & SW reference & Absolute error \\
+    \midrule
+    0 &  0.099015 &  0.099015 & 0 \\
+    1 & -0.396059 & -0.396059 & 0 \\
+    2 &  0.891133 &  0.891133 & 0 \\
+    3 & -1.584236 & -1.584236 & 0 \\
+    4 &  0.495074 &  0.495074 & 0 \\
+    5 & -1.188177 & -1.188177 & 0 \\
+    6 &  2.079309 &  2.079309 & 0 \\
+    7 & -3.168472 & -3.168472 & 0 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+The absolute error is identically zero for every element, meaning the
+kernel and the reference produce bit-identical results on this test
+vector. This outcome is somewhat stricter than expected: because the
+kernel's \texttt{sum\_of\_squares} loop uses \texttt{UNROLL factor=4},
+HLS may group elements into sets of four and accumulate their squared
+values in a different order from the sequential reference. Floating-point
+addition is not associative, so reordering additions can produce
+different rounding outcomes. In this particular case the zero-error result
+reflects the small scale of the prototype dimensions ($S = 8$), where
+the accumulated rounding differences are below the representational limit
+of single-precision arithmetic. At the full TinyLlama scale ($S = 2048$),
+small discrepancies between the unrolled and sequential summation orders
+are expected, and a tolerance threshold rather than exact equality would
+be the appropriate acceptance criterion. The csim run completed with zero
+errors as reported by Vitis HLS.
 
 \subsection{HLS Synthesis Results}
 \label{subsec:rmsnorm_csyn}
 
-% Add resource utilisation (LUT, FF, BRAM, DSP) and achieved II
-% from the standalone rmsnorm synthesis report.
+The \texttt{rmsnorm} function was synthesised in isolation using the
+prototype configuration ($S = 8$) on the \texttt{xczu9eg-ffvb1156-2-e}
+device at a \SI{150}{\mega\hertz} target clock (\SI{6.667}{\nano\second}
+period). Tables~\ref{tab:rmsnorm_timing} and \ref{tab:rmsnorm_top_latency}
+reproduce the top-level timing and latency summary as reported by Vitis
+HLS, followed by Table~\ref{tab:rmsnorm_resources} for resource utilisation
+and Table~\ref{tab:rmsnorm_latency} for the per-stage latency breakdown.
+
+\begin{table}[H]
+  \centering
+  \caption{Timing summary for \texttt{rmsnorm\_top} at the
+           \SI{150}{\mega\hertz} (\SI{6.667}{\nano\second}) target clock.}
+  \label{tab:rmsnorm_timing}
+  \begin{tabular}{lrrr}
+    \toprule
+    Clock   & Target (ns) & Estimated (ns) & Uncertainty (ns) \\
+    \midrule
+    ap\_clk & 6.667       & 4.867          & 1.800 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \caption{Top-level latency summary for \texttt{rmsnorm\_top} at
+           \SI{150}{\mega\hertz}.}
+  \label{tab:rmsnorm_top_latency}
+  \begin{tabular}{rrrrrrl}
+    \toprule
+    \multicolumn{2}{c}{Latency (cycles)} &
+    \multicolumn{2}{c}{Latency (absolute)} &
+    \multicolumn{2}{c}{Interval (cycles)} & Pipeline \\
+    min & max & min & max & min & max & type \\
+    \midrule
+    146 & 146 & \SI{0.973}{\micro\second} & \SI{0.973}{\micro\second} & 147 & 147 & no \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \caption{Resource utilisation of the \texttt{rmsnorm} function
+           synthesised at $S = 8$ on the ZCU102
+           (\texttt{xczu9eg-ffvb1156-2-e}). Figures in the core-only
+           column exclude the AXI master adapter overhead, which is
+           not present when the function is inlined into the full kernel.}
+  \label{tab:rmsnorm_resources}
+  \begin{tabular}{lrrrr}
+    \toprule
+    Resource & Used (total) & Used (core only) & Available & Utilisation (\%) \\
+    \midrule
+    LUT      & 4{,}646 & 3{,}575 & 274{,}080 & 1 \\
+    FF       & 3{,}910 & 2{,}949 & 548{,}160 & $<$1 \\
+    BRAM     & 4       & 0       & 1{,}824   & $<$1 \\
+    DSP      & 26      & 26      & 2{,}520   & 1 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \caption{Latency breakdown of \texttt{rmsnorm} ($S = 8$) by internal
+           pipeline stage at \SI{150}{\mega\hertz}. Total function latency
+           is 144 cycles (\SI{960}{\nano\second}).}
+  \label{tab:rmsnorm_latency}
+  \begin{tabular}{lrrrr}
+    \toprule
+    Stage & Trip count & II & Iteration latency & Total (cycles) \\
+    \midrule
+    Load \texttt{x} into \texttt{x\_buff}           & 8 &  1 &  3 &  9 \\
+    \texttt{sum\_of\_squares}                        & 2 & 24 & 29 & 52 \\
+    Load \texttt{weight} into \texttt{weight\_buff}  & 8 &  1 &  3 & 11 \\
+    \texttt{norm\_and\_scale}                        & 8 &  1 &  2 & 10 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+The total function latency of 146 cycles is dominated by the
+\texttt{sum\_of\_squares} reduction loop, which alone accounts for 52
+of those cycles despite iterating only twice after the
+\texttt{UNROLL factor=4} collapses the 8-element loop into 2 effective
+iterations. The cause is the loop-carried dependency on the
+floating-point accumulator \texttt{ss}. The Bind Op report shows that
+HLS mapped the floating-point addition to a full-DSP \texttt{fadd} unit
+with a pipeline latency of 5 cycles at this clock frequency. Because each
+iteration must read the current value of \texttt{ss} and write back an
+updated value, the next iteration cannot begin until the adder has
+produced its result, giving an effective II of 24 cycles. The
+\texttt{UNROLL factor=4} partially mitigates this by reducing the trip
+count from 8 to 2, cutting the number of stall events in half, but it
+cannot eliminate the dependency itself. A more complete solution would be
+accumulator interleaving, where four independent partial sums are
+maintained and merged only at the end, allowing all four lanes to pipeline
+at II\,=\,1 independently. This is identified as a future optimisation
+opportunity.
+
+In contrast, the \texttt{norm\_and\_scale} loop achieves II\,=\,1
+perfectly. Once the scalar reciprocal RMS \texttt{ss} is available, every
+element's computation is independent of all others, allowing HLS to start
+a new element every clock cycle. The \texttt{UNROLL factor=64} on an
+8-element loop effectively fully unrolls it into 8 parallel datapath
+lanes, which is reflected in the 26 DSPs consumed: 8 floating-point
+multipliers for the \texttt{weight\,$\times$\,(ss\,$\times$\,x)}
+computation each map to 3 DSPs, accounting for 24 of the 26 total, with
+the remaining 2 used by the \texttt{fadd} in the reduction.
+
+The 4 BRAMs in the total utilisation are consumed entirely by the AXI
+master adapter (\texttt{gmem0\_m\_axi}) of the standalone wrapper and
+are not a property of the \texttt{rmsnorm} logic itself. The
+\texttt{rmsnorm} core uses no BRAM, since the local buffers
+\texttt{x\_buff}, \texttt{weight\_buff}, and \texttt{out\_buff} at
+$S = 8$ are small enough to be inferred as register files. The estimated
+clock period of \SI{4.867}{\nano\second} leaves \SI{1.800}{\nano\second}
+of uncertainty budget, which exactly meets the \SI{6.667}{\nano\second}
+target with zero slack remaining. This is reflected in the \texttt{Timing}
+issue flag visible in the synthesis summary report. While the design meets
+the timing constraint, the zero-slack condition means there is no margin
+for additional logic to be added along the critical path at this clock
+frequency without risking a timing violation.
 
 % =============================================================================
-\section{Quantisation and Dequantisation}
-\label{sec:quant_impl}
+\section{Quantisation}
+\label{sec:quantize_impl}
 % =============================================================================
 
 \subsection{Implementation}
-\label{subsec:quant_impl}
+\label{subsec:quantize_impl}
 
-% Describe quantize<S> and dequantize<S> from forward.h.
-% Cover: group-based symmetric INT8 scheme, wmax scan, scale computation,
-% round-and-clamp, why GS is used as a compile-time constant rather than
-% runtime parameter, and the ARRAY_PARTITION pragmas.
+The \texttt{quantize<S>} function implements the group-wise symmetric
+INT8 quantisation scheme described in \cref{sec:quantisation}. It is
+declared as a C++ template in \texttt{forward.h}, parameterised by the
+vector length \texttt{S}, and outputs results through the
+\texttt{QuantizedTensor<S>} struct. A \texttt{QuantizedTensor<S>}
+bundles an \texttt{int8\_t} array \texttt{q[S]} for the quantised values
+and a \texttt{float} array \texttt{s[S]} for the scale factors, where
+only \texttt{S/GS} scale entries are populated, one per group of
+\texttt{GS} consecutive elements.
+
+\noindent\textbf{Quantisation.} The \texttt{quantize<S>} function
+processes the input float vector in groups of \texttt{GS} elements, as
+shown in Listing~\ref{lst:quantize}. For each group, the function first
+scans the \texttt{GS} elements to find the maximum absolute value
+\texttt{wmax}, then computes the group scale as $s = \texttt{wmax} /
+127.0$, which maps the largest magnitude in the group to the maximum
+representable INT8 value of 127. Each element is then divided by the
+scale and rounded to the nearest integer, producing a value in
+$[-127, 127]$ that is stored as \texttt{int8\_t}. The quantised values
+and scales are accumulated into local buffers
+\texttt{quantized\_buffer[S]} and \texttt{scale\_buffer[num\_groups]}
+before being written to the output struct via \texttt{memcpy}, avoiding
+repeated writes to the output pointer during the inner loops.
+
+\begin{lstlisting}[
+  caption = {Group-wise quantisation in \texttt{quantize<S>} from
+             \texttt{forward.h}. The outer loop iterates over groups;
+             the inner scan finds \texttt{wmax} and the second inner loop
+             converts each element. The compile-time constant \texttt{GS}
+             replaces the runtime parameter \texttt{runtime\_gs} so the
+             compiler can evaluate \texttt{S/GS} as a constant expression.},
+  label   = {lst:quantize}
+]
+for (int group = 0; group < num_groups; group++) {
+    #pragma HLS UNROLL factor=1
+    #pragma HLS PIPELINE
+    float wmax = 0.0f;
+    int base_idx = group * GS;
+
+    for (int i = 0; i < GS; i++) {          // find max abs value in group
+        #pragma HLS PIPELINE
+        float val = fabs(x[base_idx + i]);
+        if (val > wmax) wmax = val;
+    }
+
+    float scale = wmax / 127.0f;             // symmetric INT8 scale
+    scale_buffer[group] = scale;
+
+    for (int i = 0; i < GS; i++) {          // quantise each element
+        #pragma HLS PIPELINE
+        quantized_buffer[base_idx + i] =
+            (int8_t)round(x[base_idx + i] / scale);
+    }
+}
+\end{lstlisting}
+
+A notable implementation detail is the use of \texttt{GS} as a
+compile-time constant from \texttt{config.h} rather than the
+\texttt{runtime\_gs} parameter that is formally passed to the function.
+The reason the parameter exists at all is to prevent the C++ compiler
+from issuing a warning about a shadowed variable: an earlier iteration of
+the code attempted to use a local variable also named \texttt{GS}, which
+conflicted with the global constant. The rename to \texttt{runtime\_gs}
+resolves the shadowing, and the function body then uses the global
+\texttt{GS} constant directly. Because \texttt{GS} is a compile-time
+constant, the compiler can statically evaluate \texttt{S/GS} as
+\texttt{num\_groups}, enabling the \texttt{ARRAY\_PARTITION} pragma on
+\texttt{quantized\_buffer} and allowing the inner loops to be analysed
+at synthesis time without variable-bound ambiguity.
+
+The \texttt{PIPELINE} pragma on the outer group loop combined with
+\texttt{UNROLL factor=1} is an intentional configuration. Applying
+\texttt{PIPELINE} to the outer loop while leaving the inner scan and
+quantisation loops unpipelined would normally cause HLS to flatten the
+inner loops into the outer pipeline, which at \texttt{GS=4} means four
+sequential comparisons per outer iteration. The \texttt{UNROLL factor=1}
+prevents the outer loop from being unrolled further, ensuring that the
+group-boundary indexing remains predictable.
 
 \subsection{C-Simulation Results}
-\label{subsec:quant_csim}
+\label{subsec:quantize_csim}
+
+C-simulation was performed by compiling \texttt{quantize\_top} together
+with a software testbench using GCC on the x86 host. The testbench supplied
+an eight-element float vector containing a mix of positive and negative
+values with varying magnitude and compared the kernel output against a
+software reference implementation of the same group-wise symmetric INT8
+quantisation scheme. Two aspects were verified independently: the INT8
+quantised values and the per-group scale factors.
+
+Table~\ref{tab:quantize_csim} shows the INT8 output and scale factors
+produced by the kernel and the software reference for each element and
+group respectively.
+
+\begin{table}[H]
+  \centering
+  \caption{C-simulation output for \texttt{quantize} with input
+           $\mathbf{x} = [0.5, -1.2, 3.7, -0.3, 2.1, -4.5, 1.0, -2.8]$.
+           All INT8 values and both scale factors match the software
+           reference exactly. GS\,=\,4 so group~0 covers indices 0--3
+           and group~1 covers indices 4--7.}
+  \label{tab:quantize_csim}
+  \begin{tabular}{lrrrr}
+    \toprule
+    Index & Input ($x$) & HW \texttt{q} & SW \texttt{q} & Match \\
+    \midrule
+    0 &  0.5 &   17 &   17 & \checkmark \\
+    1 & -1.2 &  -41 &  -41 & \checkmark \\
+    2 &  3.7 &  127 &  127 & \checkmark \\
+    3 & -0.3 &  -10 &  -10 & \checkmark \\
+    4 &  2.1 &   59 &   59 & \checkmark \\
+    5 & -4.5 & -127 & -127 & \checkmark \\
+    6 &  1.0 &   28 &   28 & \checkmark \\
+    7 & -2.8 &  -79 &  -79 & \checkmark \\
+    \midrule
+    Group & & HW scale & SW scale & Abs error \\
+    \midrule
+    0 & & 0.029134 & 0.029134 & 0 \\
+    1 & & 0.035433 & 0.035433 & 0 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+All eight INT8 values and both scale factors agree exactly between the
+hardware kernel and the software reference. Elements at index~2 and
+index~5 map to the boundary values of $+127$ and $-127$ respectively,
+confirming that the maximum-magnitude element in each group correctly
+saturates the INT8 range. The scale for group~0 is $3.7 / 127 \approx
+0.02913$, and for group~1 is $4.5 / 127 \approx 0.03543$, both of which
+match the reference to the displayed precision. The csim run completed
+with zero errors.
 
 \subsection{HLS Synthesis Results}
-\label{subsec:quant_csyn}
+\label{subsec:quantize_csyn}
+
+The \texttt{quantize} function was synthesised in isolation at
+\SI{150}{\mega\hertz} on the \texttt{xczu9eg-ffvb1156-2-e} device.
+Tables~\ref{tab:quantize_timing} and \ref{tab:quantize_top_latency}
+present the top-level timing and latency summary, followed by
+Table~\ref{tab:quantize_resources} for resource utilisation and
+Table~\ref{tab:quantize_latency} for the per-stage breakdown.
+
+\begin{table}[H]
+  \centering
+  \caption{Timing summary for \texttt{quantize\_top} at
+           \SI{150}{\mega\hertz}.}
+  \label{tab:quantize_timing}
+  \begin{tabular}{lrrr}
+    \toprule
+    Clock & Target (ns) & Estimated (ns) & Uncertainty (ns) \\
+    \midrule
+    ap\_clk & 6.667 & 4.867 & 1.800 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \caption{Top-level latency summary for \texttt{quantize\_top} at
+           \SI{150}{\mega\hertz}.}
+  \label{tab:quantize_top_latency}
+  \begin{tabular}{rrrrrrl}
+    \toprule
+    \multicolumn{2}{c}{Latency (cycles)} &
+    \multicolumn{2}{c}{Latency (absolute)} &
+    \multicolumn{2}{c}{Interval (cycles)} & Pipeline \\
+    min & max & min & max & min & max & type \\
+    \midrule
+    84 & 84 & \SI{0.560}{\micro\second} & \SI{0.560}{\micro\second} & 85 & 85 & no \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \caption{Resource utilisation of \texttt{quantize} synthesised at
+           $S = 8$ on the ZCU102. The core-only column excludes the
+           AXI master adapter.}
+  \label{tab:quantize_resources}
+  \begin{tabular}{lrrrr}
+    \toprule
+    Resource & Used (total) & Used (core only) & Available & Utilisation (\%) \\
+    \midrule
+    LUT  & 6{,}379 & 3{,}275 & 274{,}080 & 2 \\
+    FF   & 3{,}556 & 1{,}653 & 548{,}160 & $<$1 \\
+    BRAM & 4       & 0       & 1{,}824   & $<$1 \\
+    DSP  & 0       & 0       & 2{,}520   & 0 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \caption{Latency breakdown of \texttt{quantize} ($S = 8$, $GS = 4$)
+           by internal pipeline stage at \SI{150}{\mega\hertz}.
+           Total function latency is 84 cycles
+           (\SI{560}{\nano\second}).}
+  \label{tab:quantize_latency}
+  \begin{tabular}{lrrrr}
+    \toprule
+    Stage & Trip count & II & Iteration latency & Total (cycles) \\
+    \midrule
+    \texttt{main\_loop} (quantise core) & 2 & 4  & 41 & 44 \\
+    Pipeline\_2 (write \texttt{q\_out}) & 8 & 1  &  1 &  8 \\
+    Pipeline\_3 (write \texttt{s\_out}) & 2 & 1  &  1 &  2 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+The most striking result is the zero DSP utilisation. In contrast to
+RMSNorm, which consumed 26 DSPs for its floating-point multiplications,
+\texttt{quantize} uses none. The Bind Op report confirms that both
+division operations: computing the group scale as $s =
+\texttt{wmax}/127$ and quantising each element as $q_i = x_i / s$, are
+mapped to fabric-based \texttt{fdiv} units with the \texttt{no\_dsp}
+suffix. This occurs because Xilinx DSP48 blocks natively support only
+multiply-accumulate operations; floating-point division has no direct DSP
+mapping and must instead be implemented using LUT-based logic. The
+consequence is higher LUT usage (3{,}275 core LUTs versus 3{,}575 for
+RMSNorm) but zero DSP consumption, which is favourable since DSPs are the
+most scarce resource on the ZCU102 relative to LUTs.
+
+The \texttt{main\_loop} achieves II\,=\,4 across its two group
+iterations, meaning a new group begins every 4 clock cycles. This is
+determined by the inner loop over $GS = 4$ elements within each group:
+since the inner quantisation loop is pipelined at II\,=\,1, processing
+four elements takes four cycles and the outer group loop can start its
+next iteration once those four cycles have elapsed. The iteration latency
+of 41 cycles is dominated by the two \texttt{fdiv} units, each with an
+11-cycle pipeline depth at \SI{150}{\mega\hertz}. Two \texttt{fdiv}
+instances are synthesised — one for the scale computation and one for the
+per-element quantisation divisions, allowing the two operations to
+overlap in the pipeline. The intermediate \texttt{QuantizedTensor} struct
+fields \texttt{qt.q} and \texttt{qt.s} are inferred as small register
+files (\texttt{qt\_q\_U} and \texttt{qt\_s\_U}) rather than BRAMs, since
+their sizes of 8 bytes and 32 bytes respectively fall well below the
+BRAM threshold. The timing closure situation is identical to RMSNorm:
+estimated \SI{4.867}{\nano\second} plus \SI{1.80}{\nano\second}
+uncertainty exactly exhausts the \SI{6.667}{\nano\second} budget,
+leaving zero slack.
+
+% =============================================================================
+\section{Dequantisation}
+\label{sec:dequantize_impl}
+% =============================================================================
+
+\subsection{Implementation}
+\label{subsec:dequantize_impl}
+
+The \texttt{dequantize<S>} function is the inverse of
+\texttt{quantize<S>}. For each element at index $i$, it multiplies the
+INT8 value \texttt{qx->q[i]} by the corresponding group scale
+\texttt{qx->s[i/GS]}, recovering an approximation of the original float.
+The division \texttt{i/GS} computes the group index, and because
+\texttt{GS} is a power of two, the compiler replaces this with a
+bitwise right shift at no hardware cost. No pragma directives are
+applied to \texttt{dequantize} in the prototype, since it operates on
+a single vector element at a time with no loop-carried dependencies and
+no memory partitioning decisions to make.
+
+The maximum reconstruction error per element is bounded by
+$\frac{1}{2} \cdot s = \frac{\texttt{wmax}}{254}$, which for typical
+activation magnitudes of order 1.0 gives an absolute error of
+approximately 0.004. This error is acceptable for the attention
+projection inputs but motivates the design decision in the full
+TinyLlama kernel to store KV cache values with per-group scales rather
+than a single scale shared across the full \texttt{kv\_dim}-dimensional
+vector.
+
+\subsection{C-Simulation Results}
+\label{subsec:dequantize_csim}
+
+% Add csim pass/fail and output table for dequantize_top.
+% Testbench strategy: supply known INT8 values and explicit scale factors,
+% then verify that every recovered float equals q[i] * s[i/GS] exactly.
+
+\subsection{HLS Synthesis Results}
+\label{subsec:dequantize_csyn}
+
+The \texttt{dequantize} function was synthesised in isolation under
+identical conditions to \texttt{quantize}.
+Tables~\ref{tab:dequantize_timing} and \ref{tab:dequantize_top_latency}
+present the top-level timing and latency summary, followed by
+Table~\ref{tab:dequantize_resources} for resource utilisation and
+Table~\ref{tab:dequantize_latency} for the per-stage breakdown.
+
+\begin{table}[H]
+  \centering
+  \caption{Timing summary for \texttt{dequantize\_top} at
+           \SI{150}{\mega\hertz}.}
+  \label{tab:dequantize_timing}
+  \begin{tabular}{lrrr}
+    \toprule
+    Clock & Target (ns) & Estimated (ns) & Uncertainty (ns) \\
+    \midrule
+    ap\_clk & 6.667 & 4.867 & 1.800 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \caption{Top-level latency summary for \texttt{dequantize\_top} at
+           \SI{150}{\mega\hertz}.}
+  \label{tab:dequantize_top_latency}
+  \begin{tabular}{rrrrrrl}
+    \toprule
+    \multicolumn{2}{c}{Latency (cycles)} &
+    \multicolumn{2}{c}{Latency (absolute)} &
+    \multicolumn{2}{c}{Interval (cycles)} & Pipeline \\
+    min & max & min & max & min & max & type \\
+    \midrule
+    45 & 45 & \SI{0.300}{\micro\second} & \SI{0.300}{\micro\second} & 46 & 46 & no \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \caption{Resource utilisation of \texttt{dequantize} synthesised at
+           $S = 8$ on the ZCU102. The core-only column excludes the
+           AXI master adapter.}
+  \label{tab:dequantize_resources}
+  \begin{tabular}{lrrrr}
+    \toprule
+    Resource & Used (total) & Used (core only) & Available & Utilisation (\%) \\
+    \midrule
+    LUT  & 3{,}128 &   273 & 274{,}080 & $<$1 \\
+    FF   & 2{,}244 &   372 & 548{,}160 & $<$1 \\
+    BRAM & 4       &     0 & 1{,}824   & $<$1 \\
+    DSP  & 3       &     3 & 2{,}520   & $<$1 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \caption{Latency breakdown of \texttt{dequantize} ($S = 8$, $GS = 4$)
+           at \SI{150}{\mega\hertz}. Total function latency is 45 cycles
+           (\SI{300}{\nano\second}).}
+  \label{tab:dequantize_latency}
+  \begin{tabular}{lrrrr}
+    \toprule
+    Stage & Trip count & II & Iteration latency & Total (cycles) \\
+    \midrule
+    \texttt{VITIS\_LOOP\_55\_1} (dequantise loop) & 8 & 1 & 12 & 18 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+The synthesis results reveal a significant asymmetry between the two
+inverse operations. \texttt{Dequantize} is nearly twice as fast (45
+cycles versus 84 cycles), consumes only a twelfth of the core LUTs
+(273 versus 3{,}275), and achieves a perfect II\,=\,1 on its inner
+loop. The root cause of this asymmetry is the difference between the
+arithmetic operations each function requires.
+
+\texttt{Dequantize} performs a single floating-point multiplication per
+element, $x_i = q_i \times s_{\lfloor i/GS \rfloor}$, which maps to one
+\texttt{fmul} unit consuming 3 DSP blocks with a 3-cycle pipeline latency.
+Since each element's result depends only on its own INT8 value and its
+group scale, and since each element's result depends only on its own INT8 value and its
+group scale with no dependency on any previous element, there are no loop-carried
+dependencies, and II\,=\,1 is achievable. The 12-cycle iteration latency
+reflects the \texttt{fmul} pipeline depth combined with the AXI read
+latency for loading \texttt{q\_in} and \texttt{s\_in}.
+
+\texttt{Quantize}, by contrast, requires two floating-point divisions per
+group: one to compute $s = \texttt{wmax}/127$ and one per element for
+$\hat{x}_i = x_i/s$. Unlike multiplication, floating-point division has
+no mapping to Xilinx DSP48 blocks and is implemented entirely in LUT
+fabric, as confirmed by the \texttt{no\_dsp} suffix on both
+\texttt{fdiv} instances in the Bind Op report. This explains why
+\texttt{quantize} consumes zero DSPs while using significantly more LUTs.
+The 11-cycle \texttt{fdiv} latency at \SI{150}{\mega\hertz}, combined
+with the sequential dependency between scale computation and element
+quantisation within each group, is what drives the 41-cycle iteration
+latency in \texttt{main\_loop}.
+
+An additional artefact visible in the \texttt{quantize} Bind Storage
+report is the presence of two small ROM lookup tables,
+\texttt{mask\_table} and \texttt{one\_half\_table}, which HLS infers to
+implement the IEEE~754 round-to-nearest operation used by the
+\texttt{round()} call. These tables are inferred in register fabric
+rather than BRAM at this prototype scale and contribute to the higher
+LUT count. The AXI data width report for \texttt{dequantize} also shows
+an interesting contrast: the \texttt{q\_in} port operates at an 8-bit
+native width widened to a 32-bit AXI bus width (8\,$\rightarrow$\,32),
+reflecting the fact that INT8 data must be packed into the 32-bit AXI
+data bus in groups of four bytes per transfer.
 
 % =============================================================================
 \section{Matrix--Vector Multiplication}

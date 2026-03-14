@@ -260,157 +260,214 @@
 \newlabel{lst:rmsnorm}{{4.1}{24}{\texttt {rmsnorm<S>} implementation from \texttt {forward.h}. Data is staged into local buffers before computation so that \texttt {ARRAY\_PARTITION} can be applied. The reduction loop uses \texttt {UNROLL factor=4} to accumulate four partial sums simultaneously; the normalisation loop uses \texttt {UNROLL factor=64} since it is fully data-parallel}{lstlisting.67}{}}
 \newlabel{lst:rmsnorm@cref}{{[listing][1][4]4.1}{[1][24][]24}{}{}{}}
 \@writefile{lol}{\contentsline {lstlisting}{\numberline {4.1}{\ignorespaces \texttt  {rmsnorm<S>} implementation from \texttt  {forward.h}. Data is staged into local buffers before computation so that \texttt  {ARRAY\_PARTITION} can be applied. The reduction loop uses \texttt  {UNROLL factor=4} to accumulate four partial sums simultaneously; the normalisation loop uses \texttt  {UNROLL factor=64} since it is fully data-parallel.}}{24}{lstlisting.67}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.1.2}C-Simulation Results}{27}{subsection.98}\protected@file@percent }
-\newlabel{subsec:rmsnorm_csim}{{4.1.2}{27}{C-Simulation Results}{subsection.98}{}}
-\newlabel{subsec:rmsnorm_csim@cref}{{[subsection][2][4,1]4.1.2}{[1][25][]27}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.1.3}HLS Synthesis Results}{27}{subsection.99}\protected@file@percent }
-\newlabel{subsec:rmsnorm_csyn}{{4.1.3}{27}{HLS Synthesis Results}{subsection.99}{}}
-\newlabel{subsec:rmsnorm_csyn@cref}{{[subsection][3][4,1]4.1.3}{[1][25][]27}{}{}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {4.2}Quantisation and Dequantisation}{27}{section.100}\protected@file@percent }
-\newlabel{sec:quant_impl}{{4.2}{27}{Quantisation and Dequantisation}{section.100}{}}
-\newlabel{sec:quant_impl@cref}{{[section][2][4]4.2}{[1][25][]27}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.2.1}Implementation}{27}{subsection.101}\protected@file@percent }
-\newlabel{subsec:quant_impl}{{4.2.1}{27}{Implementation}{subsection.101}{}}
-\newlabel{subsec:quant_impl@cref}{{[subsection][1][4,2]4.2.1}{[1][25][]27}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.2.2}C-Simulation Results}{27}{subsection.102}\protected@file@percent }
-\newlabel{subsec:quant_csim}{{4.2.2}{27}{C-Simulation Results}{subsection.102}{}}
-\newlabel{subsec:quant_csim@cref}{{[subsection][2][4,2]4.2.2}{[1][25][]27}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.2.3}HLS Synthesis Results}{27}{subsection.103}\protected@file@percent }
-\newlabel{subsec:quant_csyn}{{4.2.3}{27}{HLS Synthesis Results}{subsection.103}{}}
-\newlabel{subsec:quant_csyn@cref}{{[subsection][3][4,2]4.2.3}{[1][25][]27}{}{}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {4.3}Matrix--Vector Multiplication}{27}{section.104}\protected@file@percent }
-\newlabel{sec:matmul_impl}{{4.3}{27}{Matrix--Vector Multiplication}{section.104}{}}
-\newlabel{sec:matmul_impl@cref}{{[section][3][4]4.3}{[1][25][]27}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.3.1}Implementation}{27}{subsection.105}\protected@file@percent }
-\newlabel{subsec:matmul_impl}{{4.3.1}{27}{Implementation}{subsection.105}{}}
-\newlabel{subsec:matmul_impl@cref}{{[subsection][1][4,3]4.3.1}{[1][25][]27}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.3.2}C-Simulation Results}{27}{subsection.106}\protected@file@percent }
-\newlabel{subsec:matmul_csim}{{4.3.2}{27}{C-Simulation Results}{subsection.106}{}}
-\newlabel{subsec:matmul_csim@cref}{{[subsection][2][4,3]4.3.2}{[1][25][]27}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.3.3}HLS Synthesis Results}{27}{subsection.107}\protected@file@percent }
-\newlabel{subsec:matmul_csyn}{{4.3.3}{27}{HLS Synthesis Results}{subsection.107}{}}
-\newlabel{subsec:matmul_csyn@cref}{{[subsection][3][4,3]4.3.3}{[1][25][]27}{}{}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {4.4}Softmax}{27}{section.108}\protected@file@percent }
-\newlabel{sec:softmax_impl}{{4.4}{27}{Softmax}{section.108}{}}
-\newlabel{sec:softmax_impl@cref}{{[section][4][4]4.4}{[1][25][]27}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.4.1}Implementation}{27}{subsection.109}\protected@file@percent }
-\newlabel{subsec:softmax_impl}{{4.4.1}{27}{Implementation}{subsection.109}{}}
-\newlabel{subsec:softmax_impl@cref}{{[subsection][1][4,4]4.4.1}{[1][25][]27}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.4.2}C-Simulation Results}{27}{subsection.110}\protected@file@percent }
-\newlabel{subsec:softmax_csim}{{4.4.2}{27}{C-Simulation Results}{subsection.110}{}}
-\newlabel{subsec:softmax_csim@cref}{{[subsection][2][4,4]4.4.2}{[1][25][]27}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.4.3}HLS Synthesis Results}{27}{subsection.111}\protected@file@percent }
-\newlabel{subsec:softmax_csyn}{{4.4.3}{27}{HLS Synthesis Results}{subsection.111}{}}
-\newlabel{subsec:softmax_csyn@cref}{{[subsection][3][4,4]4.4.3}{[1][25][]27}{}{}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {4.5}Grouped-Query Attention}{27}{section.112}\protected@file@percent }
-\newlabel{sec:attn_impl}{{4.5}{27}{Grouped-Query Attention}{section.112}{}}
-\newlabel{sec:attn_impl@cref}{{[section][5][4]4.5}{[1][25][]27}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.5.1}Baseline: Floating-Point Attention}{27}{subsection.113}\protected@file@percent }
-\newlabel{subsec:attn_fp32}{{4.5.1}{27}{Baseline: Floating-Point Attention}{subsection.113}{}}
-\newlabel{subsec:attn_fp32@cref}{{[subsection][1][4,5]4.5.1}{[1][25][]27}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.5.2}Refined: Per-Head INT8 Attention}{27}{subsection.114}\protected@file@percent }
-\newlabel{subsec:attn_int8}{{4.5.2}{27}{Refined: Per-Head INT8 Attention}{subsection.114}{}}
-\newlabel{subsec:attn_int8@cref}{{[subsection][2][4,5]4.5.2}{[1][25][]27}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.5.3}C-Simulation Results}{27}{subsection.115}\protected@file@percent }
-\newlabel{subsec:attn_csim}{{4.5.3}{27}{C-Simulation Results}{subsection.115}{}}
-\newlabel{subsec:attn_csim@cref}{{[subsection][3][4,5]4.5.3}{[1][25][]27}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.5.4}HLS Synthesis Results}{27}{subsection.116}\protected@file@percent }
-\newlabel{subsec:attn_csyn}{{4.5.4}{27}{HLS Synthesis Results}{subsection.116}{}}
-\newlabel{subsec:attn_csyn@cref}{{[subsection][4][4,5]4.5.4}{[1][25][]27}{}{}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {4.6}SwiGLU Feed-Forward Network}{27}{section.117}\protected@file@percent }
-\newlabel{sec:ffn_impl}{{4.6}{27}{SwiGLU Feed-Forward Network}{section.117}{}}
-\newlabel{sec:ffn_impl@cref}{{[section][6][4]4.6}{[1][25][]27}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.6.1}Implementation}{27}{subsection.118}\protected@file@percent }
-\newlabel{subsec:ffn_impl_detail}{{4.6.1}{27}{Implementation}{subsection.118}{}}
-\newlabel{subsec:ffn_impl_detail@cref}{{[subsection][1][4,6]4.6.1}{[1][25][]27}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.6.2}C-Simulation Results}{27}{subsection.119}\protected@file@percent }
-\newlabel{subsec:ffn_csim}{{4.6.2}{27}{C-Simulation Results}{subsection.119}{}}
-\newlabel{subsec:ffn_csim@cref}{{[subsection][2][4,6]4.6.2}{[1][25][]27}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.6.3}HLS Synthesis Results}{27}{subsection.120}\protected@file@percent }
-\newlabel{subsec:ffn_csyn}{{4.6.3}{27}{HLS Synthesis Results}{subsection.120}{}}
-\newlabel{subsec:ffn_csyn@cref}{{[subsection][3][4,6]4.6.3}{[1][25][]27}{}{}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {4.7}Top-Level Forward Function}{27}{section.121}\protected@file@percent }
-\newlabel{sec:forward_impl}{{4.7}{27}{Top-Level Forward Function}{section.121}{}}
-\newlabel{sec:forward_impl@cref}{{[section][7][4]4.7}{[1][25][]27}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.7.1}AXI Interface and Buffer Layout}{27}{subsection.122}\protected@file@percent }
-\newlabel{subsec:forward_axi}{{4.7.1}{27}{AXI Interface and Buffer Layout}{subsection.122}{}}
-\newlabel{subsec:forward_axi@cref}{{[subsection][1][4,7]4.7.1}{[1][25][]27}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.7.2}Layer Loop and KV Cache Management}{27}{subsection.123}\protected@file@percent }
-\newlabel{subsec:forward_layers}{{4.7.2}{27}{Layer Loop and KV Cache Management}{subsection.123}{}}
-\newlabel{subsec:forward_layers@cref}{{[subsection][2][4,7]4.7.2}{[1][25][]27}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.7.3}Known Limitations and Design Decisions}{27}{subsection.124}\protected@file@percent }
-\newlabel{subsec:forward_limitations}{{4.7.3}{27}{Known Limitations and Design Decisions}{subsection.124}{}}
-\newlabel{subsec:forward_limitations@cref}{{[subsection][3][4,7]4.7.3}{[1][25][]27}{}{}{}}
-\@writefile{toc}{\contentsline {chapter}{\numberline {5}Results and Discussion}{28}{chapter.125}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1.2}C-Simulation Results}{25}{subsection.98}\protected@file@percent }
+\newlabel{subsec:rmsnorm_csim}{{4.1.2}{25}{C-Simulation Results}{subsection.98}{}}
+\newlabel{subsec:rmsnorm_csim@cref}{{[subsection][2][4,1]4.1.2}{[1][25][]25}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4.2}{\ignorespaces C-simulation output for \texttt  {rmsnorm} with input $\mathbf  {x} = [1, -2, 3, -4, 5, -6, 7, -8]$ and weight $\mathbf  {g} = [0.5, 1.0, 1.5, 2.0, 0.5, 1.0, 1.5, 2.0]$. All eight elements match the software reference exactly.}}{26}{table.caption.99}\protected@file@percent }
+\newlabel{tab:rmsnorm_csim}{{4.2}{26}{C-simulation output for \texttt {rmsnorm} with input $\mathbf {x} = [1, -2, 3, -4, 5, -6, 7, -8]$ and weight $\mathbf {g} = [0.5, 1.0, 1.5, 2.0, 0.5, 1.0, 1.5, 2.0]$. All eight elements match the software reference exactly}{table.caption.99}{}}
+\newlabel{tab:rmsnorm_csim@cref}{{[table][2][4]4.2}{[1][26][]26}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1.3}HLS Synthesis Results}{26}{subsection.100}\protected@file@percent }
+\newlabel{subsec:rmsnorm_csyn}{{4.1.3}{26}{HLS Synthesis Results}{subsection.100}{}}
+\newlabel{subsec:rmsnorm_csyn@cref}{{[subsection][3][4,1]4.1.3}{[1][26][]26}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4.3}{\ignorespaces Timing summary for \texttt  {rmsnorm\_top} at the \SI {150}{\mega \hertz } (\SI {6.667}{\nano \second }) target clock.}}{27}{table.caption.101}\protected@file@percent }
+\newlabel{tab:rmsnorm_timing}{{4.3}{27}{Timing summary for \texttt {rmsnorm\_top} at the \SI {150}{\mega \hertz } (\SI {6.667}{\nano \second }) target clock}{table.caption.101}{}}
+\newlabel{tab:rmsnorm_timing@cref}{{[table][3][4]4.3}{[1][27][]27}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4.4}{\ignorespaces Top-level latency summary for \texttt  {rmsnorm\_top} at \SI {150}{\mega \hertz }.}}{27}{table.caption.102}\protected@file@percent }
+\newlabel{tab:rmsnorm_top_latency}{{4.4}{27}{Top-level latency summary for \texttt {rmsnorm\_top} at \SI {150}{\mega \hertz }}{table.caption.102}{}}
+\newlabel{tab:rmsnorm_top_latency@cref}{{[table][4][4]4.4}{[1][27][]27}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4.5}{\ignorespaces Resource utilisation of the \texttt  {rmsnorm} function synthesised at $S = 8$ on the ZCU102 (\texttt  {xczu9eg-ffvb1156-2-e}). Figures in the core-only column exclude the AXI master adapter overhead, which is not present when the function is inlined into the full kernel.}}{27}{table.caption.103}\protected@file@percent }
+\newlabel{tab:rmsnorm_resources}{{4.5}{27}{Resource utilisation of the \texttt {rmsnorm} function synthesised at $S = 8$ on the ZCU102 (\texttt {xczu9eg-ffvb1156-2-e}). Figures in the core-only column exclude the AXI master adapter overhead, which is not present when the function is inlined into the full kernel}{table.caption.103}{}}
+\newlabel{tab:rmsnorm_resources@cref}{{[table][5][4]4.5}{[1][27][]27}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4.6}{\ignorespaces Latency breakdown of \texttt  {rmsnorm} ($S = 8$) by internal pipeline stage at \SI {150}{\mega \hertz }. Total function latency is 144 cycles (\SI {960}{\nano \second }).}}{27}{table.caption.104}\protected@file@percent }
+\newlabel{tab:rmsnorm_latency}{{4.6}{27}{Latency breakdown of \texttt {rmsnorm} ($S = 8$) by internal pipeline stage at \SI {150}{\mega \hertz }. Total function latency is 144 cycles (\SI {960}{\nano \second })}{table.caption.104}{}}
+\newlabel{tab:rmsnorm_latency@cref}{{[table][6][4]4.6}{[1][27][]27}{}{}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {4.2}Quantisation}{28}{section.105}\protected@file@percent }
+\newlabel{sec:quantize_impl}{{4.2}{28}{Quantisation}{section.105}{}}
+\newlabel{sec:quantize_impl@cref}{{[section][2][4]4.2}{[1][28][]28}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2.1}Implementation}{28}{subsection.106}\protected@file@percent }
+\newlabel{subsec:quantize_impl}{{4.2.1}{28}{Implementation}{subsection.106}{}}
+\newlabel{subsec:quantize_impl@cref}{{[subsection][1][4,2]4.2.1}{[1][28][]28}{}{}{}}
+\newlabel{lst:quantize}{{4.2}{29}{Group-wise quantisation in \texttt {quantize<S>} from \texttt {forward.h}. The outer loop iterates over groups; the inner scan finds \texttt {wmax} and the second inner loop converts each element. The compile-time constant \texttt {GS} replaces the runtime parameter \texttt {runtime\_gs} so the compiler can evaluate \texttt {S/GS} as a constant expression}{lstlisting.107}{}}
+\newlabel{lst:quantize@cref}{{[listing][2][4]4.2}{[1][29][]29}{}{}{}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {4.2}{\ignorespaces Group-wise quantisation in \texttt  {quantize<S>} from \texttt  {forward.h}. The outer loop iterates over groups; the inner scan finds \texttt  {wmax} and the second inner loop converts each element. The compile-time constant \texttt  {GS} replaces the runtime parameter \texttt  {runtime\_gs} so the compiler can evaluate \texttt  {S/GS} as a constant expression.}}{29}{lstlisting.107}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2.2}C-Simulation Results}{30}{subsection.129}\protected@file@percent }
+\newlabel{subsec:quantize_csim}{{4.2.2}{30}{C-Simulation Results}{subsection.129}{}}
+\newlabel{subsec:quantize_csim@cref}{{[subsection][2][4,2]4.2.2}{[1][30][]30}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4.7}{\ignorespaces C-simulation output for \texttt  {quantize} with input $\mathbf  {x} = [0.5, -1.2, 3.7, -0.3, 2.1, -4.5, 1.0, -2.8]$. All INT8 values and both scale factors match the software reference exactly. GS\,=\,4 so group~0 covers indices 0--3 and group~1 covers indices 4--7.}}{31}{table.caption.130}\protected@file@percent }
+\newlabel{tab:quantize_csim}{{4.7}{31}{C-simulation output for \texttt {quantize} with input $\mathbf {x} = [0.5, -1.2, 3.7, -0.3, 2.1, -4.5, 1.0, -2.8]$. All INT8 values and both scale factors match the software reference exactly. GS\,=\,4 so group~0 covers indices 0--3 and group~1 covers indices 4--7}{table.caption.130}{}}
+\newlabel{tab:quantize_csim@cref}{{[table][7][4]4.7}{[1][30][]31}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2.3}HLS Synthesis Results}{31}{subsection.131}\protected@file@percent }
+\newlabel{subsec:quantize_csyn}{{4.2.3}{31}{HLS Synthesis Results}{subsection.131}{}}
+\newlabel{subsec:quantize_csyn@cref}{{[subsection][3][4,2]4.2.3}{[1][31][]31}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4.8}{\ignorespaces Timing summary for \texttt  {quantize\_top} at \SI {150}{\mega \hertz }.}}{31}{table.caption.132}\protected@file@percent }
+\newlabel{tab:quantize_timing}{{4.8}{31}{Timing summary for \texttt {quantize\_top} at \SI {150}{\mega \hertz }}{table.caption.132}{}}
+\newlabel{tab:quantize_timing@cref}{{[table][8][4]4.8}{[1][31][]31}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4.9}{\ignorespaces Top-level latency summary for \texttt  {quantize\_top} at \SI {150}{\mega \hertz }.}}{32}{table.caption.133}\protected@file@percent }
+\newlabel{tab:quantize_top_latency}{{4.9}{32}{Top-level latency summary for \texttt {quantize\_top} at \SI {150}{\mega \hertz }}{table.caption.133}{}}
+\newlabel{tab:quantize_top_latency@cref}{{[table][9][4]4.9}{[1][31][]32}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4.10}{\ignorespaces Resource utilisation of \texttt  {quantize} synthesised at $S = 8$ on the ZCU102. The core-only column excludes the AXI master adapter.}}{32}{table.caption.134}\protected@file@percent }
+\newlabel{tab:quantize_resources}{{4.10}{32}{Resource utilisation of \texttt {quantize} synthesised at $S = 8$ on the ZCU102. The core-only column excludes the AXI master adapter}{table.caption.134}{}}
+\newlabel{tab:quantize_resources@cref}{{[table][10][4]4.10}{[1][32][]32}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4.11}{\ignorespaces Latency breakdown of \texttt  {quantize} ($S = 8$, $GS = 4$) by internal pipeline stage at \SI {150}{\mega \hertz }. Total function latency is 84 cycles (\SI {560}{\nano \second }).}}{32}{table.caption.135}\protected@file@percent }
+\newlabel{tab:quantize_latency}{{4.11}{32}{Latency breakdown of \texttt {quantize} ($S = 8$, $GS = 4$) by internal pipeline stage at \SI {150}{\mega \hertz }. Total function latency is 84 cycles (\SI {560}{\nano \second })}{table.caption.135}{}}
+\newlabel{tab:quantize_latency@cref}{{[table][11][4]4.11}{[1][32][]32}{}{}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {4.3}Dequantisation}{33}{section.136}\protected@file@percent }
+\newlabel{sec:dequantize_impl}{{4.3}{33}{Dequantisation}{section.136}{}}
+\newlabel{sec:dequantize_impl@cref}{{[section][3][4]4.3}{[1][33][]33}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3.1}Implementation}{33}{subsection.137}\protected@file@percent }
+\newlabel{subsec:dequantize_impl}{{4.3.1}{33}{Implementation}{subsection.137}{}}
+\newlabel{subsec:dequantize_impl@cref}{{[subsection][1][4,3]4.3.1}{[1][33][]33}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3.2}C-Simulation Results}{33}{subsection.138}\protected@file@percent }
+\newlabel{subsec:dequantize_csim}{{4.3.2}{33}{C-Simulation Results}{subsection.138}{}}
+\newlabel{subsec:dequantize_csim@cref}{{[subsection][2][4,3]4.3.2}{[1][33][]33}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3.3}HLS Synthesis Results}{33}{subsection.139}\protected@file@percent }
+\newlabel{subsec:dequantize_csyn}{{4.3.3}{33}{HLS Synthesis Results}{subsection.139}{}}
+\newlabel{subsec:dequantize_csyn@cref}{{[subsection][3][4,3]4.3.3}{[1][33][]33}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4.12}{\ignorespaces Timing summary for \texttt  {dequantize\_top} at \SI {150}{\mega \hertz }.}}{34}{table.caption.140}\protected@file@percent }
+\newlabel{tab:dequantize_timing}{{4.12}{34}{Timing summary for \texttt {dequantize\_top} at \SI {150}{\mega \hertz }}{table.caption.140}{}}
+\newlabel{tab:dequantize_timing@cref}{{[table][12][4]4.12}{[1][33][]34}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4.13}{\ignorespaces Top-level latency summary for \texttt  {dequantize\_top} at \SI {150}{\mega \hertz }.}}{34}{table.caption.141}\protected@file@percent }
+\newlabel{tab:dequantize_top_latency}{{4.13}{34}{Top-level latency summary for \texttt {dequantize\_top} at \SI {150}{\mega \hertz }}{table.caption.141}{}}
+\newlabel{tab:dequantize_top_latency@cref}{{[table][13][4]4.13}{[1][34][]34}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4.14}{\ignorespaces Resource utilisation of \texttt  {dequantize} synthesised at $S = 8$ on the ZCU102. The core-only column excludes the AXI master adapter.}}{34}{table.caption.142}\protected@file@percent }
+\newlabel{tab:dequantize_resources}{{4.14}{34}{Resource utilisation of \texttt {dequantize} synthesised at $S = 8$ on the ZCU102. The core-only column excludes the AXI master adapter}{table.caption.142}{}}
+\newlabel{tab:dequantize_resources@cref}{{[table][14][4]4.14}{[1][34][]34}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4.15}{\ignorespaces Latency breakdown of \texttt  {dequantize} ($S = 8$, $GS = 4$) at \SI {150}{\mega \hertz }. Total function latency is 45 cycles (\SI {300}{\nano \second }).}}{34}{table.caption.143}\protected@file@percent }
+\newlabel{tab:dequantize_latency}{{4.15}{34}{Latency breakdown of \texttt {dequantize} ($S = 8$, $GS = 4$) at \SI {150}{\mega \hertz }. Total function latency is 45 cycles (\SI {300}{\nano \second })}{table.caption.143}{}}
+\newlabel{tab:dequantize_latency@cref}{{[table][15][4]4.15}{[1][34][]34}{}{}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {4.4}Matrix--Vector Multiplication}{36}{section.144}\protected@file@percent }
+\newlabel{sec:matmul_impl}{{4.4}{36}{Matrix--Vector Multiplication}{section.144}{}}
+\newlabel{sec:matmul_impl@cref}{{[section][4][4]4.4}{[1][35][]36}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4.1}Implementation}{36}{subsection.145}\protected@file@percent }
+\newlabel{subsec:matmul_impl}{{4.4.1}{36}{Implementation}{subsection.145}{}}
+\newlabel{subsec:matmul_impl@cref}{{[subsection][1][4,4]4.4.1}{[1][35][]36}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4.2}C-Simulation Results}{36}{subsection.146}\protected@file@percent }
+\newlabel{subsec:matmul_csim}{{4.4.2}{36}{C-Simulation Results}{subsection.146}{}}
+\newlabel{subsec:matmul_csim@cref}{{[subsection][2][4,4]4.4.2}{[1][35][]36}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4.3}HLS Synthesis Results}{36}{subsection.147}\protected@file@percent }
+\newlabel{subsec:matmul_csyn}{{4.4.3}{36}{HLS Synthesis Results}{subsection.147}{}}
+\newlabel{subsec:matmul_csyn@cref}{{[subsection][3][4,4]4.4.3}{[1][35][]36}{}{}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {4.5}Softmax}{36}{section.148}\protected@file@percent }
+\newlabel{sec:softmax_impl}{{4.5}{36}{Softmax}{section.148}{}}
+\newlabel{sec:softmax_impl@cref}{{[section][5][4]4.5}{[1][35][]36}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.5.1}Implementation}{36}{subsection.149}\protected@file@percent }
+\newlabel{subsec:softmax_impl}{{4.5.1}{36}{Implementation}{subsection.149}{}}
+\newlabel{subsec:softmax_impl@cref}{{[subsection][1][4,5]4.5.1}{[1][35][]36}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.5.2}C-Simulation Results}{36}{subsection.150}\protected@file@percent }
+\newlabel{subsec:softmax_csim}{{4.5.2}{36}{C-Simulation Results}{subsection.150}{}}
+\newlabel{subsec:softmax_csim@cref}{{[subsection][2][4,5]4.5.2}{[1][35][]36}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.5.3}HLS Synthesis Results}{36}{subsection.151}\protected@file@percent }
+\newlabel{subsec:softmax_csyn}{{4.5.3}{36}{HLS Synthesis Results}{subsection.151}{}}
+\newlabel{subsec:softmax_csyn@cref}{{[subsection][3][4,5]4.5.3}{[1][35][]36}{}{}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {4.6}Grouped-Query Attention}{36}{section.152}\protected@file@percent }
+\newlabel{sec:attn_impl}{{4.6}{36}{Grouped-Query Attention}{section.152}{}}
+\newlabel{sec:attn_impl@cref}{{[section][6][4]4.6}{[1][35][]36}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.6.1}Baseline: Floating-Point Attention}{36}{subsection.153}\protected@file@percent }
+\newlabel{subsec:attn_fp32}{{4.6.1}{36}{Baseline: Floating-Point Attention}{subsection.153}{}}
+\newlabel{subsec:attn_fp32@cref}{{[subsection][1][4,6]4.6.1}{[1][35][]36}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.6.2}Refined: Per-Head INT8 Attention}{36}{subsection.154}\protected@file@percent }
+\newlabel{subsec:attn_int8}{{4.6.2}{36}{Refined: Per-Head INT8 Attention}{subsection.154}{}}
+\newlabel{subsec:attn_int8@cref}{{[subsection][2][4,6]4.6.2}{[1][35][]36}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.6.3}C-Simulation Results}{36}{subsection.155}\protected@file@percent }
+\newlabel{subsec:attn_csim}{{4.6.3}{36}{C-Simulation Results}{subsection.155}{}}
+\newlabel{subsec:attn_csim@cref}{{[subsection][3][4,6]4.6.3}{[1][35][]36}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.6.4}HLS Synthesis Results}{36}{subsection.156}\protected@file@percent }
+\newlabel{subsec:attn_csyn}{{4.6.4}{36}{HLS Synthesis Results}{subsection.156}{}}
+\newlabel{subsec:attn_csyn@cref}{{[subsection][4][4,6]4.6.4}{[1][35][]36}{}{}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {4.7}SwiGLU Feed-Forward Network}{36}{section.157}\protected@file@percent }
+\newlabel{sec:ffn_impl}{{4.7}{36}{SwiGLU Feed-Forward Network}{section.157}{}}
+\newlabel{sec:ffn_impl@cref}{{[section][7][4]4.7}{[1][35][]36}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.7.1}Implementation}{36}{subsection.158}\protected@file@percent }
+\newlabel{subsec:ffn_impl_detail}{{4.7.1}{36}{Implementation}{subsection.158}{}}
+\newlabel{subsec:ffn_impl_detail@cref}{{[subsection][1][4,7]4.7.1}{[1][35][]36}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.7.2}C-Simulation Results}{36}{subsection.159}\protected@file@percent }
+\newlabel{subsec:ffn_csim}{{4.7.2}{36}{C-Simulation Results}{subsection.159}{}}
+\newlabel{subsec:ffn_csim@cref}{{[subsection][2][4,7]4.7.2}{[1][35][]36}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.7.3}HLS Synthesis Results}{36}{subsection.160}\protected@file@percent }
+\newlabel{subsec:ffn_csyn}{{4.7.3}{36}{HLS Synthesis Results}{subsection.160}{}}
+\newlabel{subsec:ffn_csyn@cref}{{[subsection][3][4,7]4.7.3}{[1][35][]36}{}{}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {4.8}Top-Level Forward Function}{36}{section.161}\protected@file@percent }
+\newlabel{sec:forward_impl}{{4.8}{36}{Top-Level Forward Function}{section.161}{}}
+\newlabel{sec:forward_impl@cref}{{[section][8][4]4.8}{[1][35][]36}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.8.1}AXI Interface and Buffer Layout}{36}{subsection.162}\protected@file@percent }
+\newlabel{subsec:forward_axi}{{4.8.1}{36}{AXI Interface and Buffer Layout}{subsection.162}{}}
+\newlabel{subsec:forward_axi@cref}{{[subsection][1][4,8]4.8.1}{[1][35][]36}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.8.2}Layer Loop and KV Cache Management}{36}{subsection.163}\protected@file@percent }
+\newlabel{subsec:forward_layers}{{4.8.2}{36}{Layer Loop and KV Cache Management}{subsection.163}{}}
+\newlabel{subsec:forward_layers@cref}{{[subsection][2][4,8]4.8.2}{[1][35][]36}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.8.3}Known Limitations and Design Decisions}{36}{subsection.164}\protected@file@percent }
+\newlabel{subsec:forward_limitations}{{4.8.3}{36}{Known Limitations and Design Decisions}{subsection.164}{}}
+\newlabel{subsec:forward_limitations@cref}{{[subsection][3][4,8]4.8.3}{[1][35][]36}{}{}{}}
+\@writefile{toc}{\contentsline {chapter}{\numberline {5}Results and Discussion}{37}{chapter.165}\protected@file@percent }
 \@writefile{lof}{\addvspace {10\p@ }}
 \@writefile{lot}{\addvspace {10\p@ }}
-\newlabel{ch:results}{{5}{28}{Results and Discussion}{chapter.125}{}}
-\newlabel{ch:results@cref}{{[chapter][5][]5}{[1][28][]28}{}{}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {5.1}Experimental Setup}{28}{section.126}\protected@file@percent }
-\newlabel{sec:exp_setup}{{5.1}{28}{Experimental Setup}{section.126}{}}
-\newlabel{sec:exp_setup@cref}{{[section][1][5]5.1}{[1][28][]28}{}{}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {5.2}HLS Synthesis Results}{28}{section.127}\protected@file@percent }
-\newlabel{sec:synthesis_results}{{5.2}{28}{HLS Synthesis Results}{section.127}{}}
-\newlabel{sec:synthesis_results@cref}{{[section][2][5]5.2}{[1][28][]28}{}{}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {5.1}{\ignorespaces FPGA resource utilisation after Vivado implementation on the ZCU102 (xczu9eg-ffvb1156-2-e). Percentages are relative to total available resources on the device.}}{28}{table.caption.128}\protected@file@percent }
-\newlabel{tab:resource_util}{{5.1}{28}{FPGA resource utilisation after Vivado implementation on the ZCU102 (xczu9eg-ffvb1156-2-e). Percentages are relative to total available resources on the device}{table.caption.128}{}}
-\newlabel{tab:resource_util@cref}{{[table][1][5]5.1}{[1][28][]28}{}{}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {5.3}Functional Verification}{29}{section.129}\protected@file@percent }
-\newlabel{sec:functional_verification}{{5.3}{29}{Functional Verification}{section.129}{}}
-\newlabel{sec:functional_verification@cref}{{[section][3][5]5.3}{[1][29][]29}{}{}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {5.4}Inference Performance}{29}{section.130}\protected@file@percent }
-\newlabel{sec:performance}{{5.4}{29}{Inference Performance}{section.130}{}}
-\newlabel{sec:performance@cref}{{[section][4][5]5.4}{[1][29][]29}{}{}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {5.2}{\ignorespaces Inference performance comparison between the FPGA implementation and a CPU software baseline. Throughput is measured as the average number of tokens generated per second during the decode phase over a 128-token generation run.}}{29}{table.caption.131}\protected@file@percent }
-\newlabel{tab:performance}{{5.2}{29}{Inference performance comparison between the FPGA implementation and a CPU software baseline. Throughput is measured as the average number of tokens generated per second during the decode phase over a 128-token generation run}{table.caption.131}{}}
-\newlabel{tab:performance@cref}{{[table][2][5]5.2}{[1][29][]29}{}{}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {5.5}Energy Efficiency}{29}{section.132}\protected@file@percent }
-\newlabel{sec:energy}{{5.5}{29}{Energy Efficiency}{section.132}{}}
-\newlabel{sec:energy@cref}{{[section][5][5]5.5}{[1][29][]29}{}{}{}}
+\newlabel{ch:results}{{5}{37}{Results and Discussion}{chapter.165}{}}
+\newlabel{ch:results@cref}{{[chapter][5][]5}{[1][37][]37}{}{}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {5.1}Experimental Setup}{37}{section.166}\protected@file@percent }
+\newlabel{sec:exp_setup}{{5.1}{37}{Experimental Setup}{section.166}{}}
+\newlabel{sec:exp_setup@cref}{{[section][1][5]5.1}{[1][37][]37}{}{}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {5.2}HLS Synthesis Results}{37}{section.167}\protected@file@percent }
+\newlabel{sec:synthesis_results}{{5.2}{37}{HLS Synthesis Results}{section.167}{}}
+\newlabel{sec:synthesis_results@cref}{{[section][2][5]5.2}{[1][37][]37}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {5.1}{\ignorespaces FPGA resource utilisation after Vivado implementation on the ZCU102 (xczu9eg-ffvb1156-2-e). Percentages are relative to total available resources on the device.}}{37}{table.caption.168}\protected@file@percent }
+\newlabel{tab:resource_util}{{5.1}{37}{FPGA resource utilisation after Vivado implementation on the ZCU102 (xczu9eg-ffvb1156-2-e). Percentages are relative to total available resources on the device}{table.caption.168}{}}
+\newlabel{tab:resource_util@cref}{{[table][1][5]5.1}{[1][37][]37}{}{}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {5.3}Functional Verification}{38}{section.169}\protected@file@percent }
+\newlabel{sec:functional_verification}{{5.3}{38}{Functional Verification}{section.169}{}}
+\newlabel{sec:functional_verification@cref}{{[section][3][5]5.3}{[1][38][]38}{}{}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {5.4}Inference Performance}{38}{section.170}\protected@file@percent }
+\newlabel{sec:performance}{{5.4}{38}{Inference Performance}{section.170}{}}
+\newlabel{sec:performance@cref}{{[section][4][5]5.4}{[1][38][]38}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {5.2}{\ignorespaces Inference performance comparison between the FPGA implementation and a CPU software baseline. Throughput is measured as the average number of tokens generated per second during the decode phase over a 128-token generation run.}}{38}{table.caption.171}\protected@file@percent }
+\newlabel{tab:performance}{{5.2}{38}{Inference performance comparison between the FPGA implementation and a CPU software baseline. Throughput is measured as the average number of tokens generated per second during the decode phase over a 128-token generation run}{table.caption.171}{}}
+\newlabel{tab:performance@cref}{{[table][2][5]5.2}{[1][38][]38}{}{}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {5.5}Energy Efficiency}{38}{section.172}\protected@file@percent }
+\newlabel{sec:energy}{{5.5}{38}{Energy Efficiency}{section.172}{}}
+\newlabel{sec:energy@cref}{{[section][5][5]5.5}{[1][38][]38}{}{}{}}
 \abx@aux@cite{0}{PLACEHOLDER}
 \abx@aux@segm{0}{0}{PLACEHOLDER}
 \abx@aux@cite{0}{PLACEHOLDER}
 \abx@aux@segm{0}{0}{PLACEHOLDER}
-\@writefile{toc}{\contentsline {section}{\numberline {5.6}Comparison Against Prior Work}{30}{section.133}\protected@file@percent }
-\newlabel{sec:comparison}{{5.6}{30}{Comparison Against Prior Work}{section.133}{}}
-\newlabel{sec:comparison@cref}{{[section][6][5]5.6}{[1][30][]30}{}{}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {5.3}{\ignorespaces Comparison of this work against prior FPGA-based transformer accelerators reported in the literature.}}{30}{table.caption.134}\protected@file@percent }
-\newlabel{tab:comparison}{{5.3}{30}{Comparison of this work against prior FPGA-based transformer accelerators reported in the literature}{table.caption.134}{}}
-\newlabel{tab:comparison@cref}{{[table][3][5]5.3}{[1][30][]30}{}{}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {5.7}Discussion}{30}{section.135}\protected@file@percent }
-\newlabel{sec:discussion}{{5.7}{30}{Discussion}{section.135}{}}
-\newlabel{sec:discussion@cref}{{[section][7][5]5.7}{[1][30][]30}{}{}{}}
-\@writefile{toc}{\contentsline {chapter}{\numberline {6}Conclusion and Future Work}{31}{chapter.136}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {5.6}Comparison Against Prior Work}{39}{section.173}\protected@file@percent }
+\newlabel{sec:comparison}{{5.6}{39}{Comparison Against Prior Work}{section.173}{}}
+\newlabel{sec:comparison@cref}{{[section][6][5]5.6}{[1][39][]39}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {5.3}{\ignorespaces Comparison of this work against prior FPGA-based transformer accelerators reported in the literature.}}{39}{table.caption.174}\protected@file@percent }
+\newlabel{tab:comparison}{{5.3}{39}{Comparison of this work against prior FPGA-based transformer accelerators reported in the literature}{table.caption.174}{}}
+\newlabel{tab:comparison@cref}{{[table][3][5]5.3}{[1][39][]39}{}{}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {5.7}Discussion}{39}{section.175}\protected@file@percent }
+\newlabel{sec:discussion}{{5.7}{39}{Discussion}{section.175}{}}
+\newlabel{sec:discussion@cref}{{[section][7][5]5.7}{[1][39][]39}{}{}{}}
+\@writefile{toc}{\contentsline {chapter}{\numberline {6}Conclusion and Future Work}{40}{chapter.176}\protected@file@percent }
 \@writefile{lof}{\addvspace {10\p@ }}
 \@writefile{lot}{\addvspace {10\p@ }}
-\newlabel{ch:conclusion}{{6}{31}{Conclusion and Future Work}{chapter.136}{}}
-\newlabel{ch:conclusion@cref}{{[chapter][6][]6}{[1][31][]31}{}{}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {6.1}Conclusion}{31}{section.137}\protected@file@percent }
-\newlabel{sec:conclusion}{{6.1}{31}{Conclusion}{section.137}{}}
-\newlabel{sec:conclusion@cref}{{[section][1][6]6.1}{[1][31][]31}{}{}{}}
+\newlabel{ch:conclusion}{{6}{40}{Conclusion and Future Work}{chapter.176}{}}
+\newlabel{ch:conclusion@cref}{{[chapter][6][]6}{[1][40][]40}{}{}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {6.1}Conclusion}{40}{section.177}\protected@file@percent }
+\newlabel{sec:conclusion}{{6.1}{40}{Conclusion}{section.177}{}}
+\newlabel{sec:conclusion@cref}{{[section][1][6]6.1}{[1][40][]40}{}{}{}}
 \abx@aux@cite{0}{PLACEHOLDER}
 \abx@aux@segm{0}{0}{PLACEHOLDER}
-\@writefile{toc}{\contentsline {section}{\numberline {6.2}Recommendations for Future Work}{32}{section.138}\protected@file@percent }
-\newlabel{sec:future_work}{{6.2}{32}{Recommendations for Future Work}{section.138}{}}
-\newlabel{sec:future_work@cref}{{[section][2][6]6.2}{[1][32][]32}{}{}{}}
-\@writefile{toc}{\contentsline {chapter}{Reflection on Learning Outcome Attainment}{33}{chapter*.139}\protected@file@percent }
-\@writefile{toc}{\contentsline {chapter}{Acknowledging/Declaring the Use of GAI}{34}{chapter*.140}\protected@file@percent }
-\@writefile{toc}{\contentsline {chapter}{References}{34}{chapter*.140}\protected@file@percent }
-\@writefile{toc}{\contentsline {chapter}{\numberline {A}HLS Kernel Source Code}{35}{appendix.141}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {6.2}Recommendations for Future Work}{41}{section.178}\protected@file@percent }
+\newlabel{sec:future_work}{{6.2}{41}{Recommendations for Future Work}{section.178}{}}
+\newlabel{sec:future_work@cref}{{[section][2][6]6.2}{[1][41][]41}{}{}{}}
+\@writefile{toc}{\contentsline {chapter}{Reflection on Learning Outcome Attainment}{42}{chapter*.179}\protected@file@percent }
+\@writefile{toc}{\contentsline {chapter}{Acknowledging/Declaring the Use of GAI}{43}{chapter*.180}\protected@file@percent }
+\@writefile{toc}{\contentsline {chapter}{References}{43}{chapter*.180}\protected@file@percent }
+\@writefile{toc}{\contentsline {chapter}{\numberline {A}HLS Kernel Source Code}{44}{appendix.181}\protected@file@percent }
 \@writefile{lof}{\addvspace {10\p@ }}
 \@writefile{lot}{\addvspace {10\p@ }}
-\newlabel{app:hls_source}{{A}{35}{HLS Kernel Source Code}{appendix.141}{}}
-\newlabel{app:hls_source@cref}{{[chapter][1][]A}{[1][35][]35}{}{}{}}
-\@writefile{toc}{\contentsline {chapter}{\numberline {B}Vivado Synthesis and Implementation Reports}{36}{appendix.142}\protected@file@percent }
+\newlabel{app:hls_source}{{A}{44}{HLS Kernel Source Code}{appendix.181}{}}
+\newlabel{app:hls_source@cref}{{[chapter][1][]A}{[1][44][]44}{}{}{}}
+\@writefile{toc}{\contentsline {chapter}{\numberline {B}Vivado Synthesis and Implementation Reports}{45}{appendix.182}\protected@file@percent }
 \@writefile{lof}{\addvspace {10\p@ }}
 \@writefile{lot}{\addvspace {10\p@ }}
-\newlabel{app:vivado_reports}{{B}{36}{Vivado Synthesis and Implementation Reports}{appendix.142}{}}
-\newlabel{app:vivado_reports@cref}{{[chapter][2][]B}{[1][36][]36}{}{}{}}
-\@writefile{toc}{\contentsline {chapter}{\numberline {C}Quantisation Calibration Data}{37}{appendix.143}\protected@file@percent }
+\newlabel{app:vivado_reports}{{B}{45}{Vivado Synthesis and Implementation Reports}{appendix.182}{}}
+\newlabel{app:vivado_reports@cref}{{[chapter][2][]B}{[1][45][]45}{}{}{}}
+\@writefile{toc}{\contentsline {chapter}{\numberline {C}Quantisation Calibration Data}{46}{appendix.183}\protected@file@percent }
 \@writefile{lof}{\addvspace {10\p@ }}
 \@writefile{lot}{\addvspace {10\p@ }}
-\newlabel{app:calibration}{{C}{37}{Quantisation Calibration Data}{appendix.143}{}}
-\newlabel{app:calibration@cref}{{[chapter][3][]C}{[1][37][]37}{}{}{}}
+\newlabel{app:calibration}{{C}{46}{Quantisation Calibration Data}{appendix.183}{}}
+\newlabel{app:calibration@cref}{{[chapter][3][]C}{[1][46][]46}{}{}{}}
 \abx@aux@read@bbl@mdfivesum{E75D7E0DB03F09D45B25DF2F538BB294}
 \abx@aux@read@bblrerun
-\gdef \@abspage@last{47}
+\gdef \@abspage@last{57}
