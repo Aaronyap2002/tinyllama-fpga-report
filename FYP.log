@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.28 (TeX Live 2025) (preloaded format=pdflatex 2026.3.1)  14 MAR 2026 18:56
+This is pdfTeX, Version 3.141592653-2.6-1.40.28 (TeX Live 2025) (preloaded format=pdflatex 2026.3.1)  14 MAR 2026 19:46
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -879,7 +879,7 @@ File: translations-basic-dictionary-english.trsl (english translation file `tran
 )
 Package translations Info: loading dictionary `translations-basic-dictionary' for `english'. on input line 232.
  (./Title/titlepage.tex
-<Title/ntu_logo.png, id=271, 815.6874pt x 306.6657pt>
+<Title/ntu_logo.png, id=331, 815.6874pt x 306.6657pt>
 File: Title/ntu_logo.png Graphic file (type png)
 <use Title/ntu_logo.png>
 Package pdftex.def Info: Title/ntu_logo.png  used on input line 27.
@@ -948,6 +948,11 @@ Overfull \hbox (17.05637pt too wide) in paragraph at lines 6--6
 
 Overfull \hbox (4.35934pt too wide) in paragraph at lines 6--6
  \OT1/ptm/m/n/12 Weight and KV cache sizes are af-ter INT8 quan-ti-sa-tion. On-chip buffers 
+ []
+
+
+Overfull \hbox (8.60733pt too wide) in paragraph at lines 8--8
+ [][] [][][]\OT1/ptm/m/n/12 Prototype and full TinyLlama-1.1B con-fig-u-ra-tion pa-ram-e-ters used across 
  []
 
 
@@ -1063,6 +1068,9 @@ Overfull \hbox (10.47935pt too wide) in paragraph at lines 423--428
 LaTeX Warning: Citation 'PLACEHOLDER' on page 10 undefined on input line 463.
 
 
+LaTeX Warning: Reference `subsec:ffn_impl' on page 1 undefined on input line 466.
+
+
 LaTeX Warning: Citation 'PLACEHOLDER' on page 10 undefined on input line 473.
 
 [10]
@@ -1073,7 +1081,7 @@ LaTeX Warning: Citation 'PLACEHOLDER' on page 11 undefined on input line 562.
 LaTeX Warning: Citation 'PLACEHOLDER' on page 11 undefined on input line 571.
 
 [11]
-<Chapter2/media/sparse_transformer_patterns.png, id=516, 823.27576pt x 410.7345pt>
+<Chapter2/media/sparse_transformer_patterns.png, id=591, 823.27576pt x 410.7345pt>
 File: Chapter2/media/sparse_transformer_patterns.png Graphic file (type png)
 <use Chapter2/media/sparse_transformer_patterns.png>
 Package pdftex.def Info: Chapter2/media/sparse_transformer_patterns.png  used on input line 581.
@@ -1151,7 +1159,7 @@ LaTeX Warning: Citation 'PLACEHOLDER' on page 14 undefined on input line 725.
 
 LaTeX Warning: Citation 'PLACEHOLDER' on page 15 undefined on input line 738.
 
-<Chapter2/media/hls_pipeline.png, id=533, 259.56975pt x 111.41624pt>
+<Chapter2/media/hls_pipeline.png, id=609, 259.56975pt x 111.41624pt>
 File: Chapter2/media/hls_pipeline.png Graphic file (type png)
 <use Chapter2/media/hls_pipeline.png>
 Package pdftex.def Info: Chapter2/media/hls_pipeline.png  used on input line 743.
@@ -1165,7 +1173,7 @@ LaTeX Warning: Citation 'PLACEHOLDER' on page 15 undefined on input line 746.
 
 LaTeX Warning: Citation 'PLACEHOLDER' on page 15 undefined on input line 754.
 
-<Chapter2/media/hls_unrolling.png, id=534, 604.05675pt x 86.12175pt>
+<Chapter2/media/hls_unrolling.png, id=610, 604.05675pt x 86.12175pt>
 File: Chapter2/media/hls_unrolling.png Graphic file (type png)
 <use Chapter2/media/hls_unrolling.png>
 Package pdftex.def Info: Chapter2/media/hls_unrolling.png  used on input line 765.
@@ -1203,107 +1211,77 @@ LaTeX Warning: Citation 'PLACEHOLDER' on page 21 undefined on input line 245.
 [21]) (./Chapter4/chapter4.tex [22]
 Chapter 4.
 
-Overfull \hbox (58.7322pt too wide) in paragraph at lines 61--72
-\OT1/ptm/m/n/12 the di-men-sion con-stants de-clared in \OT1/zi4/m/n/12 config.h\OT1/ptm/m/n/12 . The foun-da-tional type is \OT1/zi4/m/n/12 QuantizedTensor<SIZE>\OT1/ptm/m/n/12 ,
+Overfull \hbox (3.93605pt too wide) in paragraph at lines 56--66
+[]\OT1/ptm/m/n/12 The pro-to-type di-men-sions were cho-sen de-lib-er-ately to keep ar-ray sizes small enough
  []
 
 [23
 
 ]
-Package hyperref Info: bookmark level for unknown lstlisting defaults to 0 on input line 78.
+Package hyperref Info: bookmark level for unknown lstlisting defaults to 0 on input line 102.
 LaTeX Font Info:    Font shape `OT1/zi4/m/n' will be
-(Font)              scaled to size 10.95pt on input line 78.
+(Font)              scaled to size 10.95pt on input line 102.
 LaTeX Font Info:    Font shape `OT1/zi4/b/n' will be
-(Font)              scaled to size 10.95pt on input line 79.
-
+(Font)              scaled to size 10.95pt on input line 103.
+ [24]
 
 LaTeX Font Warning: Font shape `OT1/zi4/m/it' undefined
-(Font)              using `OT1/zi4/m/n' instead on input line 81.
+(Font)              using `OT1/zi4/m/n' instead on input line 123.
 
 LaTeX Font Info:    Font shape `OT1/zi4/m/it' will be
-(Font)              scaled to size 10.95pt on input line 81.
-[24] [25]
-Overfull \hbox (0.19641pt too wide) in paragraph at lines 182--190
-\OT1/zi4/m/n/12 matmul1 \OT1/ptm/m/n/12 and \OT1/zi4/m/n/12 matmul2 \OT1/ptm/m/n/12 weight-loading loops are com-mented out in the pro-to-type. With-
- []
+(Font)              scaled to size 10.95pt on input line 123.
+) (./Chapter5/chapter5.tex [25] [26]
+Overfull \vbox (95.16966pt too high) has occurred while \output is active []
 
-[26]
-Overfull \hbox (33.56584pt too wide) in paragraph at lines 252--261
-[]\OT1/ptm/m/n/12 The to-ken em-bed-ding is loaded by a di-rect \OT1/zi4/m/n/12 memcpy \OT1/ptm/m/n/12 from the float \OT1/zi4/m/n/12 token[]embedding[]table
- []
-
-[27] [28]
-
-LaTeX Warning: Citation 'PLACEHOLDER' on page 29 undefined on input line 334.
-
-
-Overfull \hbox (9.46074pt too wide) in paragraph at lines 340--350
-\OT1/ptm/m/n/12 and the $[]$ query el-e-ments are quan-tised into a lo-cal \OT1/zi4/m/n/12 int8[]t q[]int8[head[]size]
- []
-
-[29] [30] [31] [32]
-
-LaTeX Warning: Citation 'PLACEHOLDER' on page 33 undefined on input line 580.
-
-[33] [34]
-Overfull \hbox (50.63231pt too wide) in paragraph at lines 647--653
-\OT1/ptm/m/n/12 ker-nel's con-trol reg-is-ter block and as-serts \OT1/zi4/m/n/12 ap[]start\OT1/ptm/m/n/12 . The host then blocks on \OT1/zi4/m/n/12 xrt::run::wait()\OT1/ptm/m/n/12 ,
- []
-
-
-Overfull \hbox (8.31587pt too wide) in paragraph at lines 654--666
-[]\OT1/ptm/m/n/12 After the ker-nel com-pletes, the out-put buffer con-tains the $\OML/ztmcm/m/it/12 d[] \OT1/ztmcm/m/n/12 = 2[]048$\OT1/ptm/m/n/12 -dimensional
- []
-
-) (./Chapter5/chapter5.tex [35]
+ [27]
 Chapter 5.
-[36
+[28
 
 ]
 Overfull \hbox (87.96349pt too wide) in paragraph at lines 75--83
  [][] 
  []
 
-[37]
+[29]
 
-LaTeX Warning: Citation 'PLACEHOLDER' on page 38 undefined on input line 104.
+LaTeX Warning: Citation 'PLACEHOLDER' on page 30 undefined on input line 104.
 
 
-LaTeX Warning: Citation 'PLACEHOLDER' on page 38 undefined on input line 105.
+LaTeX Warning: Citation 'PLACEHOLDER' on page 30 undefined on input line 105.
 
 
 Overfull \hbox (4.86462pt too wide) in paragraph at lines 100--109
  [][] 
  []
 
-) (./Chapter6/chapter6.tex [38]
+) (./Chapter6/chapter6.tex [30]
 Chapter 6.
-[39
+[31
 
 ]
 
-LaTeX Warning: Citation 'PLACEHOLDER' on page 40 undefined on input line 64.
+LaTeX Warning: Citation 'PLACEHOLDER' on page 32 undefined on input line 64.
 
-) [40] [41
+) [32] [33
 
 
 ]
 
 LaTeX Warning: Empty bibliography on input line 291.
 
-(./Appendices/appendix.tex [42
+(./Appendices/appendix.tex [34
 
 ]
 Appendix A.
-[43
+[35
 
 ]
 Appendix B.
-[44
+[36
 
 ]
 Appendix C.
-) [45
+) [37
 
 ] (./FYP.aux)
  ***********
@@ -1318,7 +1296,7 @@ LaTeX Font Warning: Some font shapes were not available, defaults substituted.
 LaTeX Warning: There were undefined references.
 
 Package rerunfilecheck Info: File `FYP.out' has not changed.
-(rerunfilecheck)             Checksum: 02605FE128424F92AC1692E2226D670B;11922.
+(rerunfilecheck)             Checksum: 3CA0E514BE31CACD351C271EA2366F81;13826.
 
 Package biblatex Warning: Please (re)run Biber on the file:
 (biblatex)                FYP
@@ -1329,18 +1307,18 @@ Package logreq Info: Writing requests to 'FYP.run.xml'.
 
  ) 
 Here is how much of TeX's memory you used:
- 29709 strings out of 467533
- 571948 string characters out of 5423669
- 1539016 words of memory out of 5000000
- 57999 multiletter control sequences out of 15000+600000
- 663355 words of font info for 114 fonts, out of 8000000 for 9000
+ 29618 strings out of 467533
+ 571238 string characters out of 5423669
+ 1561890 words of memory out of 5000000
+ 57940 multiletter control sequences out of 15000+600000
+ 662947 words of font info for 112 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 63i,13n,97p,1266b,2660s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 63i,13n,97p,1266b,2796s stack positions out of 10000i,1000n,20000p,200000b,200000s
 <c:/texlive/2025/texmf-dist/fonts/type1/public/inconsolata/Inconsolata-zi4b.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/inconsolata/Inconsolata-zi4r.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/rsfs/rsfs10.pfb><c:/texlive/2025/texmf-dist/fonts/type1/urw/symbol/usyr.pfb><c:/texlive/2025/texmf-dist/fonts/type1/urw/symbol/usyr.pfb><c:/texlive/2025/texmf-dist/fonts/type1/urw/times/utmb8a.pfb><c:/texlive/2025/texmf-dist/fonts/type1/urw/times/utmr8a.pfb><c:/texlive/2025/texmf-dist/fonts/type1/urw/times/utmri8a.pfb>
-Output written on FYP.pdf (55 pages, 587882 bytes).
+Output written on FYP.pdf (47 pages, 559315 bytes).
 PDF statistics:
- 878 PDF objects out of 1000 (max. 8388607)
- 779 compressed objects within 8 object streams
- 223 named destinations out of 1000 (max. 500000)
- 557 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 859 PDF objects out of 1000 (max. 8388607)
+ 768 compressed objects within 8 object streams
+ 191 named destinations out of 1000 (max. 500000)
+ 677 words of extra memory for PDF output out of 10000 (max. 10000000)
 

@@ -5,11 +5,11 @@
 \contentsline {table}{\numberline {3.1}{\ignorespaces Hardware/software partitioning of the TinyLlama inference pipeline. Operations marked PL are executed in the programmable logic accelerator kernel; operations marked PS run on the ARM Cortex-A53.}}{19}{table.caption.57}%
 \contentsline {table}{\numberline {3.2}{\ignorespaces Memory hierarchy of the TinyLlama inference accelerator on the ZCU102. Weight and KV cache sizes are after INT8 quantisation. On-chip buffers are reused across all 22 layers.}}{21}{table.caption.59}%
 \addvspace {10\p@ }
-\contentsline {table}{\numberline {4.1}{\ignorespaces Comparison of prototype and full TinyLlama configuration parameters.}}{23}{table.caption.65}%
+\contentsline {table}{\numberline {4.1}{\ignorespaces Prototype and full TinyLlama-1.1B configuration parameters used across kernel development.}}{23}{table.caption.64}%
 \addvspace {10\p@ }
-\contentsline {table}{\numberline {5.1}{\ignorespaces FPGA resource utilisation after Vivado implementation on the ZCU102 (xczu9eg-ffvb1156-2-e). Percentages are relative to total available resources on the device.}}{36}{table.caption.152}%
-\contentsline {table}{\numberline {5.2}{\ignorespaces Inference performance comparison between the FPGA implementation and a CPU software baseline. Throughput is measured as the average number of tokens generated per second during the decode phase over a 128-token generation run.}}{37}{table.caption.155}%
-\contentsline {table}{\numberline {5.3}{\ignorespaces Comparison of this work against prior FPGA-based transformer accelerators reported in the literature.}}{38}{table.caption.158}%
+\contentsline {table}{\numberline {5.1}{\ignorespaces FPGA resource utilisation after Vivado implementation on the ZCU102 (xczu9eg-ffvb1156-2-e). Percentages are relative to total available resources on the device.}}{28}{table.caption.128}%
+\contentsline {table}{\numberline {5.2}{\ignorespaces Inference performance comparison between the FPGA implementation and a CPU software baseline. Throughput is measured as the average number of tokens generated per second during the decode phase over a 128-token generation run.}}{29}{table.caption.131}%
+\contentsline {table}{\numberline {5.3}{\ignorespaces Comparison of this work against prior FPGA-based transformer accelerators reported in the literature.}}{30}{table.caption.134}%
 \addvspace {10\p@ }
 \addvspace {10\p@ }
 \addvspace {10\p@ }
