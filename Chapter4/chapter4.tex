@@ -339,6 +339,10 @@ the timing constraint, the zero-slack condition means there is no margin
 for additional logic to be added along the critical path at this clock
 frequency without risking a timing violation.
 
+The \texttt{rmsnorm} implementation was not modified in the second or
+third kernel iterations. The synthesis results presented here are
+therefore valid across all three iterations of the prototype.
+
 % =============================================================================
 \section{Quantisation}
 \label{sec:quantize_impl}
@@ -593,6 +597,10 @@ estimated \SI{4.867}{\nano\second} plus \SI{1.80}{\nano\second}
 uncertainty exactly exhausts the \SI{6.667}{\nano\second} budget,
 leaving zero slack.
 
+The \texttt{quantize} implementation was not modified in the second or
+third kernel iterations. The synthesis results presented here are
+therefore valid across all three iterations of the prototype.
+
 % =============================================================================
 \section{Dequantisation}
 \label{sec:dequantize_impl}
@@ -789,6 +797,10 @@ an interesting contrast: the \texttt{q\_in} port operates at an 8-bit
 native width widened to a 32-bit AXI bus width (8\,$\rightarrow$\,32),
 reflecting the fact that INT8 data must be packed into the 32-bit AXI
 data bus in groups of four bytes per transfer.
+
+The \texttt{dequantize} implementation was not modified in the second or
+third kernel iterations. The synthesis results presented here are
+therefore valid across all three iterations of the prototype.
 
 % =============================================================================
 \section{Matrix--Vector Multiplication}
@@ -1081,6 +1093,10 @@ identical to all preceding sections: estimated \SI{4.867}{\nano\second}
 plus \SI{1.800}{\nano\second} uncertainty exactly exhausts the
 \SI{6.667}{\nano\second} budget, leaving zero slack.
 
+The \texttt{matmul} implementation was not modified in the second or
+third kernel iterations. The synthesis results presented here are
+therefore valid across all three iterations of the prototype.
+
 % =============================================================================
 \section{Softmax}
 \label{sec:softmax_impl}
@@ -1159,6 +1175,54 @@ DSP48 blocks, whereas \texttt{fmul} requires 4 cycles and maps
 efficiently to DSPs. Like the \texttt{exp} loop, \texttt{norm} carries
 \texttt{PIPELINE} and \texttt{UNROLL factor=16}, fully unrolling the
 16-element loop into 16 parallel multiply lanes.
+
+Listing~\ref{lst:softmax} shows the four-loop structure and its pragma
+assignments.
+
+\begin{lstlisting}[
+  caption = {\texttt{softmax<MAXSIZE>} implementation from
+             \texttt{forward.h} (baseline iteration). The \texttt{max}
+             and \texttt{sum} loops carry no \texttt{UNROLL} because of
+             their loop-carried dependencies on \texttt{max\_val} and
+             \texttt{sum} respectively. The \texttt{exp} and \texttt{norm}
+             loops are fully unrolled into 16 parallel datapath lanes.
+             The \texttt{inv\_sum} reciprocal hoists the single division
+             out of the \texttt{norm} loop body.},
+  label = {lst:softmax}
+]
+template <int MAXSIZE>
+void softmax(float *x, int size) {
+  float buffer[MAXSIZE];
+  float max_val = x[0];
+max:
+  for (int i = 1; i < size; i++) {
+    #pragma HLS loop_tripcount min=1 max=16 avg=8
+    #pragma HLS PIPELINE
+    if (x[i] > max_val) max_val = x[i];   // carried dep: no UNROLL
+  }
+exp:
+  for (int i = 0; i < size; i++) {
+    #pragma HLS loop_tripcount min=1 max=16 avg=8
+    #pragma HLS PIPELINE
+    #pragma HLS UNROLL factor=16           // independent: complete unroll
+    buffer[i] = expf(x[i] - max_val);
+  }
+  float sum = 0.0f;
+sum:
+  for (int i = 0; i < size; i++) {
+    #pragma HLS loop_tripcount min=1 max=16 avg=8
+    sum += buffer[i];                      // carried dep: no PIPELINE
+  }
+  const float inv_sum = 1.0f / sum;        // one division hoisted out
+norm:
+  for (int i = 0; i < size; i++) {
+    #pragma HLS loop_tripcount min=1 max=16 avg=8
+    #pragma HLS PIPELINE
+    #pragma HLS UNROLL factor=16           // independent: complete unroll
+    x[i] = buffer[i] * inv_sum;
+  }
+}
+\end{lstlisting}
 
 \subsection{C-Simulation Results}
 \label{subsec:softmax_csim}
@@ -1364,21 +1428,154 @@ pipeline sub-module is the most timing-critical path, with only
 uncertainty, reflecting the deep combinational chain through the 7-DSP
 \texttt{fexp} core.
 
+\subsection{Iteration 3: Sum Loop Unroll}
+\label{subsec:softmax_iter3}
+
+The third kernel iteration (\texttt{forward\_fyp\_kvint8.cpp}) introduces
+two pragma modifications to the \texttt{softmax} function while leaving
+the function body logic unchanged. The first addition is
+\texttt{\#pragma HLS ARRAY\_PARTITION variable=buffer cyclic factor=16}
+on the internal \texttt{buffer[MAXSIZE]} array, which was absent in both
+earlier iterations. The second addition is \texttt{\#pragma HLS UNROLL
+factor=16} on the \texttt{sum} reduction loop. These two changes are
+directly motivated by the II\,=\,6 violation identified in the
+iteration~1 synthesis analysis, which attributed the 97-cycle \texttt{sum}
+latency to a loop-carried dependency on the floating-point accumulator.
+The array partition is a prerequisite for the unroll: without 16
+independent memory banks on \texttt{buffer}, adding 16 parallel read
+accesses from an unpartitioned array would cause HLS to serialise the
+reads rather than parallelise them.
+
+\subsubsection{C-Simulation Results}
+\label{subsubsec:softmax_iter3_csim}
+
+Because the function body is identical to iteration~1, the C-simulation
+produces bit-identical outputs: all eight active elements match the
+software reference with zero absolute error, and the sum-to-unity check
+passes with a reported sum of exactly $1.00000000$. The csim run
+completed with zero errors.
+
+\subsubsection{HLS Synthesis Results}
+\label{subsubsec:softmax_iter3_csyn}
+
+Tables~\ref{tab:softmax_iter3_timing} and \ref{tab:softmax_iter3_latency}
+present the timing summary and per-loop latency breakdown for the
+iteration~3 softmax synthesis. Table~\ref{tab:softmax_iter3_resources}
+compares the resource utilisation against iteration~1 for direct comparison.
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{lrrr}
+    \toprule
+    Clock   & Target (ns) & Estimated (ns) & Uncertainty (ns) \\
+    \midrule
+    ap\_clk & 6.667       & 5.084          & 1.800 \\
+    \bottomrule
+  \end{tabular}
+  \caption{Timing summary for \texttt{softmax\_kvint8\_top} at the
+           \SI{150}{\mega\hertz} target clock. The estimated path of
+           \SI{5.084}{\nano\second} plus the \SI{1.800}{\nano\second}
+           uncertainty exceeds the \SI{6.667}{\nano\second} budget by
+           \SI{0.217}{\nano\second}, constituting a timing violation.}
+  \label{tab:softmax_iter3_timing}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{lrrrr}
+    \toprule
+    Loop & Trip count & II & Iter.\ latency & Total (cycles) \\
+    \midrule
+    \texttt{max}  & 16 &  1 &  2 &  16 \\
+    \texttt{exp}  &  1 &  1 &  9 &   9 \\
+    \texttt{sum}  &  1 & 96 & 97 & 185 \\
+    \texttt{norm} &  1 &  1 &  1 &   1 \\
+    \bottomrule
+  \end{tabular}
+  \caption{Per-loop latency breakdown of the iteration~3 \texttt{softmax}
+           ($\texttt{MAXSIZE} = 16$) at \SI{150}{\mega\hertz}. The
+           \texttt{sum} loop collapses to a single effective iteration
+           (trip count~1) due to the \texttt{UNROLL factor=16}, but its
+           total latency increases from 97 to 185 cycles compared to
+           iteration~1.}
+  \label{tab:softmax_iter3_latency}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{lrrrr}
+    \toprule
+    & \multicolumn{2}{c}{Iteration 1 (baseline)} &
+      \multicolumn{2}{c}{Iteration 3 (sum unroll)} \\
+    Resource & Total & Core & Total & Core \\
+    \midrule
+    LUT  & 39{,}921 & 38{,}979 & 42{,}723 & 41{,}781 \\
+    FF   & 19{,}165 & 18{,}432 & 20{,}290 & 19{,}557 \\
+    BRAM & 4        & 0        & 4        & 0 \\
+    DSP  & 192      & 192      & 192      & 192 \\
+    \bottomrule
+  \end{tabular}
+  \caption{Resource utilisation comparison between the iteration~1 baseline
+           and the iteration~3 \texttt{softmax} designs, both at
+           $\texttt{MAXSIZE} = 16$ on the \texttt{xczu9eg-ffvb1156-2-e}.
+           Core figures exclude the AXI adapter and S-AXILite control
+           interface.}
+  \label{tab:softmax_iter3_resources}
+\end{table}
+
+The synthesis results reveal that the \texttt{UNROLL factor=16}
+optimisation produced the opposite of the intended effect. In
+iteration~1, the \texttt{sum} loop had trip count~16, achieved II\,=\,6,
+and a total latency of 97 cycles. In iteration~3, the complete unroll
+collapses the loop to a single effective iteration (trip count~1), but
+that single iteration has a latency of 97 cycles and an II of 96,
+giving a total of 185 cycles — nearly double the iteration~1 cost.
+The worst-case total function latency increased from 205 to 295 cycles
+as a result.
+
+The mechanism behind this regression is the binary reduction tree that
+HLS generates to reduce 16 parallel partial sums down to a single
+scalar. Fully unrolling the 16-element loop creates 16 independent
+\texttt{fadd} units operating in parallel, which then feed into a
+tree of adders with $\log_2(16) = 4$ levels. Each level contains
+floating-point adders with a pipeline depth of 6 cycles, so the
+minimum reduction latency is approximately $4 \times 6 = 24$ cycles.
+However, the resulting combinational network is wide enough that
+routing introduces additional path delay, causing the \SI{0.217}{\nano\second}
+timing violation visible in Table~\ref{tab:softmax_iter3_timing}. This
+is the first timing violation across all primitives synthesised in this
+chapter and indicates that the \texttt{sum} unroll exceeds what the
+placer and router can close at \SI{150}{\mega\hertz}.
+
+The correct approach to reducing the accumulator dependency would have
+been to use a small number of independent partial accumulators, for
+example two or four, rather than sixteen. Maintaining four independent
+partial sum registers and merging them at the end would reduce the
+effective II from 6 to approximately 2 while keeping the reduction tree
+shallow enough to close timing. The lesson from this result is that
+loop unrolling for reduction operations requires careful sizing: the
+number of parallel lanes must be matched to the adder pipeline depth,
+not simply maximised, and the resulting hardware cost and routing
+complexity must be validated through synthesis rather than assumed to
+be beneficial.
+
 % =============================================================================
 \section{Grouped-Query Attention}
 \label{sec:attn_impl}
 % =============================================================================
 
-Section~\ref{sec:attn_impl} covers the attention mechanism in two
-subsections that correspond directly to the two prototype kernel
-iterations. The baseline implementation uses floating-point arithmetic
-throughout and is synthesised from \texttt{forward.cpp}. The refined
-implementation replaces the inner dot products and value accumulation
+Section~\ref{sec:attn_impl} covers the attention mechanism across three
+kernel iterations. The baseline implementation uses floating-point
+arithmetic throughout and is synthesised from \texttt{forward.cpp}. The
+second iteration replaces the inner dot products and value accumulation
 with per-head INT8 arithmetic and is synthesised from
-\texttt{forward\_fyp.cpp}. Each subsection has its own implementation
-description, C-simulation result, and HLS synthesis result so that the
-two designs can be compared directly in terms of both functional
-behaviour and hardware cost.
+\texttt{forward\_fyp.cpp}. The third iteration extends the INT8
+representation into the KV cache itself, eliminating on-the-fly
+quantisation from the inner attention loops and is synthesised from
+\texttt{forward\_fyp\_kvint8.cpp}. Each iteration has its own
+implementation description. C-simulation results for all three
+iterations are compared together in \cref{subsec:attn_csim}, and
+synthesis results for all three are compared in \cref{subsec:attn_csyn}.
 
 \subsection{Baseline: Floating-Point Attention}
 \label{subsec:attn_fp32}
@@ -1438,6 +1635,44 @@ clear, creating a circular wait that locks the kernel. This AXI
 interface deadlock is one of the three critical bugs encountered during
 on-board testing and is discussed further in
 \cref{subsec:forward_limitations}.
+
+Listing~\ref{lst:attn_baseline} shows the \texttt{iterate} and
+\texttt{acc} loop bodies extracted from \texttt{forward.cpp}.
+
+\begin{lstlisting}[
+  caption = {Baseline float attention \texttt{iterate} and \texttt{acc}
+             loops from \texttt{forward.cpp}. Both outer loops carry
+             \texttt{PIPELINE}; both inner loops carry \texttt{UNROLL}
+             (complete) over \texttt{head\_size\,=\,4} elements.
+             The key and value cache values are read as float directly
+             from DDR with no intermediate buffering.},
+  label = {lst:attn_baseline}
+]
+iterate:
+  for (int t = 0; t <= pos; t++) {
+    #pragma HLS PIPELINE
+    #pragma HLS loop_tripcount min=1 max=16 avg=8
+    float score = 0.0f;
+    for (int i = 0; i < head_size; i++) {
+      #pragma HLS UNROLL         // complete unroll: 4 parallel fmul units
+      score += q_buf[i + q_offset] * key_cache[i + key_offset]; // float DDR read
+    }
+    score /= sqrtf(head_size);
+    att_buf[t + att_offset] = score;
+  }
+  softmax<seq_len>(att_buf + att_offset, pos + 1);
+
+acc:
+  for (int t = 0; t <= pos; t++) {
+    #pragma HLS loop_tripcount min=1 max=16 avg=8
+    #pragma HLS PIPELINE
+    float a = att_buf[t + att_offset];
+    for (int i = 0; i < head_size; i++) {
+      #pragma HLS UNROLL         // complete unroll: 4 parallel fmul+fadd
+      xb_buf[i + xb_offset] += a * value_cache[i + v_offset]; // float DDR read
+    }
+  }
+\end{lstlisting}
 
 \subsubsection{C-Simulation Results}
 \label{subsubsec:attn_fp32_csim}
@@ -1702,8 +1937,49 @@ elements of \texttt{xb\_accum} in each pipeline iteration: a BRAM-based
 array would introduce read-after-write latency on the same address,
 whereas a register file supports simultaneous access to all four ports.
 
-\subsection{C-Simulation Results}
-\label{subsec:attn_csim}
+Listing~\ref{lst:attn_int8} shows the Step~1 per-head Q quantisation
+and the Step~2 INT32 dot product, which together constitute the core
+change from the baseline.
+
+\begin{lstlisting}[
+  caption = {Per-head Q quantisation (Step~1) and INT32 score dot product
+             (Step~2) from \texttt{forward\_fyp.cpp}. Step~1 executes
+             once per head before the position loop; Step~2 executes for
+             each attended position inside \texttt{iterate}. The reciprocal
+             trick replaces \texttt{head\_size} divisions with one
+             \texttt{fdiv} and \texttt{head\_size} \texttt{fmul} calls.},
+  label = {lst:attn_int8}
+]
+// STEP 1: per-head Q quantisation (before iterate loop)
+float max_val = 0.0f;
+for (int i = 0; i < head_size; i++) {
+    #pragma HLS PIPELINE
+    float v = std::fabs(q_buf[i + q_offset]);
+    if (v > max_val) max_val = v;
+}
+float q_scale_val = (max_val == 0.0f) ? 1.0f : (max_val / 127.0f);
+float q_inv_scale = 1.0f / q_scale_val;  // one division hoisted out
+int8_t q_int8[head_size];
+for (int i = 0; i < head_size; i++) {
+    #pragma HLS UNROLL
+    q_int8[i] = (int8_t)round(q_buf[i + q_offset] * q_inv_scale);
+}
+
+// STEP 2: on-the-fly K quantisation + INT32 dot product (inside iterate)
+iterate:
+for (int t = 0; t <= pos; t++) {
+    #pragma HLS PIPELINE
+    // ... load float k_buffer[head_size] from key_cache, compute k_scale ...
+    int32_t score_int = 0;
+    for (int i = 0; i < head_size; i++) {
+        #pragma HLS UNROLL
+        score_int += (int32_t)q_int8[i] * (int32_t)k_int8[i]; // integer MAC
+    }
+    float score = ((float)score_int) * q_scale_val * k_scale_val
+                  * (1.0f / sqrtf(head_size));   // single dequantise step
+    att_buf[t + att_offset] = score;
+}
+\end{lstlisting}
 
 C-simulation was performed for both implementations using the same
 test configuration: \texttt{pos\,=\,3}, \texttt{loff\,=\,0}, with
@@ -1855,6 +2131,236 @@ prototype scale, but rather the elimination of cross-head scale
 contamination and the 37\% reduction in DSP consumption, which becomes
 the enabling factor for fitting the full-scale attention design within
 the ZCU102's resource budget.
+
+\subsection{Iteration 3: INT8 KV Cache}
+\label{subsec:attn_kvint8}
+
+The third iteration, implemented in \texttt{forward\_fyp\_kvint8.cpp},
+extends the INT8 representation into the KV cache itself. In the first
+two iterations, the key and value vectors are stored in DDR as float32
+arrays and quantised on the fly when they are read back during the
+\texttt{iterate} and \texttt{acc} loops. The third iteration instead
+quantises K and V immediately after the QKV projections, before writing
+them into the cache, so that subsequent reads during attention retrieve
+pre-quantised INT8 data directly. This eliminates the on-the-fly
+quantisation sequences from the inner attention loops, at the cost of
+making the KV cache write slightly more expensive.
+
+The function signature gains two new AXI arguments. \texttt{key\_cache}
+and \texttt{value\_cache} change type from \texttt{float*} to
+\texttt{int8\_t*}, and two new \texttt{float*} arguments
+\texttt{key\_scales} and \texttt{value\_scales} carry the group-wise
+scale factors stored alongside the INT8 data. At prototype scale with
+$\texttt{kv\_dim} = 8$ and $\texttt{GS} = 4$, each timestep's KV head
+slice requires two scale factors, and the scale arrays are indexed with
+a separate \texttt{loff\_scale} offset computed as $l \times
+\texttt{seq\_len} \times (\texttt{kv\_dim}/\texttt{GS})$.
+
+Inside the \texttt{iterate} loop, the on-the-fly K loading from iteration~2
+--- which required loading float K, scanning for the maximum, computing
+$s_K$, and quantising element by element --- is replaced by two direct
+reads: a burst read of \texttt{head\_size} INT8 values from
+\texttt{key\_cache} and a single float read of the pre-stored scale from
+\texttt{key\_scales}. The INT32 dot product and dequantisation formula
+are unchanged from Equation~\ref{eq:int8_score}. Inside the \texttt{acc}
+loop, the equivalent on-the-fly V quantisation is similarly replaced by
+direct INT8 and scale reads from \texttt{value\_cache} and
+\texttt{value\_scales}. The value accumulation formula also simplifies:
+iteration~2 mapped the softmax probability to INT8 before accumulating,
+while iteration~3 keeps it as a float and folds it directly with the
+V scale into a \texttt{combined\_scale = prob\,$\times$\,v\_scale}
+scalar. The \texttt{acc} loop additionally gains
+\texttt{\#pragma HLS UNROLL factor=2} on the outer position loop, processing
+two timesteps per pipeline iteration.
+
+The \texttt{softmax} call reverts to \texttt{softmax<16>} from the
+\texttt{softmax<257>} used in iteration~2, since the iteration~3 loop
+trip count bounds return to \texttt{min=1 max=16}. The softmax function
+in this header also includes the \texttt{UNROLL factor=16} on the
+\texttt{sum} loop and the buffer partition discussed in
+\cref{subsec:softmax_iter3}, so the attention block inherits both the
+performance regression and the timing violation of that unrolled softmax.
+
+Listing~\ref{lst:attn_kvint8} contrasts the \texttt{iterate} loop bodies
+of iterations~2 and~3 side by side, making the elimination of on-the-fly
+K quantisation concrete.
+
+\begin{lstlisting}[
+  caption = {Contrast between the \texttt{iterate} loop bodies of
+             iteration~2 (\texttt{forward\_fyp.cpp}) and iteration~3
+             (\texttt{forward\_fyp\_kvint8.cpp}). Iteration~2 loads float
+             K and performs a full max-scan, scale-compute, and quantise
+             sequence per position. Iteration~3 replaces the entire sequence
+             with two direct reads from the pre-quantised cache arrays.},
+  label = {lst:attn_kvint8}
+]
+// ITERATION 2: on-the-fly K quantisation inside iterate
+for (int t = 0; t <= pos; t++) {
+    #pragma HLS PIPELINE
+    float k_buffer[head_size];
+    for (int i = 0; i < head_size; i++)
+        k_buffer[i] = key_cache[i + key_offset]; // float DDR load
+    float k_max = 0.0f;
+    for (int i = 0; i < head_size; i++) {
+        float v = std::fabs(k_buffer[i]);         // max scan
+        if (v > k_max) k_max = v;
+    }
+    float k_scale = k_max / 127.0f;               // scale compute
+    float k_inv   = 1.0f / k_scale;
+    int8_t k_int8[head_size];
+    for (int i = 0; i < head_size; i++)
+        k_int8[i] = (int8_t)round(k_buffer[i] * k_inv); // quantise
+    // ... INT32 dot product using k_int8 ...
+}
+
+// ITERATION 3: direct INT8 load from pre-quantised cache
+for (int t = 0; t <= pos; t++) {
+    #pragma HLS PIPELINE
+    float k_scale = key_scales[scale_offset];    // one float scalar read
+    int8_t k_buffer[head_size];
+    for (int i = 0; i < head_size; i++)
+        k_buffer[i] = key_cache[data_offset + i]; // INT8 burst load (4x smaller)
+    // ... INT32 dot product using k_buffer directly ...
+}
+\end{lstlisting}
+
+Table~\ref{tab:attn_csim_all} extends the earlier two-iteration csim
+comparison to include iteration~3. All three csim runs passed with zero
+errors against their respective software references.
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{rrrr}
+    \toprule
+    Index & Baseline \texttt{xb} (float) & Iter.~2 \texttt{xb} (INT8) & Iter.~3 \texttt{xb} (INT8-KV) \\
+    \midrule
+    0 & 0.343754 & 0.337795 & 0.343771 \\
+    1 & 0.313754 & 0.307415 & 0.312900 \\
+    2 & 0.283754 & 0.279273 & 0.284313 \\
+    3 & 0.253754 & 0.248893 & 0.253442 \\
+    4 & 0.213827 & 0.209449 & 0.213733 \\
+    5 & 0.183827 & 0.179730 & 0.183540 \\
+    6 & 0.153827 & 0.150702 & 0.154046 \\
+    7 & 0.123827 & 0.120983 & 0.123853 \\
+    \bottomrule
+  \end{tabular}
+  \caption{C-simulation \texttt{xb} outputs for all three attention
+           iterations at identical inputs (\texttt{pos\,=\,3},
+           \texttt{loff\,=\,0}). Iteration~3 outputs are substantially
+           closer to the float baseline than iteration~2, reflecting
+           the higher fidelity of pre-quantised group-scale storage
+           compared to per-position on-the-fly quantisation.}
+  \label{tab:attn_csim_all}
+\end{table}
+
+The iteration~3 outputs are noticeably closer to the float baseline
+than the iteration~2 outputs: the maximum absolute difference from
+the float baseline reduces from approximately $0.006$ (iteration~2) to
+approximately $0.001$ (iteration~3). This improvement occurs because
+iteration~3 stores K and V with group-wise scales computed over
+$\texttt{GS} = 4$ elements of the full \texttt{kv\_dim\,=\,8}-element
+vector, whereas iteration~2 computed one scale per head slice
+(\texttt{head\_size\,=\,4} elements) on the fly. Although both use the
+same number of elements per group, the pre-stored group scales in
+iteration~3 are computed once at the write site using the full integer
+range of 127, while iteration~2's on-the-fly scales were subject to
+additional rounding at each read. The net effect is a more accurate
+reconstruction of the float activations at the point where they
+enter the attention score computation.
+
+\subsection{HLS Synthesis Results}
+\label{subsec:attn_csyn}
+
+Table~\ref{tab:attn_all_resources} extends the resource comparison to
+all three iterations, and Table~\ref{tab:attn_kvint8_latency} presents
+the per-pipeline-module latency for iteration~3.
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{lrrrr}
+    \toprule
+    & Baseline & Iter.~2 & \multicolumn{2}{c}{Iter.~3} \\
+    Resource & (core) & (core) & Total & Core \\
+    \midrule
+    LUT  & 53{,}650 & 45{,}186 & 72{,}096 & 70{,}514 \\
+    FF   & 26{,}673 & 26{,}962 & 35{,}036 & 33{,}947 \\
+    BRAM & 0        & 32       & 22       & 18 \\
+    DSP  & 192      & 122      & 194      & 194 \\
+    \bottomrule
+  \end{tabular}
+  \caption{Resource utilisation across all three attention iterations
+           on the \texttt{xczu9eg-ffvb1156-2-e} at \SI{150}{\mega\hertz}.
+           Core figures for iterations~1 and~2 exclude the AXI master
+           adapter and S-AXILite control interface; the same exclusions
+           apply to the iteration~3 core column.}
+  \label{tab:attn_all_resources}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{lrrrr}
+    \toprule
+    Pipeline stage & Trip count & II & Iter.\ latency & Total (cycles) \\
+    \midrule
+    Q max scan                                  &  4 &  1 &  2 &   4 \\
+    Q quantise                                  &  4 &  1 &  1 &   4 \\
+    \texttt{iterate} (INT8 K load + INT32)      & 16 &  5 & 26 & 100 \\
+    \texttt{max}     (softmax pass 1)           & 16 &  1 &  2 &  16 \\
+    \texttt{exp}     (softmax pass 2)           &  1 &  1 & 17 &  16 \\
+    \texttt{sum}     (softmax pass 3, unrolled) &  1 & 96 & 97 & 185 \\
+    \texttt{norm}    (softmax pass 4)           &  1 &  1 &  1 &   1 \\
+    \texttt{xb\_accum} initialise               &  4 &  1 &  1 &   4 \\
+    \texttt{acc}     (INT8 V load + weighted)   &  8 & 12 & 36 & 124 \\
+    \bottomrule
+  \end{tabular}
+  \caption{Per-pipeline-module latency breakdown of the iteration~3
+           INT8-KV attention block at \SI{150}{\mega\hertz}, for one
+           head at \texttt{pos\,=\,15}. The \texttt{sum} stage reflects
+           the unrolled softmax from \cref{subsec:softmax_iter3}.}
+  \label{tab:attn_kvint8_latency}
+\end{table}
+
+The most notable change in iteration~3 is the sharp reduction in
+\texttt{iterate} iteration latency from 42 cycles (baseline) and 73
+cycles (iteration~2) to 26 cycles. This directly reflects the
+elimination of the on-the-fly K quantisation sequence. Where
+iteration~2's \texttt{iterate} body spent the majority of its 73
+cycles on the max-scan, scale computation, and element-wise
+quantisation of the loaded float K vector, iteration~3 instead
+issues two AXI reads --- a burst of \texttt{head\_size} INT8 bytes
+from \texttt{key\_cache} and a single float from
+\texttt{key\_scales} --- and proceeds directly to the integer dot
+product. The achieved II is 5 rather than the 4 observed in the
+baseline and iteration~2, because the two separate AXI read streams
+(\texttt{key\_cache} and \texttt{key\_scales}) now issue through the
+same \texttt{gmem0} bundle and require one additional cycle of
+arbitration compared to the single float stream of the baseline.
+
+The \texttt{acc} loop shows trip count~8 with II\,=\,12 and total
+124 cycles. The \texttt{UNROLL factor=2} on the outer position loop
+halves the trip count from 16 to 8, but also doubles the work per
+pipeline iteration. The II\,=\,12 reflects the two simultaneous V
+vector loads per iteration combined with the float
+\texttt{fmul}--\texttt{fadd} accumulation chain, which has a combined
+pipeline depth of approximately 10 cycles. Total \texttt{acc} latency
+at 124 cycles is slightly more than the baseline's 112 cycles, as the
+on-the-fly V scale load adds one extra memory access per iteration.
+
+The resource comparison reveals a significant increase in LUT usage
+from iteration~2 (45,186 core) to iteration~3 (70,514 core). The
+primary driver is not the attention block itself but the
+\texttt{sum} pipeline module inherited from the iteration~3 softmax
+function, which grew from 233 LUTs in the baseline to 2,416 LUTs
+after the \texttt{UNROLL factor=16} change. The BRAM count reduced
+from 32 core (iteration~2) to 18 core (iteration~3), because
+\texttt{softmax<16>} is reinstated and its 64-byte buffer stays in
+registers rather than BRAM, while the \texttt{generic\_round\_double\_s}
+rounding IP instances remain from the per-head Q quantisation, each
+still consuming 4 BRAM\_18K blocks. Both iteration~3 designs
+(softmax and attention) carry the \SI{-0.217}{\nano\second} timing
+violation introduced by the \texttt{sum} unroll, with an estimated
+critical path of \SI{5.084}{\nano\second} against the
+\SI{4.867}{\nano\second} budget.
 
 % =============================================================================
 \section{SwiGLU Feed-Forward Network}
