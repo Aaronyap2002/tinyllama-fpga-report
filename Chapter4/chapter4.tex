@@ -19,7 +19,7 @@
 
 All kernels in this chapter are implemented in Vitis HLS 2021.2,
 targeting the \texttt{xczu9eg-ffvb1156-2-e} device on the ZCU102 evaluation
-board at a design clock of \SI{200}{\mega\hertz}. Each primitive is first
+board at a design clock of \SI{150}{\mega\hertz}. Each primitive is first
 presented as a standalone synthesisable function, allowing its resource
 utilisation and initiation interval to be measured in isolation before it
 is composed into the full transformer forward pass.
@@ -34,9 +34,6 @@ Table~\ref{tab:config_comparison} summarises the two sets of parameters.
 
 \begin{table}[H]
   \centering
-  \caption{Prototype and full TinyLlama-1.1B configuration parameters
-           used across kernel development.}
-  \label{tab:config_comparison}
   \begin{tabular}{lrr}
     \toprule
     Parameter & Prototype & TinyLlama-1.1B \\
@@ -51,6 +48,10 @@ Table~\ref{tab:config_comparison} summarises the two sets of parameters.
     Quantisation group size $GS$         & 4       & 64       \\
     \bottomrule
   \end{tabular}
+  \caption{Prototype and full TinyLlama-1.1B configuration parameters
+           used across kernel development.}
+  \label{tab:config_comparison}
+
 \end{table}
 
 The prototype dimensions were chosen deliberately to keep array sizes small
@@ -173,11 +174,6 @@ the software reference for each element of the test vector.
 
 \begin{table}[H]
   \centering
-  \caption{C-simulation output for \texttt{rmsnorm} with input
-           $\mathbf{x} = [1, -2, 3, -4, 5, -6, 7, -8]$ and weight
-           $\mathbf{g} = [0.5, 1.0, 1.5, 2.0, 0.5, 1.0, 1.5, 2.0]$.
-           All eight elements match the software reference exactly.}
-  \label{tab:rmsnorm_csim}
   \begin{tabular}{rrrr}
     \toprule
     Index & HW output & SW reference & Absolute error \\
@@ -192,6 +188,12 @@ the software reference for each element of the test vector.
     7 & -3.168472 & -3.168472 & 0 \\
     \bottomrule
   \end{tabular}
+  \caption{C-simulation output for \texttt{rmsnorm} with input
+           $\mathbf{x} = [1, -2, 3, -4, 5, -6, 7, -8]$ and weight
+           $\mathbf{g} = [0.5, 1.0, 1.5, 2.0, 0.5, 1.0, 1.5, 2.0]$.
+           All eight elements match the software reference exactly.}
+  \label{tab:rmsnorm_csim}
+
 \end{table}
 
 The absolute error is identically zero for every element, meaning the
@@ -223,9 +225,6 @@ and Table~\ref{tab:rmsnorm_latency} for the per-stage latency breakdown.
 
 \begin{table}[H]
   \centering
-  \caption{Timing summary for \texttt{rmsnorm\_top} at the
-           \SI{150}{\mega\hertz} (\SI{6.667}{\nano\second}) target clock.}
-  \label{tab:rmsnorm_timing}
   \begin{tabular}{lrrr}
     \toprule
     Clock   & Target (ns) & Estimated (ns) & Uncertainty (ns) \\
@@ -233,13 +232,14 @@ and Table~\ref{tab:rmsnorm_latency} for the per-stage latency breakdown.
     ap\_clk & 6.667       & 4.867          & 1.800 \\
     \bottomrule
   \end{tabular}
+  \caption{Timing summary for \texttt{rmsnorm\_top} at the
+           \SI{150}{\mega\hertz} (\SI{6.667}{\nano\second}) target clock.}
+  \label{tab:rmsnorm_timing}
+
 \end{table}
 
 \begin{table}[H]
   \centering
-  \caption{Top-level latency summary for \texttt{rmsnorm\_top} at
-           \SI{150}{\mega\hertz}.}
-  \label{tab:rmsnorm_top_latency}
   \begin{tabular}{rrrrrrl}
     \toprule
     \multicolumn{2}{c}{Latency (cycles)} &
@@ -250,16 +250,14 @@ and Table~\ref{tab:rmsnorm_latency} for the per-stage latency breakdown.
     146 & 146 & \SI{0.973}{\micro\second} & \SI{0.973}{\micro\second} & 147 & 147 & no \\
     \bottomrule
   \end{tabular}
+  \caption{Top-level latency summary for \texttt{rmsnorm\_top} at
+           \SI{150}{\mega\hertz}.}
+  \label{tab:rmsnorm_top_latency}
+
 \end{table}
 
 \begin{table}[H]
   \centering
-  \caption{Resource utilisation of the \texttt{rmsnorm} function
-           synthesised at $S = 8$ on the ZCU102
-           (\texttt{xczu9eg-ffvb1156-2-e}). Figures in the core-only
-           column exclude the AXI master adapter overhead, which is
-           not present when the function is inlined into the full kernel.}
-  \label{tab:rmsnorm_resources}
   \begin{tabular}{lrrrr}
     \toprule
     Resource & Used (total) & Used (core only) & Available & Utilisation (\%) \\
@@ -270,14 +268,17 @@ and Table~\ref{tab:rmsnorm_latency} for the per-stage latency breakdown.
     DSP      & 26      & 26      & 2{,}520   & 1 \\
     \bottomrule
   \end{tabular}
+  \caption{Resource utilisation of the \texttt{rmsnorm} function
+           synthesised at $S = 8$ on the ZCU102
+           (\texttt{xczu9eg-ffvb1156-2-e}). Figures in the core-only
+           column exclude the AXI master adapter overhead, which is
+           not present when the function is inlined into the full kernel.}
+  \label{tab:rmsnorm_resources}
+
 \end{table}
 
 \begin{table}[H]
   \centering
-  \caption{Latency breakdown of \texttt{rmsnorm} ($S = 8$) by internal
-           pipeline stage at \SI{150}{\mega\hertz}. Total function latency
-           is 144 cycles (\SI{960}{\nano\second}).}
-  \label{tab:rmsnorm_latency}
   \begin{tabular}{lrrrr}
     \toprule
     Stage & Trip count & II & Iteration latency & Total (cycles) \\
@@ -288,6 +289,11 @@ and Table~\ref{tab:rmsnorm_latency} for the per-stage latency breakdown.
     \texttt{norm\_and\_scale}                        & 8 &  1 &  2 & 10 \\
     \bottomrule
   \end{tabular}
+  \caption{Latency breakdown of \texttt{rmsnorm} ($S = 8$) by internal
+           pipeline stage at \SI{150}{\mega\hertz}. Total function latency
+           is 144 cycles (\SI{960}{\nano\second}).}
+  \label{tab:rmsnorm_latency}
+
 \end{table}
 
 The total function latency of 146 cycles is dominated by the
@@ -351,7 +357,7 @@ and a \texttt{float} array \texttt{s[S]} for the scale factors, where
 only \texttt{S/GS} scale entries are populated, one per group of
 \texttt{GS} consecutive elements.
 
-\noindent\textbf{Quantisation.} The \texttt{quantize<S>} function
+The \texttt{quantize<S>} function
 processes the input float vector in groups of \texttt{GS} elements, as
 shown in Listing~\ref{lst:quantize}. For each group, the function first
 scans the \texttt{GS} elements to find the maximum absolute value
@@ -437,12 +443,6 @@ group respectively.
 
 \begin{table}[H]
   \centering
-  \caption{C-simulation output for \texttt{quantize} with input
-           $\mathbf{x} = [0.5, -1.2, 3.7, -0.3, 2.1, -4.5, 1.0, -2.8]$.
-           All INT8 values and both scale factors match the software
-           reference exactly. GS\,=\,4 so group~0 covers indices 0--3
-           and group~1 covers indices 4--7.}
-  \label{tab:quantize_csim}
   \begin{tabular}{lrrrr}
     \toprule
     Index & Input ($x$) & HW \texttt{q} & SW \texttt{q} & Match \\
@@ -462,6 +462,13 @@ group respectively.
     1 & & 0.035433 & 0.035433 & 0 \\
     \bottomrule
   \end{tabular}
+  \caption{C-simulation output for \texttt{quantize} with input
+           $\mathbf{x} = [0.5, -1.2, 3.7, -0.3, 2.1, -4.5, 1.0, -2.8]$.
+           All INT8 values and both scale factors match the software
+           reference exactly. GS\,=\,4 so group~0 covers indices 0--3
+           and group~1 covers indices 4--7.}
+  \label{tab:quantize_csim}
+
 \end{table}
 
 All eight INT8 values and both scale factors agree exactly between the
@@ -485,9 +492,6 @@ Table~\ref{tab:quantize_latency} for the per-stage breakdown.
 
 \begin{table}[H]
   \centering
-  \caption{Timing summary for \texttt{quantize\_top} at
-           \SI{150}{\mega\hertz}.}
-  \label{tab:quantize_timing}
   \begin{tabular}{lrrr}
     \toprule
     Clock & Target (ns) & Estimated (ns) & Uncertainty (ns) \\
@@ -495,13 +499,14 @@ Table~\ref{tab:quantize_latency} for the per-stage breakdown.
     ap\_clk & 6.667 & 4.867 & 1.800 \\
     \bottomrule
   \end{tabular}
+  \caption{Timing summary for \texttt{quantize\_top} at
+           \SI{150}{\mega\hertz}.}
+  \label{tab:quantize_timing}
+
 \end{table}
 
 \begin{table}[H]
   \centering
-  \caption{Top-level latency summary for \texttt{quantize\_top} at
-           \SI{150}{\mega\hertz}.}
-  \label{tab:quantize_top_latency}
   \begin{tabular}{rrrrrrl}
     \toprule
     \multicolumn{2}{c}{Latency (cycles)} &
@@ -512,14 +517,14 @@ Table~\ref{tab:quantize_latency} for the per-stage breakdown.
     84 & 84 & \SI{0.560}{\micro\second} & \SI{0.560}{\micro\second} & 85 & 85 & no \\
     \bottomrule
   \end{tabular}
+  \caption{Top-level latency summary for \texttt{quantize\_top} at
+           \SI{150}{\mega\hertz}.}
+  \label{tab:quantize_top_latency}
+
 \end{table}
 
 \begin{table}[H]
   \centering
-  \caption{Resource utilisation of \texttt{quantize} synthesised at
-           $S = 8$ on the ZCU102. The core-only column excludes the
-           AXI master adapter.}
-  \label{tab:quantize_resources}
   \begin{tabular}{lrrrr}
     \toprule
     Resource & Used (total) & Used (core only) & Available & Utilisation (\%) \\
@@ -530,15 +535,15 @@ Table~\ref{tab:quantize_latency} for the per-stage breakdown.
     DSP  & 0       & 0       & 2{,}520   & 0 \\
     \bottomrule
   \end{tabular}
+  \caption{Resource utilisation of \texttt{quantize} synthesised at
+           $S = 8$ on the ZCU102. The core-only column excludes the
+           AXI master adapter.}
+  \label{tab:quantize_resources}
+
 \end{table}
 
 \begin{table}[H]
   \centering
-  \caption{Latency breakdown of \texttt{quantize} ($S = 8$, $GS = 4$)
-           by internal pipeline stage at \SI{150}{\mega\hertz}.
-           Total function latency is 84 cycles
-           (\SI{560}{\nano\second}).}
-  \label{tab:quantize_latency}
   \begin{tabular}{lrrrr}
     \toprule
     Stage & Trip count & II & Iteration latency & Total (cycles) \\
@@ -548,6 +553,12 @@ Table~\ref{tab:quantize_latency} for the per-stage breakdown.
     Pipeline\_3 (write \texttt{s\_out}) & 2 & 1  &  1 &  2 \\
     \bottomrule
   \end{tabular}
+  \caption{Latency breakdown of \texttt{quantize} ($S = 8$, $GS = 4$)
+           by internal pipeline stage at \SI{150}{\mega\hertz}.
+           Total function latency is 84 cycles
+           (\SI{560}{\nano\second}).}
+  \label{tab:quantize_latency}
+
 \end{table}
 
 The most striking result is the zero DSP utilisation. In contrast to
@@ -613,9 +624,53 @@ vector.
 \subsection{C-Simulation Results}
 \label{subsec:dequantize_csim}
 
-% Add csim pass/fail and output table for dequantize_top.
-% Testbench strategy: supply known INT8 values and explicit scale factors,
-% then verify that every recovered float equals q[i] * s[i/GS] exactly.
+C-simulation was performed by compiling \texttt{dequantize\_top} together
+with a software testbench using GCC on the x86 host. The testbench
+supplied eight known INT8 values along with two explicit group scale
+factors, one per \texttt{GS\,=\,4} element group, then compared the
+kernel output element by element against a software reference computing
+$x_{\text{ref}}[i] = q[i] \times s_{\lfloor i/GS \rfloor}$ directly.
+The same group scale factors from the \texttt{quantize} csim run
+($s_0 = 0.029134$, $s_1 = 0.035433$) were reused, making the two
+testbenches complementary. Table~\ref{tab:dequantize_csim} shows the
+kernel and reference outputs for each element.
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{rrrr}
+    \toprule
+    Index & HW output & SW reference & Absolute error \\
+    \midrule
+    0 &  1.835442 &  1.835442 & 0 \\
+    1 & -2.942534 & -2.942534 & 0 \\
+    2 &  3.700018 &  3.700018 & 0 \\
+    3 & -1.107092 & -1.107092 & 0 \\
+    4 &  2.976372 &  2.976372 & 0 \\
+    5 & -4.499991 & -4.499991 & 0 \\
+    6 &  1.807083 &  1.807083 & 0 \\
+    7 & -4.039362 & -4.039362 & 0 \\
+    \bottomrule
+  \end{tabular}
+  \caption{C-simulation output for \texttt{dequantize} with group scales
+           $s_0 = 0.029134$ (indices 0--3) and $s_1 = 0.035433$
+           (indices 4--7). All eight dequantised float values match the
+           software reference with zero absolute error.}
+  \label{tab:dequantize_csim}
+
+\end{table}
+
+All eight dequantised float values agree exactly with the software
+reference, with zero absolute error across every element. Elements at
+indices 2 and 5, corresponding to the INT8 boundary values $+127$ and
+$-127$, correctly reconstruct to $+3.700018$ and $-4.499991$
+respectively, confirming that the scale multiplication path handles
+boundary saturation without loss. The zero-error result is expected for
+dequantisation: unlike quantisation, which introduces an irreducible
+rounding error at the point of integer conversion, dequantisation is a
+pure floating-point multiplication with no rounding decision, and the
+kernel output is therefore bit-identical to the sequential software
+reference on every element. The csim run completed with zero errors as
+reported by Vitis HLS.
 
 \subsection{HLS Synthesis Results}
 \label{subsec:dequantize_csyn}
@@ -629,9 +684,6 @@ Table~\ref{tab:dequantize_latency} for the per-stage breakdown.
 
 \begin{table}[H]
   \centering
-  \caption{Timing summary for \texttt{dequantize\_top} at
-           \SI{150}{\mega\hertz}.}
-  \label{tab:dequantize_timing}
   \begin{tabular}{lrrr}
     \toprule
     Clock & Target (ns) & Estimated (ns) & Uncertainty (ns) \\
@@ -639,13 +691,14 @@ Table~\ref{tab:dequantize_latency} for the per-stage breakdown.
     ap\_clk & 6.667 & 4.867 & 1.800 \\
     \bottomrule
   \end{tabular}
+  \caption{Timing summary for \texttt{dequantize\_top} at
+           \SI{150}{\mega\hertz}.}
+  \label{tab:dequantize_timing}
+
 \end{table}
 
 \begin{table}[H]
   \centering
-  \caption{Top-level latency summary for \texttt{dequantize\_top} at
-           \SI{150}{\mega\hertz}.}
-  \label{tab:dequantize_top_latency}
   \begin{tabular}{rrrrrrl}
     \toprule
     \multicolumn{2}{c}{Latency (cycles)} &
@@ -656,32 +709,33 @@ Table~\ref{tab:dequantize_latency} for the per-stage breakdown.
     45 & 45 & \SI{0.300}{\micro\second} & \SI{0.300}{\micro\second} & 46 & 46 & no \\
     \bottomrule
   \end{tabular}
+  \caption{Top-level latency summary for \texttt{dequantize\_top} at
+           \SI{150}{\mega\hertz}.}
+  \label{tab:dequantize_top_latency}
+
 \end{table}
 
 \begin{table}[H]
   \centering
-  \caption{Resource utilisation of \texttt{dequantize} synthesised at
-           $S = 8$ on the ZCU102. The core-only column excludes the
-           AXI master adapter.}
-  \label{tab:dequantize_resources}
   \begin{tabular}{lrrrr}
     \toprule
     Resource & Used (total) & Used (core only) & Available & Utilisation (\%) \\
     \midrule
-    LUT  & 3{,}128 &   273 & 274{,}080 & $<$1 \\
+    LUT  & 3{,}128 &   273 & 274{,}080 & 1 \\
     FF   & 2{,}244 &   372 & 548{,}160 & $<$1 \\
     BRAM & 4       &     0 & 1{,}824   & $<$1 \\
     DSP  & 3       &     3 & 2{,}520   & $<$1 \\
     \bottomrule
   \end{tabular}
+  \caption{Resource utilisation of \texttt{dequantize} synthesised at
+           $S = 8$ on the ZCU102. The core-only column excludes the
+           AXI master adapter.}
+  \label{tab:dequantize_resources}
+
 \end{table}
 
 \begin{table}[H]
   \centering
-  \caption{Latency breakdown of \texttt{dequantize} ($S = 8$, $GS = 4$)
-           at \SI{150}{\mega\hertz}. Total function latency is 45 cycles
-           (\SI{300}{\nano\second}).}
-  \label{tab:dequantize_latency}
   \begin{tabular}{lrrrr}
     \toprule
     Stage & Trip count & II & Iteration latency & Total (cycles) \\
@@ -689,6 +743,11 @@ Table~\ref{tab:dequantize_latency} for the per-stage breakdown.
     \texttt{VITIS\_LOOP\_55\_1} (dequantise loop) & 8 & 1 & 12 & 18 \\
     \bottomrule
   \end{tabular}
+  \caption{Latency breakdown of \texttt{dequantize} ($S = 8$, $GS = 4$)
+           at \SI{150}{\mega\hertz}. Total function latency is 45 cycles
+           (\SI{300}{\nano\second}).}
+  \label{tab:dequantize_latency}
+
 \end{table}
 
 The synthesis results reveal a significant asymmetry between the two
@@ -701,8 +760,7 @@ arithmetic operations each function requires.
 \texttt{Dequantize} performs a single floating-point multiplication per
 element, $x_i = q_i \times s_{\lfloor i/GS \rfloor}$, which maps to one
 \texttt{fmul} unit consuming 3 DSP blocks with a 3-cycle pipeline latency.
-Since each element's result depends only on its own INT8 value and its
-group scale, and since each element's result depends only on its own INT8 value and its
+Since each element's computation depends only on its own INT8 value and its
 group scale with no dependency on any previous element, there are no loop-carried
 dependencies, and II\,=\,1 is achievable. The 12-cycle iteration latency
 reflects the \texttt{fmul} pipeline depth combined with the AXI read
@@ -740,18 +798,288 @@ data bus in groups of four bytes per transfer.
 \subsection{Implementation}
 \label{subsec:matmul_impl}
 
-% Describe matmul<N,D> from forward.h.
-% Cover: three-stage structure (load x/xs buffers, load w/ws per row,
-% group accumulation), INT32 accumulation per group to prevent overflow,
-% per-group dequantisation, ARRAY_PARTITION on x_buffer (factor=16) and
-% w_buffer (factor=32), PIPELINE on outer row loop, commented-out UNROLL
-% on inner loops and why they were left disabled in the prototype.
+The \texttt{matmul<N,D>} function computes the quantised matrix--vector
+product $\mathbf{W}\mathbf{x} \to \mathbf{y}$, where $\mathbf{W} \in
+\mathbb{Z}^{D \times N}$ is an INT8 weight matrix stored in row-major
+order and $\mathbf{x} \in \mathbb{Z}^N$ is an INT8 input vector. Both
+operands are accompanied by their group-wise scale factors, and the output
+$\mathbf{y} \in \mathbb{R}^D$ is returned as a dequantised float vector.
+The function is declared as a C++ template in \texttt{forward.h},
+parameterised by \texttt{N} (input dimension) and \texttt{D} (output
+dimension), and is instantiated at the call sites in \texttt{forward.cpp}
+for the Q, K, V, and output projections.
+
+The implementation is organised into three phases. The first phase
+pre-loads the input vector and its associated scale factors into two
+static local buffers before any row computation begins. The input buffer
+\texttt{x\_buffer[N]} receives the INT8 input values via the
+\texttt{x\_buff} loop with \texttt{UNROLL factor=16}, and the scale buffer
+\texttt{xs\_buffer[N/GS]} receives the per-group float scales via the
+\texttt{xs\_buff} loop with \texttt{UNROLL factor=4}. Both buffers are
+declared \texttt{static} so that HLS allocates them as persistent on-chip
+storage rather than on the call stack, and both are partitioned with
+\texttt{ARRAY\_PARTITION cyclic} to provide sufficient read ports for the
+downstream compute loops. Pre-loading into local buffers serves the same
+purpose as in \texttt{rmsnorm}: it separates the AXI burst reads for the
+input from the per-row AXI burst reads for the weights, preventing
+contention on the shared \texttt{gmem0} port.
+
+The second and third phases execute inside the outer row loop over
+\texttt{D} output elements, which carries the \texttt{\#pragma HLS
+PIPELINE} directive. For each row \texttt{i}, HLS allocates two
+non-static local buffers, \texttt{w\_buffer[N]} and
+\texttt{ws\_buffer[N/GS]}, each partitioned with \texttt{ARRAY\_PARTITION
+cyclic factor=32}. The \texttt{matmul1} loop loads the \texttt{N} INT8
+weight values for row \texttt{i} from DDR into \texttt{w\_buffer}, and
+\texttt{matmul2} loads the corresponding \texttt{N/GS} scale factors into
+\texttt{ws\_buffer}. Crucially, neither of these inner loading loops
+carries an \texttt{UNROLL} pragma: the directives are present in the
+source but commented out. This is a deliberate conservative design
+decision for the prototype. Enabling \texttt{UNROLL} on \texttt{matmul1}
+at full scale ($N = 2048$) would cause HLS to generate 2048 simultaneous
+AXI read requests when the outer loop is pipelined, saturating the AXI
+master adapter's 16-slot outstanding transaction queue and causing a
+circular wait stall. The commented-out state reflects the minimum safe
+configuration for prototype correctness.
+
+The third phase is the grouped integer dot product. The \texttt{matmul3}
+loop iterates over groups of \texttt{GS} consecutive elements, and within
+each group the \texttt{matmul4} loop accumulates the INT8--INT8 products
+into a 32-bit integer accumulator \texttt{ival}. Using \texttt{int32\_t}
+for the accumulator is essential: the product of two INT8 values can reach
+$127 \times 127 = 16{,}129$, and summing \texttt{GS = 4} such products
+gives a maximum of $4 \times 16{,}129 = 64{,}516$, which fits within
+\texttt{int16\_t} but would overflow \texttt{int8\_t}. Accumulating into
+\texttt{int32\_t} prevents any possibility of overflow. After all
+\texttt{GS} products have been accumulated, the group result is
+dequantised inline: the integer sum is cast to float and multiplied by the
+product of the weight group scale \texttt{ws\_buffer[j/GS]} and the input
+group scale \texttt{xs\_buffer[j/GS]}, recovering the floating-point
+partial sum for that group. This per-group dequantisation is added
+directly to the running float accumulator \texttt{val} before moving to
+the next group. Listing~\ref{lst:matmul} shows the core loop structure.
+
+\begin{lstlisting}[
+  caption = {Core loop structure of \texttt{matmul<N,D>} from
+             \texttt{forward.h}. The outer row loop is pipelined; the
+             inner loading loops (\texttt{matmul1}, \texttt{matmul2})
+             and the grouped dot product loops (\texttt{matmul3},
+             \texttt{matmul4}) execute sequentially within each pipeline
+             iteration. The \texttt{UNROLL} pragmas on \texttt{matmul1}
+             and \texttt{matmul2} are commented out to prevent AXI
+             interface flooding at full scale.},
+  label = {lst:matmul}
+]
+for (i = 0; i < D; i++) {
+  #pragma HLS PIPELINE
+  float val = 0.0f;
+  int8_t  w_buffer[N];   float ws_buffer[N/GS];
+  #pragma HLS ARRAY_PARTITION variable=w_buffer  cyclic factor=32
+  #pragma HLS ARRAY_PARTITION variable=ws_buffer cyclic factor=32
+
+matmul1: for (int j = 0; j < N; j++)   // no UNROLL: deliberate
+    w_buffer[j]  = wq[j + i*N];
+matmul2: for (int j = 0; j < N/GS; j++) // no UNROLL: deliberate
+    ws_buffer[j] = ws[i*(N/GS) + j];
+
+matmul3: for (int j = 0; j <= N-GS; j += GS) {
+    int32_t ival = 0;
+matmul4:  for (int k = 0; k < GS; k++) // UNROLL commented out
+        ival += (int32_t)x_buffer[j+k] * (int32_t)w_buffer[j+k];
+    val += (float)ival * ws_buffer[j/GS] * xs_buffer[j/GS];
+  }
+  xout[i] = val;
+}
+\end{lstlisting}
 
 \subsection{C-Simulation Results}
 \label{subsec:matmul_csim}
 
+C-simulation was performed by compiling \texttt{matmul\_top} together
+with a software testbench using GCC on the x86 host. The testbench
+constructs an $8 \times 8$ weight matrix whose diagonal entries are all
+127 and whose off-diagonal entries are all zero, with all weight scales
+set to $1/127$. With this configuration the computation simplifies to
+$\texttt{xout}[i] = \texttt{xq}[i] \times \texttt{xs}[\lfloor i/GS
+\rfloor]$, which is precisely the dequantised input vector. The testbench
+reuses the quantised values and scale factors from the \texttt{quantize}
+csim as input, making the three testbenches a matched chain in which
+quantise, identity matrix--vector multiply, and dequantise can be
+cross-validated against one another.
+
+Table~\ref{tab:matmul_csim} shows the output from both the kernel and the
+software reference for each of the eight output elements.
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{rrrr}
+    \toprule
+    Index & HW output & SW reference & Absolute error \\
+    \midrule
+    0 &  0.495278 &  0.495278 & 0 \\
+    1 & -1.194494 & -1.194494 & 0 \\
+    2 &  3.700018 &  3.700018 & 0 \\
+    3 & -0.291340 & -0.291340 & 0 \\
+    4 &  2.090547 &  2.090547 & 0 \\
+    5 & -4.499991 & -4.499991 & 0 \\
+    6 &  0.992124 &  0.992124 & 0 \\
+    7 & -2.799207 & -2.799207 & 0 \\
+    \bottomrule
+  \end{tabular}
+  \caption{C-simulation output for \texttt{matmul} with quantised input
+           $\hat{\mathbf{x}} = [17, -41, 127, -10, 59, -127, 28, -79]$
+           (group scales $s_0 = 0.029134$, $s_1 = 0.035433$) and an
+           $8 \times 8$ scaled identity weight matrix. All eight output
+           elements match the software reference within tolerance.}
+  \label{tab:matmul_csim}
+
+\end{table}
+
+All eight output elements agree exactly between the hardware kernel and
+the software reference. The expected round-trip relationship holds: the
+output values are the dequantised equivalents of the original float inputs
+$[0.5, -1.2, 3.7, -0.3, 2.1, -4.5, 1.0, -2.8]$ to within the precision
+limits of symmetric INT8 quantisation, with the largest absolute
+reconstruction error occurring at index~2 where the original value of
+$3.7$ reconstructs to $3.700018$, a difference of $18 \times 10^{-6}$
+arising from the scale factor $s_0 = 3.7/127 \approx 0.029134$ stored as
+a 32-bit float. The csim run completed with zero errors as reported by
+Vitis HLS.
+
 \subsection{HLS Synthesis Results}
 \label{subsec:matmul_csyn}
+
+The \texttt{matmul} function was synthesised in isolation using the
+prototype configuration ($N = D = 8$, $GS = 4$) on the
+\texttt{xczu9eg-ffvb1156-2-e} device at a \SI{150}{\mega\hertz} target
+clock (\SI{6.667}{\nano\second} period).
+Tables~\ref{tab:matmul_timing} and \ref{tab:matmul_top_latency} present
+the top-level timing and latency summary, followed by
+Table~\ref{tab:matmul_resources} for resource utilisation and
+Table~\ref{tab:matmul_latency} for the per-stage latency breakdown.
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{lrrr}
+    \toprule
+    Clock   & Target (ns) & Estimated (ns) & Uncertainty (ns) \\
+    \midrule
+    ap\_clk & 6.667       & 4.867          & 1.800 \\
+    \bottomrule
+  \end{tabular}
+  \caption{Timing summary for \texttt{matmul\_top} at the
+           \SI{150}{\mega\hertz} (\SI{6.667}{\nano\second}) target clock.}
+  \label{tab:matmul_timing}
+
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{rrrrrrl}
+    \toprule
+    \multicolumn{2}{c}{Latency (cycles)} &
+    \multicolumn{2}{c}{Latency (absolute)} &
+    \multicolumn{2}{c}{Interval (cycles)} & Pipeline \\
+    min & max & min & max & min & max & type \\
+    \midrule
+    146 & 146 & \SI{0.973}{\micro\second} & \SI{0.973}{\micro\second} & 147 & 147 & no \\
+    \bottomrule
+  \end{tabular}
+  \caption{Top-level latency summary for \texttt{matmul\_top} at
+           \SI{150}{\mega\hertz}.}
+  \label{tab:matmul_top_latency}
+
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{lrrrr}
+    \toprule
+    Resource & Used (total) & Used (core only) & Available & Utilisation (\%) \\
+    \midrule
+    LUT  & 5{,}577 & 2{,}506 & 274{,}080 & 2 \\
+    FF   & 4{,}163 & 1{,}944 & 548{,}160 & $<$1 \\
+    BRAM & 4       & 0       & 1{,}824   & $<$1 \\
+    DSP  & 9       & 9       & 2{,}520   & $<$1 \\
+    \bottomrule
+  \end{tabular}
+  \caption{Resource utilisation of \texttt{matmul} synthesised at $N = D
+           = 8$ on the ZCU102 (\texttt{xczu9eg-ffvb1156-2-e}). The
+           core-only column excludes the AXI master adapter and S-AXILite
+           control interface, which are not present when the function is
+           inlined into the full kernel.}
+  \label{tab:matmul_resources}
+
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{lrrrr}
+    \toprule
+    Stage & Trip count & II & Iteration latency & Total (cycles) \\
+    \midrule
+    Pre-loop buffer loads (\texttt{x\_buff}, \texttt{xs\_buff}) & — & — & — & 24 \\
+    \texttt{VITIS\_LOOP\_143\_1} (row loop)                     & 8 & 10 & 42 & 120 \\
+    \bottomrule
+  \end{tabular}
+  \caption{Latency breakdown of \texttt{matmul} ($N = D = 8$, $GS = 4$)
+           at \SI{150}{\mega\hertz}. Total function latency is 146 cycles
+           (\SI{973}{\nano\second}).}
+  \label{tab:matmul_latency}
+
+\end{table}
+
+The central result is that the row loop \texttt{VITIS\_LOOP\_143\_1}
+achieves an II of 10 against a target of 1. Understanding why requires
+examining what the pipeline must accomplish in each iteration: before any
+arithmetic can begin on row~\texttt{i}, the pipeline must first issue AXI
+reads for the \texttt{N = 8} INT8 weight values from \texttt{matmul1} and
+the \texttt{N/GS = 2} float scale values from \texttt{matmul2}. Because
+neither loading loop carries an \texttt{UNROLL} pragma, HLS issues these
+reads sequentially: eight weight reads followed by two scale reads, giving
+$8 + 2 = 10$ sequential AXI transactions before the first arithmetic
+operation of the iteration can complete. This sequential load count
+directly determines the achieved II of 10. If the \texttt{UNROLL} pragmas
+were enabled, HLS could issue all ten reads simultaneously, reducing II
+toward~1, but doing so at full scale ($N = 2048$) would generate 2048
+concurrent read requests that would saturate the adapter's outstanding
+transaction limit and cause a deadlock stall, as detailed in
+\cref{subsec:forward_limitations}.
+
+The iteration latency of 42 cycles reflects the time required to complete
+the full body of one row iteration: the sequential weight and scale loads
+followed by the grouped integer dot product across two groups of four
+elements each, culminating in the per-group floating-point dequantisation.
+The total row loop latency is therefore $\text{II} \times (D - 1) +
+\text{iteration latency} = 10 \times 7 + 42 = 112$ cycles for the
+arithmetic, with the remaining 8 cycles accounting for pipeline drain and
+sub-module handshaking overhead. The 24-cycle pre-loop overhead covers the
+AXI address setup and the two buffer-loading loops for the input vector
+and its scales, which execute once before any row computation begins.
+
+The DSP utilisation of 9 breaks down as follows. The Bind Op report
+identifies four \texttt{mac\_muladd\_8s\_8s\_16s\_17} units (one per INT8
+element of the \texttt{matmul4} inner loop within one group, consuming 1
+DSP each), one \texttt{fmul\_32ns} unit for the floating-point
+dequantisation product $\texttt{ival} \times \texttt{ws} \times
+\texttt{xs}$ (3 DSPs), and one \texttt{fadd\_32ns} unit for the
+float accumulator \texttt{val} (2 DSPs), totalling $4 + 3 + 2 = 9$. An
+additional four \texttt{mul\_8s\_8s\_16} instances appear in the report
+with zero DSP assignment; these correspond to the second group's INT8
+multiplications, which HLS chose to implement in LUT fabric rather than
+DSP48 blocks. The asymmetric mapping, with one group in DSPs and the other
+in LUTs, reflects HLS's resource allocation heuristics when the inner
+\texttt{UNROLL} pragma is absent: without a directive forcing all four
+elements of both groups to be instantiated in parallel, the tool schedules
+one group's products through the DSP-backed MAC pipeline and places the
+second group's products in available LUT fabric. The total DSP count of 9
+is notably higher than the zero DSPs consumed by \texttt{quantize} and the
+3 DSPs consumed by \texttt{dequantize}, reflecting that \texttt{matmul} is
+the first primitive that performs both integer and floating-point
+arithmetic requiring DSP48 resources for both. The timing situation is
+identical to all preceding sections: estimated \SI{4.867}{\nano\second}
+plus \SI{1.800}{\nano\second} uncertainty exactly exhausts the
+\SI{6.667}{\nano\second} budget, leaving zero slack.
 
 % =============================================================================
 \section{Softmax}

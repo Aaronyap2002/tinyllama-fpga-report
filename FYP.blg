@@ -1,16 +1,16 @@
 [0] Config.pm:328> INFO - This is Biber 2.21
 [0] Config.pm:331> INFO - Logfile is 'FYP.blg'
-[89] biber-MSWIN64:342> INFO - === 
-[131] Biber.pm:421> INFO - Reading 'FYP.bcf'
-[217] Biber.pm:1002> INFO - Found 1 citekeys in bib section 0
-[227] Biber.pm:4487> INFO - Processing section 0
-[235] Biber.pm:4678> INFO - Looking for bibtex file 'references.bib' for section 0
-[239] UCollate.pm:68> INFO - Overriding locale 'en-US' defaults 'variable = shifted' with 'variable = non-ignorable'
-[239] UCollate.pm:68> INFO - Overriding locale 'en-US' defaults 'normalization = NFD' with 'normalization = prenormalized'
-[239] Biber.pm:4307> INFO - Sorting list 'none/global//global/global/global' of type 'entry' with template 'none' and locale 'en-US'
-[239] Biber.pm:4313> INFO - No sort tailoring available for locale 'en-US'
-[239] bbl.pm:676> INFO - Writing 'FYP.bbl' with encoding 'UTF-8'
-[240] bbl.pm:779> INFO - Output to FYP.bbl
-[240] Biber.pm:132> WARN - Data source 'references.bib' is empty, ignoring
-[240] Biber.pm:132> WARN - I didn't find a database entry for 'PLACEHOLDER' (section 0)
-[240] Biber.pm:134> INFO - WARNINGS: 2
+[73] biber-MSWIN64:342> INFO - === 
+[98] Biber.pm:421> INFO - Reading 'FYP.bcf'
+[173] Biber.pm:1002> INFO - Found 1 citekeys in bib section 0
+[182] Biber.pm:4487> INFO - Processing section 0
+[190] Biber.pm:4678> INFO - Looking for bibtex file 'references.bib' for section 0
+[194] UCollate.pm:68> INFO - Overriding locale 'en-US' defaults 'variable = shifted' with 'variable = non-ignorable'
+[194] UCollate.pm:68> INFO - Overriding locale 'en-US' defaults 'normalization = NFD' with 'normalization = prenormalized'
+[194] Biber.pm:4307> INFO - Sorting list 'none/global//global/global/global' of type 'entry' with template 'none' and locale 'en-US'
+[194] Biber.pm:4313> INFO - No sort tailoring available for locale 'en-US'
+[194] bbl.pm:676> INFO - Writing 'FYP.bbl' with encoding 'UTF-8'
+[194] bbl.pm:779> INFO - Output to FYP.bbl
+[195] Biber.pm:132> WARN - Data source 'references.bib' is empty, ignoring
+[195] Biber.pm:132> WARN - I didn't find a database entry for 'PLACEHOLDER' (section 0)
+[195] Biber.pm:134> INFO - WARNINGS: 2

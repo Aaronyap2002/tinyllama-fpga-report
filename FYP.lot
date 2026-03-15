@@ -16,14 +16,20 @@
 \contentsline {table}{\numberline {4.9}{\ignorespaces Top-level latency summary for \texttt {quantize\_top} at \SI {150}{\mega \hertz }.}}{32}{table.caption.133}%
 \contentsline {table}{\numberline {4.10}{\ignorespaces Resource utilisation of \texttt {quantize} synthesised at $S = 8$ on the ZCU102. The core-only column excludes the AXI master adapter.}}{32}{table.caption.134}%
 \contentsline {table}{\numberline {4.11}{\ignorespaces Latency breakdown of \texttt {quantize} ($S = 8$, $GS = 4$) by internal pipeline stage at \SI {150}{\mega \hertz }. Total function latency is 84 cycles (\SI {560}{\nano \second }).}}{32}{table.caption.135}%
-\contentsline {table}{\numberline {4.12}{\ignorespaces Timing summary for \texttt {dequantize\_top} at \SI {150}{\mega \hertz }.}}{34}{table.caption.140}%
-\contentsline {table}{\numberline {4.13}{\ignorespaces Top-level latency summary for \texttt {dequantize\_top} at \SI {150}{\mega \hertz }.}}{34}{table.caption.141}%
-\contentsline {table}{\numberline {4.14}{\ignorespaces Resource utilisation of \texttt {dequantize} synthesised at $S = 8$ on the ZCU102. The core-only column excludes the AXI master adapter.}}{34}{table.caption.142}%
-\contentsline {table}{\numberline {4.15}{\ignorespaces Latency breakdown of \texttt {dequantize} ($S = 8$, $GS = 4$) at \SI {150}{\mega \hertz }. Total function latency is 45 cycles (\SI {300}{\nano \second }).}}{34}{table.caption.143}%
+\contentsline {table}{\numberline {4.12}{\ignorespaces C-simulation output for \texttt {dequantize} with group scales $s_0 = 0.029134$ (indices 0--3) and $s_1 = 0.035433$ (indices 4--7). All eight dequantised float values match the software reference with zero absolute error.}}{34}{table.caption.139}%
+\contentsline {table}{\numberline {4.13}{\ignorespaces Timing summary for \texttt {dequantize\_top} at \SI {150}{\mega \hertz }.}}{34}{table.caption.141}%
+\contentsline {table}{\numberline {4.14}{\ignorespaces Top-level latency summary for \texttt {dequantize\_top} at \SI {150}{\mega \hertz }.}}{35}{table.caption.142}%
+\contentsline {table}{\numberline {4.15}{\ignorespaces Resource utilisation of \texttt {dequantize} synthesised at $S = 8$ on the ZCU102. The core-only column excludes the AXI master adapter.}}{35}{table.caption.143}%
+\contentsline {table}{\numberline {4.16}{\ignorespaces Latency breakdown of \texttt {dequantize} ($S = 8$, $GS = 4$) at \SI {150}{\mega \hertz }. Total function latency is 45 cycles (\SI {300}{\nano \second }).}}{35}{table.caption.144}%
+\contentsline {table}{\numberline {4.17}{\ignorespaces C-simulation output for \texttt {matmul} with quantised input $\hat {\mathbf {x}} = [17, -41, 127, -10, 59, -127, 28, -79]$ (group scales $s_0 = 0.029134$, $s_1 = 0.035433$) and an $8 \times 8$ scaled identity weight matrix. All eight output elements match the software reference within tolerance.}}{39}{table.caption.169}%
+\contentsline {table}{\numberline {4.18}{\ignorespaces Timing summary for \texttt {matmul\_top} at the \SI {150}{\mega \hertz } (\SI {6.667}{\nano \second }) target clock.}}{39}{table.caption.171}%
+\contentsline {table}{\numberline {4.19}{\ignorespaces Top-level latency summary for \texttt {matmul\_top} at \SI {150}{\mega \hertz }.}}{40}{table.caption.172}%
+\contentsline {table}{\numberline {4.20}{\ignorespaces Resource utilisation of \texttt {matmul} synthesised at $N = D = 8$ on the ZCU102 (\texttt {xczu9eg-ffvb1156-2-e}). The core-only column excludes the AXI master adapter and S-AXILite control interface, which are not present when the function is inlined into the full kernel.}}{40}{table.caption.173}%
+\contentsline {table}{\numberline {4.21}{\ignorespaces Latency breakdown of \texttt {matmul} ($N = D = 8$, $GS = 4$) at \SI {150}{\mega \hertz }. Total function latency is 146 cycles (\SI {973}{\nano \second }).}}{40}{table.caption.174}%
 \addvspace {10\p@ }
-\contentsline {table}{\numberline {5.1}{\ignorespaces FPGA resource utilisation after Vivado implementation on the ZCU102 (xczu9eg-ffvb1156-2-e). Percentages are relative to total available resources on the device.}}{37}{table.caption.168}%
-\contentsline {table}{\numberline {5.2}{\ignorespaces Inference performance comparison between the FPGA implementation and a CPU software baseline. Throughput is measured as the average number of tokens generated per second during the decode phase over a 128-token generation run.}}{38}{table.caption.171}%
-\contentsline {table}{\numberline {5.3}{\ignorespaces Comparison of this work against prior FPGA-based transformer accelerators reported in the literature.}}{39}{table.caption.174}%
+\contentsline {table}{\numberline {5.1}{\ignorespaces FPGA resource utilisation after Vivado implementation on the ZCU102 (xczu9eg-ffvb1156-2-e). Percentages are relative to total available resources on the device.}}{43}{table.caption.195}%
+\contentsline {table}{\numberline {5.2}{\ignorespaces Inference performance comparison between the FPGA implementation and a CPU software baseline. Throughput is measured as the average number of tokens generated per second during the decode phase over a 128-token generation run.}}{44}{table.caption.198}%
+\contentsline {table}{\numberline {5.3}{\ignorespaces Comparison of this work against prior FPGA-based transformer accelerators reported in the literature.}}{45}{table.caption.201}%
 \addvspace {10\p@ }
 \addvspace {10\p@ }
 \addvspace {10\p@ }
