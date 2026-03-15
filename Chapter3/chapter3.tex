@@ -90,10 +90,6 @@ operations in the TinyLlama forward pass.
 
 \begin{table}[H]
   \centering
-  \caption{Hardware/software partitioning of the TinyLlama inference pipeline.
-           Operations marked PL are executed in the programmable logic
-           accelerator kernel; operations marked PS run on the ARM Cortex-A53.}
-  \label{tab:partition}
   \begin{tabular}{llll}
     \toprule
     Operation & Dominant cost & Assigned to & Status \\
@@ -113,6 +109,11 @@ operations in the TinyLlama forward pass.
     Sampling (argmax/temperature)& Control             & PS & Implemented \\
     \bottomrule
   \end{tabular}
+  \caption{Hardware/software partitioning of the TinyLlama inference pipeline.
+           Operations marked PL are executed in the programmable logic
+           accelerator kernel; operations marked PS run on the ARM Cortex-A53.}
+  \label{tab:partition}
+
 \end{table}
 
 The \emph{Designed} status in \Cref{tab:partition} indicates that the
@@ -179,10 +180,6 @@ capacity. The two-tier memory organisation is summarised in
 
 \begin{table}[H]
   \centering
-  \caption{Memory hierarchy of the TinyLlama inference accelerator on the
-           ZCU102. Weight and KV cache sizes are after INT8 quantisation.
-           On-chip buffers are reused across all 22 layers.}
-  \label{tab:memory_hierarchy}
   \begin{tabular}{llll}
     \toprule
     Data & Location & Approx.\ size (full model) & Access pattern \\
@@ -195,6 +192,11 @@ capacity. The two-tier memory organisation is summarised in
     Intermediate activation buffers           & On-chip & $\sim$96\,KB   & Reused per layer \\
     \bottomrule
   \end{tabular}
+  \caption{Memory hierarchy of the TinyLlama inference accelerator on the
+           ZCU102. Weight and KV cache sizes are after INT8 quantisation.
+           On-chip buffers are reused across all 22 layers.}
+  \label{tab:memory_hierarchy}
+
 \end{table}
 
 \section{Quantisation Scheme}
