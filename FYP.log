@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.28 (TeX Live 2025) (preloaded format=pdflatex 2026.3.1)  15 MAR 2026 15:46
+This is pdfTeX, Version 3.141592653-2.6-1.40.28 (TeX Live 2025) (preloaded format=pdflatex 2026.3.1)  15 MAR 2026 17:25
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -989,15 +989,50 @@ Overfull \hbox (5.50803pt too wide) in paragraph at lines 27--27
  []
 
 
-Overfull \hbox (1.19098pt too wide) in paragraph at lines 30--30
+Overfull \hbox (65.472pt too wide) in paragraph at lines 29--29
+ [][] [][][]\OT1/ptm/m/n/12 C-simulation out-put for \OT1/zi4/m/n/12 softmax \OT1/ptm/m/n/12 with in-put $\OT1/ztmcm/m/n/12 [\OMS/ztmcm/m/n/12 ^^@\OT1/ztmcm/m/n/12 1\OML/ztmcm/m/it/12 :\OT1/ztmcm/m/n/12 2\OML/ztmcm/m/it/12 ; \OT1/ztmcm/m/n/12 0\OML/ztmcm/m/it/12 :\OT1/ztmcm/m/n/12 5\OML/ztmcm/m/it/12 ; \OT1/ztmcm/m/n/12 1\OML/ztmcm/m/it/12 :\OT1/ztmcm/m/n/12 8\OML/ztmcm/m/it/12 ; \OT1/ztmcm/m/n/12 4\OML/ztmcm/m/it/12 :\OT1/ztmcm/m/n/12 5\OML/ztmcm/m/it/12 ; \OMS/ztmcm/m/n/12 ^^@\OT1/ztmcm/m/n/12 0\OML/ztmcm/m/it/12 :\OT1/ztmcm/m/n/12 3\OML/ztmcm/m/it/12 ; \OT1/ztmcm/m/n/12 2\OML/ztmcm/m/it/12 :\OT1/ztmcm/m/n/12 1\OML/ztmcm/m/it/12 ; \OMS/ztmcm/m/n/12 ^^@\OT1/ztmcm/m/n/12 2\OML/ztmcm/m/it/12 :\OT1/ztmcm/m/n/12 7\OML/ztmcm/m/it/12 ; \OT1/ztmcm/m/n/12 0\OML/ztmcm/m/it/12 :\OT1/ztmcm/m/n/12 9]$\OT1/ptm/m/n/12 , 
+ []
+
+
+Overfull \hbox (0.38771pt too wide) in paragraph at lines 33--33
+ \OT1/ptm/m/n/12 The \OT1/zi4/m/n/12 exp \OT1/ptm/m/n/12 and \OT1/zi4/m/n/12 norm \OT1/ptm/m/n/12 loops re-port trip count 1 be-cause \OT1/zi4/m/n/12 UNROLL factor=16 
+ []
+
+
+Overfull \hbox (9.33884pt too wide) in paragraph at lines 33--33
+ \OT1/ptm/m/n/12 on a 16-element loop col-lapses all it-er-a-tions into a sin-gle par-al-lel pipeline 
+ []
+
+[10]
+Overfull \hbox (43.03598pt too wide) in paragraph at lines 34--34
+ [][] [][][]\OT1/ptm/m/n/12 C-simulation out-put for the base-line float at-ten-tion ker-nel (\OT1/zi4/m/n/12 attn[]baseline[]top\OT1/ptm/m/n/12 ) 
+ []
+
+
+Overfull \hbox (11.022pt too wide) in paragraph at lines 41--41
+ \OT1/ptm/m/n/12 at-ten-tion block at $\OT1/ztmcm/m/n/12 150$$[]$\OT1/ptm/m/n/12 , for one head at max-i-mum con-text (\OT1/zi4/m/n/12 pos=256\OT1/ptm/m/n/12 , 
+ []
+
+
+Overfull \hbox (9.77257pt too wide) in paragraph at lines 41--41
+ \OT1/zi4/m/n/12 MAXSIZE=257\OT1/ptm/m/n/12 ). The outer \OT1/zi4/m/n/12 multihead[]attention \OT1/ptm/m/n/12 loop over \OT1/zi4/m/n/12 n[]heads=2 
+ []
+
+
+Overfull \hbox (42.74799pt too wide) in paragraph at lines 42--42
+ [][] [][][]\OT1/ptm/m/n/12 AXI mas-ter bun-dle as-sign-ment in the pro-to-type \OT1/zi4/m/n/12 forward \OT1/ptm/m/n/12 ker-nel (\OT1/zi4/m/n/12 forward.cpp\OT1/ptm/m/n/12 ). 
+ []
+
+
+Overfull \hbox (1.19098pt too wide) in paragraph at lines 44--44
  [][] [][][]\OT1/ptm/m/n/12 FPGA re-source util-i-sa-tion af-ter Vi-vado im-ple-men-ta-tion on the ZCU102 
  []
 
-)
+[11])
 \tf@lot=\write7
 \openout7 = `FYP.lot'.
 
- [10] (./Chapter1/chapter1.tex
+ [12] (./Chapter1/chapter1.tex
 Chapter 1.
 
 LaTeX Warning: Citation 'PLACEHOLDER' on page 1 undefined on input line 20.
@@ -1112,7 +1147,7 @@ LaTeX Warning: Citation 'PLACEHOLDER' on page 11 undefined on input line 563.
 LaTeX Warning: Citation 'PLACEHOLDER' on page 11 undefined on input line 572.
 
 [11]
-<Chapter2/media/sparse_transformer_patterns.png, id=680, 823.27576pt x 410.7345pt>
+<Chapter2/media/sparse_transformer_patterns.png, id=751, 823.27576pt x 410.7345pt>
 File: Chapter2/media/sparse_transformer_patterns.png Graphic file (type png)
 <use Chapter2/media/sparse_transformer_patterns.png>
 Package pdftex.def Info: Chapter2/media/sparse_transformer_patterns.png  used on input line 582.
@@ -1183,7 +1218,7 @@ LaTeX Warning: Citation 'PLACEHOLDER' on page 14 undefined on input line 726.
 
 LaTeX Warning: Citation 'PLACEHOLDER' on page 15 undefined on input line 739.
 
-<Chapter2/media/hls_pipeline.png, id=697, 259.56975pt x 111.41624pt>
+<Chapter2/media/hls_pipeline.png, id=768, 259.56975pt x 111.41624pt>
 File: Chapter2/media/hls_pipeline.png Graphic file (type png)
 <use Chapter2/media/hls_pipeline.png>
 Package pdftex.def Info: Chapter2/media/hls_pipeline.png  used on input line 744.
@@ -1197,7 +1232,7 @@ LaTeX Warning: Citation 'PLACEHOLDER' on page 15 undefined on input line 747.
 
 LaTeX Warning: Citation 'PLACEHOLDER' on page 15 undefined on input line 755.
 
-<Chapter2/media/hls_unrolling.png, id=698, 604.05675pt x 86.12175pt>
+<Chapter2/media/hls_unrolling.png, id=769, 604.05675pt x 86.12175pt>
 File: Chapter2/media/hls_unrolling.png Graphic file (type png)
 <use Chapter2/media/hls_unrolling.png>
 Package pdftex.def Info: Chapter2/media/hls_unrolling.png  used on input line 766.
@@ -1308,55 +1343,120 @@ Overfull \hbox (45.71216pt too wide) in paragraph at lines 1017--1027
  [][] 
  []
 
-[40]) (./Chapter5/chapter5.tex [41] [42]
+[40] [41] [42]
+Underfull \hbox (badness 10000) in paragraph at lines 1200--1200
+[]\OT1/ptm/m/n/12 Table 4.22: |C-simulation out-put for \OT1/zi4/m/n/12 softmax \OT1/ptm/m/n/12 with in-put
+ []
+
+[43] [44] [45] [46]
+Overfull \hbox (30.43396pt too wide) in paragraph at lines 1416--1424
+[]\OT1/ptm/m/n/12 The lo-cal buffers \OT1/zi4/m/n/12 q[]buf\OT1/ptm/m/n/12 , \OT1/zi4/m/n/12 att[]buf\OT1/ptm/m/n/12 , and \OT1/zi4/m/n/12 xb[]buf \OT1/ptm/m/n/12 are each par-ti-tioned with \OT1/zi4/m/n/12 ARRAY[]PARTITION
+ []
+
+[47]
+Underfull \hbox (badness 10000) in paragraph at lines 1479--1479
+[]\OT1/ptm/m/n/12 Table 4.27: |C-simulation out-put for the base-line float at-ten-tion ker-nel
+ []
+
+
+Overfull \hbox (25.71663pt too wide) in paragraph at lines 1495--1502
+[]\OT1/ptm/m/n/12 The base-line at-ten-tion block was syn-the-sised in iso-la-tion on the \OT1/zi4/m/n/12 xczu9eg-ffvb1156-2-e
+ []
+
+
+Underfull \hbox (badness 1087) in paragraph at lines 1532--1532
+\OT1/ptm/m/n/12 min-i-mum cor-re-sponds to \OT1/zi4/m/n/12 pos=0 \OT1/ptm/m/n/12 (one at-tended po-si-tion) and the max-i-mum to
+ []
+
+[48] [49]
+Overfull \hbox (5.34052pt too wide) in paragraph at lines 1621--1636
+[]\OT1/ptm/m/n/12 The sec-ond it-er-a-tion of the at-ten-tion mech-a-nism, im-ple-mented in \OT1/zi4/m/n/12 forward[]fyp.cpp\OT1/ptm/m/n/12 ,
+ []
+
+[50]
+Overfull \hbox (33.76175pt too wide) in paragraph at lines 1696--1704
+\OT1/ptm/m/n/12 where $[]$ is the INT8 quan-tised value el-e-ment. The ac-cu-mu-la-tion tar-get \OT1/zi4/m/n/12 xb[]accum[head[]size]
+ []
+
+[51] [52]
+Underfull \hbox (badness 3118) in paragraph at lines 1806--1806
+\OT1/ptm/m/n/12 at-ten-tion block at $\OT1/ztmcm/m/n/12 150$$[]$\OT1/ptm/m/n/12 , for one head at max-i-mum con-text (\OT1/zi4/m/n/12 pos=256\OT1/ptm/m/n/12 ,
+ []
+
+[53] [54]
+Underfull \hbox (badness 1565) in paragraph at lines 1933--1933
+[]\OT1/ptm/m/n/12 Table 4.35: |AXI mas-ter bun-dle as-sign-ment in the pro-to-type \OT1/zi4/m/n/12 forward \OT1/ptm/m/n/12 ker-nel
+ []
+
+
+Overfull \hbox (3.15749pt too wide) in paragraph at lines 1937--1944
+[]\OT1/ptm/m/n/12 Sharing \OT1/zi4/m/n/12 key[]cache \OT1/ptm/m/n/12 and \OT1/zi4/m/n/12 value[]cache \OT1/ptm/m/n/12 on the same bun-dle as the trans-former weights
+ []
+
+[55]
+Overfull \hbox (13.23587pt too wide) in paragraph at lines 1961--1973
+[]\OT1/ptm/m/n/12 All in-ter-me-di-ate ac-ti-va-tion buffers are de-clared as \OT1/zi4/m/n/12 static \OT1/ptm/m/n/12 lo-cal ar-rays in-side \OT1/zi4/m/n/12 forward\OT1/ptm/m/n/12 ,
+ []
+
+
+Overfull \hbox (8.63275pt too wide) in paragraph at lines 1977--1986
+\OT1/ptm/m/n/12 layer loop be-gins, the to-ken em-bed-ding is loaded from the float \OT1/zi4/m/n/12 token[]embedding[]table
+ []
+
+
+Overfull \hbox (33.76463pt too wide) in paragraph at lines 1977--1986
+\OT1/ptm/m/n/12 field of the trans-former weights struct via a sin-gle \OT1/zi4/m/n/12 memcpy \OT1/ptm/m/n/12 call, copy-ing \OT1/zi4/m/n/12 dim$\OMS/ztmcm/m/n/12 ^^B$\OT1/zi4/m/n/12 sizeof(float)
+ []
+
+[56] [57]) (./Chapter5/chapter5.tex [58]
 Chapter 5.
-[43
+[59
 
 ]
 Overfull \hbox (87.96349pt too wide) in paragraph at lines 75--83
  [][] 
  []
 
-[44]
+[60]
 
-LaTeX Warning: Citation 'PLACEHOLDER' on page 45 undefined on input line 104.
+LaTeX Warning: Citation 'PLACEHOLDER' on page 61 undefined on input line 104.
 
 
-LaTeX Warning: Citation 'PLACEHOLDER' on page 45 undefined on input line 105.
+LaTeX Warning: Citation 'PLACEHOLDER' on page 61 undefined on input line 105.
 
 
 Overfull \hbox (4.86462pt too wide) in paragraph at lines 100--109
  [][] 
  []
 
-) (./Chapter6/chapter6.tex [45]
+) (./Chapter6/chapter6.tex [61]
 Chapter 6.
-[46
+[62
 
 ]
 
-LaTeX Warning: Citation 'PLACEHOLDER' on page 47 undefined on input line 64.
+LaTeX Warning: Citation 'PLACEHOLDER' on page 63 undefined on input line 64.
 
-) [47] [48
+) [63] [64
 
 
 ]
 
 LaTeX Warning: Empty bibliography on input line 291.
 
-(./Appendices/appendix.tex [49
+(./Appendices/appendix.tex [65
 
 ]
 Appendix A.
-[50
+[66
 
 ]
 Appendix B.
-[51
+[67
 
 ]
 Appendix C.
-) [52
+) [68
 
 ] (./FYP.aux)
  ***********
@@ -1371,7 +1471,7 @@ LaTeX Font Warning: Some font shapes were not available, defaults substituted.
 LaTeX Warning: There were undefined references.
 
 Package rerunfilecheck Info: File `FYP.out' has not changed.
-(rerunfilecheck)             Checksum: 40D9067CD2B7E429F3B73B893FF26E42;14316.
+(rerunfilecheck)             Checksum: 3259BE450812FBC531A530F06D64251A;14316.
 
 Package biblatex Warning: Please (re)run Biber on the file:
 (biblatex)                FYP
@@ -1382,18 +1482,18 @@ Package logreq Info: Writing requests to 'FYP.run.xml'.
 
  ) 
 Here is how much of TeX's memory you used:
- 29847 strings out of 467533
- 574725 string characters out of 5423669
- 1583278 words of memory out of 5000000
- 58082 multiletter control sequences out of 15000+600000
+ 29924 strings out of 467533
+ 576158 string characters out of 5423669
+ 1591800 words of memory out of 5000000
+ 58122 multiletter control sequences out of 15000+600000
  664297 words of font info for 117 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  63i,13n,97p,1266b,2796s stack positions out of 10000i,1000n,20000p,200000b,200000s
 <c:/texlive/2025/texmf-dist/fonts/type1/public/inconsolata/Inconsolata-zi4b.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/inconsolata/Inconsolata-zi4r.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/symbols/msam10.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/rsfs/rsfs10.pfb><c:/texlive/2025/texmf-dist/fonts/type1/urw/symbol/usyr.pfb><c:/texlive/2025/texmf-dist/fonts/type1/urw/symbol/usyr.pfb><c:/texlive/2025/texmf-dist/fonts/type1/urw/times/utmb8a.pfb><c:/texlive/2025/texmf-dist/fonts/type1/urw/times/utmr8a.pfb><c:/texlive/2025/texmf-dist/fonts/type1/urw/times/utmri8a.pfb>
-Output written on FYP.pdf (63 pages, 618074 bytes).
+Output written on FYP.pdf (81 pages, 671513 bytes).
 PDF statistics:
- 1102 PDF objects out of 1200 (max. 8388607)
- 991 compressed objects within 10 object streams
- 274 named destinations out of 1000 (max. 500000)
+ 1276 PDF objects out of 1440 (max. 8388607)
+ 1145 compressed objects within 12 object streams
+ 311 named destinations out of 1000 (max. 500000)
  709 words of extra memory for PDF output out of 10000 (max. 10000000)
 

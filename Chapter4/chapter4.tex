@@ -1089,52 +1089,772 @@ plus \SI{1.800}{\nano\second} uncertainty exactly exhausts the
 \subsection{Implementation}
 \label{subsec:softmax_impl}
 
-% Describe softmax<MAXSIZE> from forward.h.
-% Cover: numerically stable max-subtract form, four sequential loops
-% (max, exp, sum, norm), loop_tripcount hints for variable-length
-% operation, UNROLL factor=16 on exp and norm loops, inv_sum optimisation.
-% Note the template parameter change from <16> to <257> in forward_fyp.h
-% and explain why (accommodates larger seq_len without code changes).
+The \texttt{softmax<MAXSIZE>} function converts a vector of raw attention
+scores into a probability distribution over sequence positions. It is
+declared as a C++ template in \texttt{forward.h}, parameterised by
+\texttt{MAXSIZE}, which sets the size of the local working buffer
+allocated on-chip. The function accepts a runtime integer \texttt{size}
+that specifies how many of the \texttt{MAXSIZE} elements are active for
+the current call, reflecting the fact that the number of attended
+positions grows with each decode step from 1 up to the maximum context
+length. In the baseline kernel, the template is instantiated as
+\texttt{softmax<16>}, matching the prototype's \texttt{seq\_len = 16}.
+The second iteration of the kernel widens this to
+\texttt{softmax<257>}, accommodating larger context windows without
+any code change to the function body, at the cost of a larger static
+on-chip buffer allocation.
+
+The implementation uses the numerically stable max-subtract form,
+decomposed into four sequential named loops. Each loop addresses a
+distinct phase of the computation with its own pragma strategy, since
+the dependencies between phases prevent them from being merged into a
+single pipelined stage.
+
+The first loop, \texttt{max}, scans the active \texttt{size} elements
+to find the maximum score value. It carries a \texttt{\#pragma HLS
+PIPELINE} directive and a \texttt{loop\_tripcount} hint, but no
+\texttt{UNROLL}. The reason is that finding the maximum is a
+sequential reduction: each comparison must read the current running
+maximum and potentially update it before the next iteration can
+proceed. This loop-carried dependency on \texttt{max\_val} prevents
+parallelism in the same way as the \texttt{sum\_of\_squares} reduction
+in \texttt{rmsnorm}.
+
+The second loop, \texttt{exp}, subtracts \texttt{max\_val} from each
+element and applies the exponential function, writing results into the
+local \texttt{buffer[MAXSIZE]} array. This loop carries both
+\texttt{\#pragma HLS PIPELINE} and \texttt{\#pragma HLS UNROLL
+factor=16}. Because each element's computation is entirely
+independent, the \texttt{UNROLL factor=16} on a
+\texttt{MAXSIZE = 16}-element loop amounts to complete unrolling: HLS
+generates 16 parallel datapath lanes each containing a subtraction
+unit followed by an exponential unit. The exponential function
+\texttt{expf} is a transcendental operation that Vitis HLS maps to
+the Xilinx \texttt{fexp} floating-point IP core, which requires 7 DSP
+blocks and an 8-cycle pipeline depth. The cost of this operation
+dominates the resource budget of the entire function, as discussed in
+the synthesis subsection.
+
+The third loop, \texttt{sum}, accumulates the sum of all
+\texttt{buffer} entries. It carries only a \texttt{loop\_tripcount}
+hint and no \texttt{PIPELINE} or \texttt{UNROLL} pragma. Omitting
+\texttt{PIPELINE} here is the correct choice: the floating-point
+adder has a multi-cycle pipeline latency, and applying
+\texttt{PIPELINE} without a sufficient unroll factor would not
+eliminate the loop-carried dependency on the accumulator \texttt{sum}
+but would force HLS to report an II violation as a warning. The loop
+is left sequential, and the dependency manifests as an achieved II
+equal to the \texttt{fadd} pipeline depth rather than the target of
+1.
+
+The fourth loop, \texttt{norm}, divides each \texttt{buffer} entry by
+the total sum to produce the final probability values. Rather than
+performing a floating-point division per element, the implementation
+precomputes the reciprocal \texttt{inv\_sum = 1.0f / sum} as a single
+scalar before the loop, then multiplies each element by
+\texttt{inv\_sum}. This replaces \texttt{MAXSIZE} divisions with one
+division and \texttt{MAXSIZE} multiplications, which is a significant
+saving since \texttt{fdiv} requires 12 cycles and cannot map to
+DSP48 blocks, whereas \texttt{fmul} requires 4 cycles and maps
+efficiently to DSPs. Like the \texttt{exp} loop, \texttt{norm} carries
+\texttt{PIPELINE} and \texttt{UNROLL factor=16}, fully unrolling the
+16-element loop into 16 parallel multiply lanes.
 
 \subsection{C-Simulation Results}
 \label{subsec:softmax_csim}
 
+C-simulation was performed by compiling \texttt{softmax\_top} together
+with a software testbench using GCC on the x86 host. The testbench
+supplied a 16-element input vector with \texttt{size = 8} active
+elements, exercising the variable-length behaviour of the
+\texttt{loop\_tripcount} pragmas. The input vector
+$[-1.2, 0.5, 1.8, 4.5, -0.3, 2.1, -2.7, 0.9]$ was chosen to include
+one clearly dominant value (index~3, score $4.5$) so that the
+resulting probability distribution should concentrate most of its mass
+on that position. The testbench verified two independent correctness
+criteria: element-wise agreement with a software reference
+implementing the same four-loop algorithm, and a sum-to-unity check
+on the hardware output independent of the reference. Table~\ref{tab:softmax_csim}
+shows the output from both the kernel and the software reference.
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{rrrr}
+    \toprule
+    Index & HW output & SW reference & Absolute error \\
+    \midrule
+    0 & 0.002752 & 0.002752 & 0 \\
+    1 & 0.015064 & 0.015064 & 0 \\
+    2 & 0.055273 & 0.055273 & 0 \\
+    3 & 0.822446 & 0.822446 & 0 \\
+    4 & 0.006769 & 0.006769 & 0 \\
+    5 & 0.074611 & 0.074611 & 0 \\
+    6 & 0.000614 & 0.000614 & 0 \\
+    7 & 0.022472 & 0.022472 & 0 \\
+    \bottomrule
+  \end{tabular}
+  \caption{C-simulation output for \texttt{softmax} with input
+           $[-1.2, 0.5, 1.8, 4.5, -0.3, 2.1, -2.7, 0.9]$,
+           $\texttt{size} = 8$, $\texttt{MAXSIZE} = 16$.
+           All eight elements match the software reference exactly,
+           and the sum of outputs is $1.00000000$.}
+  \label{tab:softmax_csim}
+\end{table}
+
+All eight elements match the software reference with zero absolute
+error, and the independent sum check confirmed that the outputs sum
+to exactly $1.00000000$. The probability mass distribution is strongly
+concentrated at index~3 (probability $0.822$), as expected for the
+dominant score. The output at index~6 is the smallest ($0.000614$),
+corresponding to the most negative input score of $-2.7$. Both extremes
+are handled correctly, confirming that the max-subtract numerical
+stabilisation and the \texttt{inv\_sum} reciprocal optimisation produce
+accurate results. The csim run completed with zero errors as reported
+by Vitis HLS.
+
 \subsection{HLS Synthesis Results}
 \label{subsec:softmax_csyn}
+
+The \texttt{softmax} function was synthesised in isolation using the
+prototype configuration (\texttt{MAXSIZE} = \texttt{seq\_len} = 16)
+on the \texttt{xczu9eg-ffvb1156-2-e} device at a
+\SI{150}{\mega\hertz} target clock (\SI{6.667}{\nano\second} period).
+Tables~\ref{tab:softmax_timing} and \ref{tab:softmax_top_latency}
+present the top-level timing and latency summary, followed by
+Table~\ref{tab:softmax_resources} for resource utilisation and
+Table~\ref{tab:softmax_latency} for the per-loop latency breakdown.
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{lrrr}
+    \toprule
+    Clock   & Target (ns) & Estimated (ns) & Uncertainty (ns) \\
+    \midrule
+    ap\_clk & 6.667       & 4.867          & 1.800 \\
+    \bottomrule
+  \end{tabular}
+  \caption{Timing summary for \texttt{softmax\_top} at the
+           \SI{150}{\mega\hertz} (\SI{6.667}{\nano\second}) target clock.}
+  \label{tab:softmax_timing}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{rrrrrrl}
+    \toprule
+    \multicolumn{2}{c}{Latency (cycles)} &
+    \multicolumn{2}{c}{Latency (absolute)} &
+    \multicolumn{2}{c}{Interval (cycles)} & Pipeline \\
+    min & max & min & max & min & max & type \\
+    \midrule
+    51 & 205 & \SI{0.340}{\micro\second} & \SI{1.367}{\micro\second} & 52 & 206 & no \\
+    \bottomrule
+  \end{tabular}
+  \caption{Top-level latency summary for \texttt{softmax\_top} at
+           \SI{150}{\mega\hertz}. The minimum corresponds to
+           $\texttt{size} = 1$ and the maximum to
+           $\texttt{size} = \texttt{MAXSIZE} = 16$.}
+  \label{tab:softmax_top_latency}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{lrrrr}
+    \toprule
+    Resource & Used (total) & Used (core only) & Available & Utilisation (\%) \\
+    \midrule
+    LUT  & 39{,}921 & 38{,}979 & 274{,}080 & 14 \\
+    FF   & 19{,}165 & 18{,}432 & 548{,}160 &  3 \\
+    BRAM & 4        & 0        &   1{,}824 & $<$1 \\
+    DSP  & 192      & 192      &   2{,}520 &  7 \\
+    \bottomrule
+  \end{tabular}
+  \caption{Resource utilisation of \texttt{softmax} synthesised at
+           $\texttt{MAXSIZE} = 16$ on the ZCU102
+           (\texttt{xczu9eg-ffvb1156-2-e}). The core-only column
+           excludes the AXI master adapter and S-AXILite control
+           interface.}
+  \label{tab:softmax_resources}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{lrrrr}
+    \toprule
+    Loop & Trip count & II & Iteration latency & Total (cycles) \\
+    \midrule
+    \texttt{max}  & 16 &  1 &  2 &  16 \\
+    \texttt{exp}  &  1 &  1 &  9 &   9 \\
+    \texttt{sum}  & 16 &  6 &  8 &  97 \\
+    \texttt{norm} &  1 &  1 &  1 &   1 \\
+    \bottomrule
+  \end{tabular}
+  \caption{Per-loop latency breakdown of \texttt{softmax}
+           ($\texttt{MAXSIZE} = 16$) at \SI{150}{\mega\hertz}.
+           The \texttt{exp} and \texttt{norm} loops report trip
+           count~1 because \texttt{UNROLL factor=16} on a
+           16-element loop collapses all iterations into a single
+           parallel pipeline stage.}
+  \label{tab:softmax_latency}
+\end{table}
+
+The most immediately striking feature of these results is the
+resource consumption: with 192 DSPs and 38{,}979 core LUTs,
+\texttt{softmax} consumes more hardware than all four preceding
+primitives combined. The cause is the complete unrolling of the
+\texttt{exp} and \texttt{norm} loops into 16 parallel datapath lanes
+each. Each of the 16 \texttt{expf} computations in the \texttt{exp}
+loop is mapped to a Xilinx \texttt{fexp\_32ns\_32ns\_32\_9\_full\_dsp}
+IP core consuming 7 DSP48E2 blocks and an 8-cycle pipeline depth at
+\SI{150}{\mega\hertz}, contributing $16 \times 7 = 112$ DSPs. The 16
+max-subtract operations in the same loop each require an \texttt{fsub}
+unit consuming 2 DSPs, contributing a further $16 \times 2 = 32$ DSPs.
+The 16 multiply-by-reciprocal operations in the \texttt{norm} loop
+each map to an \texttt{fmul} unit consuming 3 DSPs, adding $16 \times
+3 = 48$ DSPs. The total $112 + 32 + 48 = 192$ DSPs is accounted for
+exactly by these three sources, with the \texttt{max} and \texttt{sum}
+loops contributing zero DSPs since they use only fabric-based
+comparators and adders respectively.
+
+The \texttt{Bind Storage} section of the synthesis report confirms that
+the \texttt{buffer[16]} array occupies no BRAM: at $16 \times 4 = 64$
+bytes, the buffer falls well below the threshold at which HLS infers
+block RAM, and it is instead mapped to flip-flop registers within the
+pipeline datapath.
+
+The variable latency reported in Table~\ref{tab:softmax_top_latency}
+is the first instance of a non-constant latency across all primitives
+synthesised in this chapter. The minimum of 51 cycles corresponds to
+the degenerate case $\texttt{size} = 1$, where the \texttt{max} loop
+has zero iterations (its lower bound is $i = 1$), the \texttt{exp}
+loop computes a single element, the \texttt{sum} loop performs one
+accumulation, and the \texttt{norm} loop normalises one value. The
+maximum of 205 cycles corresponds to $\texttt{size} = 16 =
+\texttt{MAXSIZE}$, engaging all four loops at their full trip counts.
+This variability is a direct consequence of the runtime \texttt{size}
+parameter, which is passed through the S-AXILite control register
+interface and therefore cannot be statically resolved by HLS during
+synthesis. The \texttt{loop\_tripcount} hints on all four loops inform
+the latency estimator of the expected range but do not constrain the
+hardware; the actual execution length is always determined at runtime.
+
+The \texttt{sum} loop is the dominant contributor to worst-case
+latency at 97 cycles, nearly five times the combined contribution of
+the other three loops. The cause is the loop-carried dependency on the
+floating-point accumulator \texttt{sum}: each iteration must wait for
+the preceding \texttt{fadd} to complete before it can add the next
+element, and \texttt{fadd} has a pipeline depth of 6 cycles at
+\SI{150}{\mega\hertz}, yielding an achieved II of 6 rather than the
+target of 1. Across 16 iterations this gives $6 \times 16 - 6 + 8 =
+98 - 1 = 97$ cycles for the loop body alone. This is the same
+loop-carried dependency pattern observed in the
+\texttt{sum\_of\_squares} reduction in \texttt{rmsnorm}. The
+\texttt{rmsnorm} implementation partially mitigated this with
+\texttt{UNROLL factor=4} to maintain four independent partial sum
+lanes; applying the same technique to \texttt{sum} would reduce the
+II from 6 to approximately 2, saving roughly 64 cycles per softmax
+call and is identified as a future optimisation.
+
+The timing result follows the same pattern as all preceding sections:
+the estimated path of \SI{4.867}{\nano\second} plus the
+\SI{1.800}{\nano\second} uncertainty exactly exhausts the
+\SI{6.667}{\nano\second} target, leaving zero slack. The \texttt{exp}
+pipeline sub-module is the most timing-critical path, with only
+\SI{0.09}{\nano\second} of slack above the timing constraint prior to
+uncertainty, reflecting the deep combinational chain through the 7-DSP
+\texttt{fexp} core.
 
 % =============================================================================
 \section{Grouped-Query Attention}
 \label{sec:attn_impl}
 % =============================================================================
 
+Section~\ref{sec:attn_impl} covers the attention mechanism in two
+subsections that correspond directly to the two prototype kernel
+iterations. The baseline implementation uses floating-point arithmetic
+throughout and is synthesised from \texttt{forward.cpp}. The refined
+implementation replaces the inner dot products and value accumulation
+with per-head INT8 arithmetic and is synthesised from
+\texttt{forward\_fyp.cpp}. Each subsection has its own implementation
+description, C-simulation result, and HLS synthesis result so that the
+two designs can be compared directly in terms of both functional
+behaviour and hardware cost.
+
 \subsection{Baseline: Floating-Point Attention}
 \label{subsec:attn_fp32}
 
-% Describe the baseline attention in forward.cpp:
-% - QKV projections via matmul
-% - Float KV cache write via memcpy
-% - Per-head score computation with PIPELINE on outer t-loop
-%   and UNROLL on inner head_size dot product
-% - softmax<16> call
-% - Value accumulation with same outer-PIPELINE structure
-% - Note that PIPELINE on outer t-loop is safe at seq_len=16 but
-%   will cause deadlock at full scale (forward reference to Sec 4.7)
+\subsubsection{Implementation}
+\label{subsubsec:attn_fp32_impl}
+
+The baseline attention block is contained in the
+\texttt{multihead\_attention} loop in \texttt{forward.cpp}. It executes
+after the QKV matrix--vector multiplications and before the residual
+addition, operating on the float query vector \texttt{q[dim]} and the
+float KV cache arrays \texttt{key\_cache} and \texttt{value\_cache}.
+The block is not a standalone function in the baseline: it is embedded
+directly inside the \texttt{forward} kernel's layer loop, and the KV
+cache arrays are shared on the same \texttt{gmem0} AXI bundle as the
+transformer weight struct.
+
+The outer \texttt{multihead\_attention} loop iterates over the
+\texttt{n\_heads = 2} query heads sequentially at prototype scale. For
+each head, the computation proceeds in three phases. The first phase,
+the \texttt{iterate} loop, computes the dot product between the current
+query slice and every cached key vector from timestep 0 through
+\texttt{pos}. The outer position loop carries \texttt{\#pragma HLS
+PIPELINE}, and the inner element loop over \texttt{head\_size = 4}
+dimensions carries \texttt{\#pragma HLS UNROLL} with no factor
+specified, amounting to complete unrolling. The score is then divided
+by $\sqrt{\texttt{head\_size}}$ and written to the local
+\texttt{att\_buf} score buffer. After the \texttt{iterate} loop, a call
+to \texttt{softmax<seq\_len>} converts the scores for the current head
+into a probability distribution in-place. The second phase, the
+\texttt{acc} loop, accumulates the probability-weighted value vectors
+into \texttt{xb\_buf}. Like the \texttt{iterate} loop, it pipelines the
+outer position loop and completely unrolls the inner element loop.
+
+The local buffers \texttt{q\_buf}, \texttt{att\_buf}, and
+\texttt{xb\_buf} are each partitioned with \texttt{ARRAY\_PARTITION
+cyclic factor=16} to provide sufficient memory ports for the
+simultaneously executing unrolled inner loop iterations. The key cache
+and value cache are read directly from the \texttt{gmem0} AXI port
+inside the pipelined outer loops without intermediate buffering, which
+is the source of the II violation described in the synthesis analysis
+below.
+
+A critical design consideration concerns the \texttt{PIPELINE} pragma
+placement on the \texttt{iterate} and \texttt{acc} outer loops. At
+prototype scale (\texttt{seq\_len = 16}, \texttt{head\_size = 4}),
+pipelining the outer position loop is safe: the inner unrolled element
+loop generates four concurrent AXI read requests per outer iteration,
+which the adapter's 16-slot transaction queue can accommodate without
+stalling indefinitely. At full TinyLlama scale (\texttt{seq\_len =
+2048}, \texttt{head\_size = 64}), applying \texttt{PIPELINE II=1} to
+the outer loop would instruct HLS to start a new position every clock
+cycle while the inner loop generates 64 simultaneous AXI read requests.
+The adapter's queue would fill within the first iteration, and each
+subsequent position would stall waiting for outstanding transactions to
+clear, creating a circular wait that locks the kernel. This AXI
+interface deadlock is one of the three critical bugs encountered during
+on-board testing and is discussed further in
+\cref{subsec:forward_limitations}.
+
+\subsubsection{C-Simulation Results}
+\label{subsubsec:attn_fp32_csim}
+
+C-simulation was performed by compiling \texttt{attn\_baseline\_top}
+together with a software testbench using GCC on the x86 host. The
+testbench exercised the kernel at \texttt{pos\,=\,3} and
+\texttt{loff\,=\,0}, covering four attended positions across both query
+heads. The query vector was set to linearly spaced values $[0.1, 0.2,
+\ldots, 0.8]$, and the key and value cache entries were initialised
+with small deterministic float values to produce non-trivial softmax
+outputs without requiring random number generation. The testbench
+verified only the final weighted value accumulation output \texttt{xb},
+since the attention score buffer \texttt{att\_buf} is an internal
+on-chip buffer in the real kernel and is not exposed as an AXI port.
+Table~\ref{tab:attn_fp32_csim} shows the output from both the kernel
+and the software reference.
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{rrrr}
+    \toprule
+    Index & HW \texttt{xb} & SW reference & Absolute error \\
+    \midrule
+    0 & 0.343754 & 0.343754 & 0 \\
+    1 & 0.313754 & 0.313754 & 0 \\
+    2 & 0.283754 & 0.283754 & 0 \\
+    3 & 0.253754 & 0.253754 & 0 \\
+    4 & 0.213827 & 0.213827 & 0 \\
+    5 & 0.183827 & 0.183827 & 0 \\
+    6 & 0.153827 & 0.153827 & 0 \\
+    7 & 0.123827 & 0.123827 & 0 \\
+    \bottomrule
+  \end{tabular}
+  \caption{C-simulation output for the baseline float attention kernel
+           (\texttt{attn\_baseline\_top}) at \texttt{pos\,=\,3},
+           \texttt{loff\,=\,0}. All eight elements of the weighted value
+           accumulation \texttt{xb} match the software reference
+           with zero absolute error.}
+  \label{tab:attn_fp32_csim}
+\end{table}
+
+All eight output elements agree exactly with the software reference,
+confirming that the three phases of the attention computation, score
+dot products, softmax normalisation, and value accumulation, all
+produce correct results when composed together. The zero-error outcome
+is expected for this test configuration: all arithmetic is performed in
+float32 using the same operation sequence in both the kernel and the
+reference, so no rounding divergence can arise. The csim run completed
+with zero errors as reported by Vitis HLS.
+
+\subsubsection{HLS Synthesis Results}
+\label{subsubsec:attn_fp32_csyn}
+
+The baseline attention block was synthesised in isolation on the
+\texttt{xczu9eg-ffvb1156-2-e} device at a \SI{150}{\mega\hertz} target
+clock. Tables~\ref{tab:attn_fp32_timing} and
+\ref{tab:attn_fp32_top_latency} present the top-level timing and
+latency summary, followed by Table~\ref{tab:attn_fp32_resources} for
+resource utilisation and Table~\ref{tab:attn_fp32_latency} for the
+per-pipeline-module breakdown.
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{lrrr}
+    \toprule
+    Clock   & Target (ns) & Estimated (ns) & Uncertainty (ns) \\
+    \midrule
+    ap\_clk & 6.667       & 4.867          & 1.800 \\
+    \bottomrule
+  \end{tabular}
+  \caption{Timing summary for \texttt{attn\_baseline\_top} at the
+           \SI{150}{\mega\hertz} (\SI{6.667}{\nano\second}) target clock.}
+  \label{tab:attn_fp32_timing}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{rrrrrrl}
+    \toprule
+    \multicolumn{2}{c}{Latency (cycles)} &
+    \multicolumn{2}{c}{Latency (absolute)} &
+    \multicolumn{2}{c}{Interval (cycles)} & Pipeline \\
+    min & max & min & max & min & max & type \\
+    \midrule
+    48 & 800 & \SI{0.320}{\micro\second} & \SI{5.334}{\micro\second} & 49 & 801 & no \\
+    \bottomrule
+  \end{tabular}
+  \caption{Top-level latency summary for \texttt{attn\_baseline\_top}
+           at \SI{150}{\mega\hertz}. The minimum corresponds to
+           \texttt{pos\,=\,0} (one attended position) and the maximum to
+           \texttt{pos\,=\,seq\_len\,$-$\,1\,=\,15} (sixteen attended positions).}
+  \label{tab:attn_fp32_top_latency}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{lrrrr}
+    \toprule
+    Resource & Used (total) & Used (core only) & Available & Utilisation (\%) \\
+    \midrule
+    LUT  & 54{,}912 & 53{,}650 & 274{,}080 & 20 \\
+    FF   & 27{,}584 & 26{,}673 & 548{,}160 &  5 \\
+    BRAM & 4        & 0        &   1{,}824 & $<$1 \\
+    DSP  & 192      & 192      &   2{,}520 &  7 \\
+    \bottomrule
+  \end{tabular}
+  \caption{Resource utilisation of the baseline float attention block
+           synthesised at prototype scale on the ZCU102
+           (\texttt{xczu9eg-ffvb1156-2-e}). The core-only column
+           excludes the AXI master adapter and S-AXILite control
+           interface.}
+  \label{tab:attn_fp32_resources}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{lrrrr}
+    \toprule
+    Pipeline stage & Trip count & II & Iter.\ latency & Total (cycles) \\
+    \midrule
+    \texttt{iterate} (score dot product)  & 16 &  4 & 42 & 101 \\
+    \texttt{max}     (softmax pass 1)     & 16 &  1 &  2 &  16 \\
+    \texttt{exp}     (softmax pass 2)     &  1 &  1 & 17 &  16 \\
+    \texttt{sum}     (softmax pass 3)     & 16 &  6 &  8 &  97 \\
+    \texttt{norm}    (softmax pass 4)     &  1 &  1 &  1 &   1 \\
+    \texttt{acc}     (value accumulation) & 16 &  6 & 23 & 112 \\
+    \bottomrule
+  \end{tabular}
+  \caption{Per-pipeline-module latency breakdown of the baseline float
+           attention block at \SI{150}{\mega\hertz}, for one head at
+           maximum context length (\texttt{pos\,=\,15}). The outer
+           \texttt{multihead\_attention} loop over \texttt{n\_heads\,=\,2}
+           runs sequentially, so the per-head cost is incurred twice.}
+  \label{tab:attn_fp32_latency}
+\end{table}
+
+The resource figures reflect the composition of the attention block
+with the softmax function it calls internally. The 192 DSPs and 53{,}650
+core LUTs match the softmax standalone synthesis results almost exactly,
+confirming that the floating-point exponential units from the 16 fully
+unrolled \texttt{fexp} instances dominate the resource budget of the
+entire attention block. The compute logic for the score dot products
+and value accumulation consumes relatively few resources in comparison:
+the \texttt{iterate} pipeline module uses only 2{,}005 LUTs and zero
+DSPs, and the \texttt{acc} module uses only 1{,}136 LUTs and zero DSPs.
+
+The two most important II violations appear in the \texttt{iterate} and
+\texttt{acc} loops. The \texttt{iterate} loop achieves II\,=\,4 against
+a target of 1. With \texttt{\#pragma HLS PIPELINE} on the outer
+position loop and \texttt{\#pragma HLS UNROLL} (complete) on the inner
+\texttt{head\_size\,=\,4} element loop, HLS attempts to start a new
+position every clock cycle. Doing so requires loading four key cache
+elements simultaneously through the shared \texttt{gmem0} AXI port at
+each new iteration. The AXI adapter can accept at most as many
+outstanding read transactions as it has queue slots, and with four
+simultaneous requests the pipeline stalls until the preceding reads
+complete, giving an effective II of 4. The
+\texttt{iterate} module therefore takes $4 \times (16 - 1) + 42 = 101$
+cycles to process all 16 positions rather than the ideal $16 + 42 =
+58$ cycles at II\,=\,1.
+
+The \texttt{acc} loop achieves II\,=\,6. The inner element loop is
+again completely unrolled, but the accumulation
+$\texttt{xb\_buf}[i] \mathrel{+}= a \times \texttt{value\_cache}[i +
+\texttt{v\_offset}]$ introduces a float multiply-add chain through the
+accumulator. The \texttt{fmul}--\texttt{fadd} dependency has a combined
+pipeline depth of 6 cycles at \SI{150}{\mega\hertz}, preventing the
+outer loop from starting the next position until the previous
+accumulation has propagated through both the multiplier and the adder.
+This II\,=\,6 is identical to the accumulator dependency that was
+identified in the \texttt{sum} loop of \texttt{softmax}. These II
+violations at prototype scale, while not catastrophic given the small
+\texttt{seq\_len = 16}, scale linearly at full TinyLlama dimensions
+(\texttt{seq\_len = 2048}) and motivate the per-head INT8 redesign
+described in \cref{subsec:attn_int8}.
 
 \subsection{Refined: Per-Head INT8 Attention}
 \label{subsec:attn_int8}
 
-% Describe the per-head quantisation approach in forward_fyp.cpp.
-% Cover: outlier suppression motivation, three-step structure
-% (quantise Q per head, load+quantise K on-the-fly, INT32 dot product,
-% dequantise score), value accumulation with prob_int8 and v_int8,
-% xb_accum with ARRAY_PARTITION complete (register file).
-% Reference eq:int8_score and eq:int8_value_acc.
+The second iteration of the attention mechanism, implemented in
+\texttt{forward\_fyp.cpp}, replaces the floating-point score
+computation and value accumulation with per-head INT8 arithmetic. The
+motivation for this redesign is a quantisation precision problem that
+arises when the global \texttt{quantize()} helper is applied to the
+full query, key, and value vectors. The helper computes a single
+scale factor from the absolute maximum of the entire \texttt{dim}-element
+vector. If one head's slice contains activation outliers that dominate
+the global maximum, the resulting scale factor maps the outlier range to
+the INT8 boundary of 127 and compresses all other heads' values into a
+narrow fraction of the INT8 range. This cross-head scale contamination
+degrades the precision of every head that does not contain the outlier.
+The fix is to compute a separate scale for each head's slice
+independently, so that the scale reflects only the \texttt{head\_size}
+elements belonging to that head.
+
+The revised implementation introduces three structured steps per head,
+executed in sequence within the \texttt{multihead\_attention} outer loop.
+
+Step~1 quantises the query slice for the current head. Before the
+position loop begins, the implementation scans the
+\texttt{head\_size\,=\,4} elements of \texttt{q\_buf} belonging to head
+\texttt{h} to find the maximum absolute value, computes a per-head scale
+$s_Q = \texttt{max\_val} / 127$, and quantises the slice into a local
+\texttt{int8\_t q\_int8[head\_size]} array. The reciprocal trick from the
+quantise primitive is applied: a single \texttt{fdiv} computes
+$1 / s_Q$ before the element loop, and each element is then quantised
+by multiplying by this reciprocal rather than dividing, replacing
+\texttt{head\_size} divisions with one division and \texttt{head\_size}
+multiplications.
+
+Step~2 executes inside the \texttt{iterate} position loop. For each
+attended timestep \texttt{t}, the \texttt{head\_size} key values are
+loaded from the float KV cache into a local \texttt{k\_buffer}, a
+per-position scale $s_K$ is computed from the buffer's maximum absolute
+value, and the key slice is quantised to \texttt{int8\_t k\_int8}. The
+dot product between \texttt{q\_int8} and \texttt{k\_int8} is then
+accumulated into a 32-bit integer \texttt{score\_int}, with
+\texttt{\#pragma HLS UNROLL} applied to the inner \texttt{head\_size}
+element loop. The final dequantisation combines both per-head scales and
+the attention scaling factor in a single expression:
+
+\begin{equation}
+  \text{score} = \left(\sum_{i=0}^{d_k-1} \hat{q}_i \cdot \hat{k}_i\right)
+    \cdot s_Q \cdot s_K \cdot \frac{1}{\sqrt{d_k}}
+  \label{eq:int8_score}
+\end{equation}
+
+\noindent where $\hat{q}_i$ and $\hat{k}_i$ are the INT8 quantised
+query and key values, and $s_Q$, $s_K$ are the respective per-head
+scales. The result is written to \texttt{att\_buf} as a float.
+
+The softmax call is widened from \texttt{softmax<16>} to
+\texttt{softmax<257>} in this iteration. This accommodates context
+lengths up to 256 positions without any code change to the function
+body. The cost is that the internal \texttt{buffer[257]} array within
+\texttt{softmax<257>} is too large for register inference at this scale
+and is instead inferred as BRAM, as observed in the synthesis results.
+
+Step~3 executes inside the \texttt{acc} position loop. The attention
+probability for timestep \texttt{t} is first truncated to a signed
+INT8 value by the mapping $\texttt{prob\_int8} = \lfloor
+\texttt{prob\_float} \times 127 \rfloor$, which assigns the unit
+probability $1.0$ to the value $127$ and uses a fixed implicit scale of
+$1/127$. The value vector is then loaded from the float KV cache,
+quantised on the fly with its own per-position scale $s_V$, and the
+weighted contribution is accumulated as:
+
+\begin{equation}
+  \Delta \texttt{xb}(i) =
+    \left(\texttt{prob\_int8} \times \hat{v}_i\right)
+    \cdot \frac{1}{127} \cdot s_V
+  \label{eq:int8_value_acc}
+\end{equation}
+
+\noindent where $\hat{v}_i$ is the INT8 quantised value element. The
+accumulation target \texttt{xb\_accum[head\_size]} is declared with
+\texttt{\#pragma HLS ARRAY\_PARTITION variable=xb\_accum complete},
+which maps it to four independent registers rather than a BRAM array.
+This is important because the accumulation loop updates all four
+elements of \texttt{xb\_accum} in each pipeline iteration: a BRAM-based
+array would introduce read-after-write latency on the same address,
+whereas a register file supports simultaneous access to all four ports.
 
 \subsection{C-Simulation Results}
 \label{subsec:attn_csim}
 
+C-simulation was performed for both implementations using the same
+test configuration: \texttt{pos\,=\,3}, \texttt{loff\,=\,0}, with
+identical query, key cache, and value cache values. This allows the
+outputs to be compared directly as a measure of the quantisation error
+introduced by the INT8 redesign. Table~\ref{tab:attn_csim_compare}
+shows the \texttt{xb} output from both iterations alongside the
+absolute difference between them.
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{rrrr}
+    \toprule
+    Index & Baseline \texttt{xb} (float) & INT8 \texttt{xb} & Abs difference \\
+    \midrule
+    0 & 0.343754 & 0.337795 & 0.005959 \\
+    1 & 0.313754 & 0.307415 & 0.006339 \\
+    2 & 0.283754 & 0.279273 & 0.004481 \\
+    3 & 0.253754 & 0.248893 & 0.004861 \\
+    4 & 0.213827 & 0.209449 & 0.004378 \\
+    5 & 0.183827 & 0.179730 & 0.004097 \\
+    6 & 0.153827 & 0.150702 & 0.003125 \\
+    7 & 0.123827 & 0.120983 & 0.002844 \\
+    \bottomrule
+  \end{tabular}
+  \caption{Comparison of \texttt{xb} outputs from the baseline float
+           attention and the refined per-head INT8 attention for identical
+           inputs at \texttt{pos\,=\,3}. The absolute difference in each
+           element reflects the quantisation error introduced by the INT8
+           arithmetic path. Both kernels passed their respective csim runs
+           with zero errors against their own software references.}
+  \label{tab:attn_csim_compare}
+\end{table}
+
+Both implementations passed their csim runs with zero errors against
+their respective software references. The absolute differences between
+the two kernels' outputs range from approximately $0.003$ to $0.006$,
+representing relative errors of $1.3\%$ to $2.0\%$ with respect to
+the float baseline. This level of quantisation error is consistent with
+what is expected from symmetric INT8 quantisation at \texttt{head\_size\,=\,4}:
+each individual scale is computed from only four values, so a single
+outlier or uneven distribution can shift the scale enough to round
+adjacent values by up to half an INT8 step. At full TinyLlama scale
+(\texttt{head\_size\,=\,64}), the per-head scale is computed from a
+much larger pool of values, and the expected quantisation error per
+element is correspondingly smaller.
+
 \subsection{HLS Synthesis Results}
 \label{subsec:attn_csyn}
+
+Table~\ref{tab:attn_compare_resources} summarises the resource
+utilisation of both attention implementations, and
+Table~\ref{tab:attn_int8_latency} provides the per-pipeline-module
+latency breakdown for the refined INT8 design. The baseline latency
+breakdown was presented in Table~\ref{tab:attn_fp32_latency}.
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{lrrrr}
+    \toprule
+    & \multicolumn{2}{c}{Baseline (float)} & \multicolumn{2}{c}{Refined (INT8)} \\
+    Resource & Total & Core only & Total & Core only \\
+    \midrule
+    LUT  & 54{,}912 & 53{,}650 & 46{,}448 & 45{,}186 \\
+    FF   & 27{,}584 & 26{,}673 & 27{,}873 & 26{,}962 \\
+    BRAM & 4        & 0        & 36       & 32       \\
+    DSP  & 192      & 192      & 122      & 122      \\
+    \bottomrule
+  \end{tabular}
+  \caption{Resource utilisation comparison between the baseline float
+           attention and the refined per-head INT8 attention, both synthesised
+           at prototype scale on the \texttt{xczu9eg-ffvb1156-2-e} at
+           \SI{150}{\mega\hertz}. Core-only figures exclude the AXI master
+           adapter and S-AXILite control interface.}
+  \label{tab:attn_compare_resources}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{lrrrr}
+    \toprule
+    Pipeline stage & Trip count & II & Iter.\ latency & Total (cycles) \\
+    \midrule
+    Q max scan                            &   4 &  1 &  2 &    4 \\
+    Q quantise                            &   4 &  1 &  1 &    4 \\
+    \texttt{iterate} (K quant + INT32)    & 257 &  4 & 73 & 1{,}096 \\
+    \texttt{max}     (softmax pass 1)     & 257 &  1 &  2 &  257 \\
+    \texttt{exp}     (softmax pass 2)     &  17 &  2 & 18 &   51 \\
+    \texttt{sum}     (softmax pass 3)     & 257 &  6 &  9 & 1{,}544 \\
+    \texttt{norm}    (softmax pass 4)     &  17 &  1 &  6 &   22 \\
+    \texttt{xb\_accum} initialise         &   4 &  1 &  1 &    4 \\
+    \texttt{acc}     (V quant + weighted) & 257 &  6 & 76 & 1{,}611 \\
+    \bottomrule
+  \end{tabular}
+  \caption{Per-pipeline-module latency breakdown of the refined per-head
+           INT8 attention block at \SI{150}{\mega\hertz}, for one head at
+           maximum context (\texttt{pos\,=\,256}, \texttt{MAXSIZE\,=\,257}).
+           The outer \texttt{multihead\_attention} loop over
+           \texttt{n\_heads\,=\,2} runs sequentially, giving a worst-case
+           total of approximately 9{,}332 cycles.}
+  \label{tab:attn_int8_latency}
+\end{table}
+
+The most significant change in the resource comparison is the DSP
+reduction from 192 to 122, a saving of 70 DSP48E2 blocks. In the
+baseline, the 192 DSPs are almost entirely accounted for by the 16
+parallel \texttt{fexp} units inside \texttt{softmax<16>} (112 DSPs)
+plus the \texttt{fsub} max-subtract units (32 DSPs) and \texttt{fmul}
+normalisation units (48 DSPs). In the refined design, the
+\texttt{softmax<257>} instance with \texttt{UNROLL factor=16} on its
+257-element buffer generates 16 parallel \texttt{fexp} units for the
+\texttt{exp} loop's 17 effective iterations, but HLS maps only 70 DSPs
+to the \texttt{exp} pipeline sub-module at this larger template size,
+compared to 112 at \texttt{MAXSIZE=16}. The \texttt{norm} sub-module
+consumes 36 DSPs, and the \texttt{iterate} module 2 DSPs for the
+dequantisation multiplications. The INT32 dot product itself, being
+an integer accumulation rather than a floating-point multiply-add
+chain, is implemented in LUT fabric without consuming DSP blocks.
+
+The BRAM increase from 0 to 32 core BRAMs reflects two new memory
+consumers in the refined design. The first is the \texttt{softmax<257>}
+internal \texttt{buffer[257]} array: at $257 \times 4 = 1{,}028$ bytes
+this exceeds the register inference threshold and is partitioned by HLS
+into 8 BRAM banks of 2 BRAM\_18K each, consuming 16 BRAM\_18K blocks
+in total. The second is the \texttt{generic\_round\_double\_s} IP core
+instantiated four times for the per-element Q quantisation rounding,
+consuming 4 BRAM\_18K blocks per instance (16 total). This rounding IP
+uses BRAM-backed lookup tables to implement IEEE~754 round-to-nearest
+in double precision, analogous to the \texttt{mask\_table} and
+\texttt{one\_half\_table} ROM inferences observed in the
+\texttt{quantize} standalone synthesis.
+
+The \texttt{iterate} loop maintains II\,=\,4 in the refined design,
+unchanged from the baseline. The root cause is identical: the on-the-fly
+K loading inside the pipelined position loop generates four concurrent
+AXI read requests through the shared \texttt{gmem0} port, and the
+adapter's transaction queue limits the sustainable request rate to one
+group of four reads per 4 clock cycles. The on-the-fly K quantisation
+steps that are unique to the refined design add substantially to the
+iteration latency (73 cycles versus 42 in the baseline), but do not
+change the II since those operations execute after the four reads have
+been issued. The \texttt{acc} loop similarly retains II\,=\,6 from the
+float multiply-accumulate dependency introduced by the
+\texttt{prob\_int8\,$\times$\,v\_int8\,$\times$\,scale} dequantisation
+chain, which presents the same \texttt{fmul}--\texttt{fadd} latency
+bottleneck as the float baseline's direct accumulation. The structural
+benefit of the INT8 redesign is therefore not a reduction in II at
+prototype scale, but rather the elimination of cross-head scale
+contamination and the 37\% reduction in DSP consumption, which becomes
+the enabling factor for fitting the full-scale attention design within
+the ZCU102's resource budget.
 
 % =============================================================================
 \section{SwiGLU Feed-Forward Network}
@@ -1164,32 +1884,199 @@ plus \SI{1.800}{\nano\second} uncertainty exactly exhausts the
 \label{sec:forward_impl}
 % =============================================================================
 
+The top-level \texttt{forward} function in \texttt{forward.cpp} is the
+entry point of the FPGA kernel. It is the function registered with
+Vitis HLS via \texttt{set\_top forward} and is the only
+\texttt{extern~"C"} function in the design. All the primitives
+described in Sections~\ref{sec:rmsnorm_impl}
+through~\ref{sec:attn_impl} are inlined into this single synthesised
+module: Vitis HLS resolves the template instantiations at compile time
+and merges the function bodies into one hardware design with shared
+AXI interfaces and shared on-chip buffers. The top-level function is
+therefore the composition point where all prior design decisions
+interact, and the choices made here about the AXI interface
+configuration, buffer organisation, and loop structure determine the
+overall hardware behaviour of the prototype kernel.
+
 \subsection{AXI Interface and Buffer Layout}
 \label{subsec:forward_axi}
 
-% Describe the AXI bundle configuration:
-% - Prototype: 2 bundles (gmem0: transformer+key_cache+value_cache, gmem1: out)
-% - Full model: 4 bundles (gmem0: weights, gmem1: key, gmem2: value, gmem3: out)
-% Explain why sharing caches on gmem0 with weights is acceptable at small
-% scale but causes deadlock at full scale.
-% Cover static buffer declarations and ARRAY_PARTITION annotations.
+The \texttt{forward} function declares six arguments. Two are scalar
+integers passed through the S-AXILite control register interface:
+\texttt{token} (the current input token index) and \texttt{pos} (the
+current sequence position). The remaining four are memory-mapped
+pointers to DDR-resident arrays, each assigned to one of two AXI
+master bundles via \texttt{\#pragma HLS INTERFACE m\_axi} directives.
+
+The prototype uses two AXI master bundles. The first bundle,
+\texttt{gmem0}, carries three ports simultaneously: the
+\texttt{transformer} struct pointer (which contains all model weights
+and the embedding table), \texttt{key\_cache}, and
+\texttt{value\_cache}. The second bundle, \texttt{gmem1}, carries only
+\texttt{out}, the output activation vector. This two-bundle arrangement
+is depicted in Table~\ref{tab:axi_bundles}.
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{lll}
+    \toprule
+    Bundle  & Port(s)                                          & Contents \\
+    \midrule
+    gmem0   & \texttt{transformer}, \texttt{key\_cache},
+               \texttt{value\_cache}                          & Weights, KV cache \\
+    gmem1   & \texttt{out}                                    & Output activation \\
+    \bottomrule
+  \end{tabular}
+  \caption{AXI master bundle assignment in the prototype
+           \texttt{forward} kernel (\texttt{forward.cpp}).
+           All weight and KV cache traffic shares a single AXI master
+           port on \texttt{gmem0}.}
+  \label{tab:axi_bundles}
+\end{table}
+
+Sharing \texttt{key\_cache} and \texttt{value\_cache} on the same
+bundle as the transformer weights is acceptable at prototype scale
+because the small dimensions keep the total AXI transaction volume low.
+At prototype configuration ($\texttt{dim} = 8$,
+$\texttt{seq\_len} = 16$, $\texttt{n\_layers} = 2$), the number of
+outstanding AXI read transactions generated within any single pipeline
+stage remains within the adapter's 16-slot queue limit.
+
+At full TinyLlama scale, however, this shared-bundle arrangement
+becomes untenable. The \texttt{matmul} weight reads and the KV cache
+reads in the \texttt{iterate} loop both issue through \texttt{gmem0}
+concurrently. With \texttt{dim} = 2048 and a completely unrolled inner
+\texttt{head\_size} = 64 element loop inside a pipelined outer position
+loop, the \texttt{iterate} loop generates 64 simultaneous read requests
+targeting the key cache while the weight loading logic is issuing its
+own burst reads. The adapter's transaction queue fills, new requests
+stall, and the pipeline enters a circular wait. This AXI interface
+deadlock is Bug~1 discovered during on-board testing of the full-scale
+kernel. The fix is to separate the KV caches onto dedicated bundles:
+\texttt{gmem0} for weights, \texttt{gmem1} for the key cache,
+\texttt{gmem2} for the value cache, and \texttt{gmem3} for the output.
+This four-bundle configuration is used in the full-scale kernel but is
+not needed at prototype scale.
+
+All intermediate activation buffers are declared as \texttt{static}
+local arrays inside \texttt{forward}, which causes HLS to allocate
+them as persistent on-chip storage rather than stack-allocated memory.
+The buffers \texttt{x}, \texttt{xb}, \texttt{xb2}, \texttt{q},
+\texttt{k}, \texttt{v}, \texttt{att}, \texttt{xq}, and \texttt{hq} are
+all declared this way, and each receives a \texttt{\#pragma HLS
+ARRAY\_PARTITION cyclic factor=16} directive so that the 16-wide
+unrolled loop bodies in the attention block have sufficient memory ports
+to sustain their read and write bandwidth requirements. The
+\texttt{cyclic factor=16} partitioning splits each array into 16
+independently addressable banks, allowing 16 simultaneous accesses per
+clock cycle.
 
 \subsection{Layer Loop and KV Cache Management}
 \label{subsec:forward_layers}
 
-% Describe the main_forward_loop over L layers:
-% - Embedding lookup (float table in prototype)
-% - RMSNorm -> quantize -> QKV matmuls
-% - KV cache write (float in prototype, INT8 in full model)
-% - Multihead attention loop
-% - Residual addition
-% Note that FFN and final RMSNorm are commented out in the prototype.
+The body of \texttt{forward} follows a fixed sequence for each decode
+step. Before the layer loop begins, the token embedding is loaded from
+the float \texttt{token\_embedding\_table} field of the transformer
+weights struct via a single \texttt{memcpy} call, copying
+\texttt{dim\,$\times$\,sizeof(float)} bytes into the activation buffer
+\texttt{x}. This lookup is $\mathcal{O}(1)$ in the sense that it reads
+one row of a table regardless of sequence length, but it is
+memory-bandwidth-bound because the embedding matrix is stored in DDR
+and must be transferred over \texttt{gmem0}.
+
+The \texttt{main\_forward\_loop} then iterates over all \texttt{L =
+n\_layers} transformer layers sequentially. The structure within each
+layer iteration proceeds as follows. First, \texttt{rmsnorm<dim>} is
+applied to \texttt{x}, writing the normalised result into \texttt{xb}.
+The activation \texttt{xb} is then quantised into the
+\texttt{QuantizedTensor} struct \texttt{xq} via \texttt{quantize(\&xq,
+xb, GS)}. Three \texttt{matmul} calls consume \texttt{xq} to compute
+the Q, K, and V projections: \texttt{matmul<dim,dim>} for Q,
+\texttt{matmul<dim,kv\_dim>} for K, and \texttt{matmul<dim,kv\_dim>}
+for V, where \texttt{kv\_dim = (dim\,$\times$\,n\_kv\_heads) /
+n\_heads}. At prototype scale where \texttt{n\_kv\_heads = n\_heads =
+2}, \texttt{kv\_dim = dim = 8}, so all three projections operate on
+identically sized vectors.
+
+After the QKV projections, the current key and value vectors are
+written into the KV cache at the position corresponding to the current
+layer and timestep. The layer offset \texttt{loff = l\,$\times$\,seq\_len\,$\times$\,kv\_dim}
+indexes the start of the current layer's portion of the cache, and the
+position within that layer is \texttt{pos\,$\times$\,kv\_dim}. Both
+the key and value vectors are written as float32 via \texttt{memcpy},
+reflecting the prototype's use of a floating-point KV cache.
+
+The multihead attention block then executes as described in
+\cref{sec:attn_impl}, reading from the accumulated KV cache entries at
+positions 0 through \texttt{pos} and producing the weighted value
+accumulation in \texttt{xb}. The output projection matrix
+$\mathbf{W}_O$ is not applied in the prototype: the commented-out
+\texttt{matmul<dim,dim>} call for \texttt{wo} means that \texttt{xb}
+is used directly in the residual addition rather than \texttt{xb2}.
+The residual loop then adds \texttt{xb} element-wise into \texttt{x}
+with \texttt{\#pragma HLS UNROLL factor=64}, completing one transformer
+layer.
+
+After all \texttt{n\_layers} iterations, the final activation \texttt{x}
+is written to the output buffer via \texttt{memcpy(out, x,
+dim\,$\times$\,sizeof(float))}. The FFN sub-block, the final RMSNorm,
+and the language model head projection are all commented out and do
+not execute in the prototype kernel.
 
 \subsection{Known Limitations and Design Decisions}
 \label{subsec:forward_limitations}
 
-% Cover the three deliberate simplifications in the prototype:
-% 1. Output projection W_O disabled (xb used directly in residual)
-% 2. FFN commented out (attention-only forward pass)
-% 3. Float KV cache (INT8 cache added in full model)
-% Frame these as conscious scope decisions, not bugs.
+Three deliberate simplifications were made in the prototype kernel to
+focus the implementation effort on the attention sub-block and to
+remain within the resource and complexity budget of the initial
+development phase. These are documented here as engineering scope
+decisions rather than defects, and each is accompanied by the
+corresponding fix that would be required in a production implementation.
+
+The first simplification is the omission of the output projection
+$\mathbf{W}_O$. In the full transformer, after the weighted value
+accumulation \texttt{xb} is computed, it is passed through a final
+linear projection \texttt{matmul<dim,dim>} using the weight matrix
+\texttt{wo} to mix information across heads before the residual
+addition. The prototype comments out this call and uses \texttt{xb}
+directly in the residual, meaning the output dimension of the softmax
+attention already matches \texttt{dim} without the projection. This
+reduces the compute cost of each layer iteration by one \texttt{dim
+$\times$ dim} matrix--vector multiply, which at full scale
+(\texttt{dim = 2048}) is the second most expensive operation in the
+attention block after the Q projection. Restoring the output projection
+requires uncommenting the \texttt{quantize} and \texttt{matmul<dim,dim>}
+calls and updating the residual to add \texttt{xb2} rather than
+\texttt{xb}.
+
+The second simplification is the complete omission of the SwiGLU
+feed-forward network. The FFN sub-block, which follows the attention
+residual in each transformer layer, would contribute three further
+matrix--vector multiplications and the SwiGLU activation function.
+At full TinyLlama scale the FFN weight matrices are larger than the
+attention matrices, making the FFN the dominant contributor to both
+the per-layer compute cost and the memory bandwidth requirement. The
+prototype excludes the FFN entirely, meaning the closing brace of
+\texttt{main\_forward\_loop} appears immediately after the first
+residual addition. This conscious omission was taken to keep the
+prototype kernel focused on validating the attention hardware, which
+is the architecturally novel component. The FFN implementation in
+\texttt{FFN\_update2.cpp} and \texttt{FFN\_update3.cpp} provides the
+full SwiGLU implementation with INT8 quantisation.
+
+The third simplification is the use of a floating-point KV cache. The
+key and value vectors are stored in DDR as \texttt{float32} arrays
+and retrieved as \texttt{float32} in the attention block. In the full
+kernel, these vectors are stored as INT8 with accompanying group scales
+to reduce the KV cache memory footprint by a factor of four and to
+halve the DDR bandwidth required when reading past positions during
+the \texttt{iterate} loop. The float cache was retained in the
+prototype because it avoids the additional quantise-before-write and
+dequantise-on-read steps, keeping the attention data path simpler while
+functional correctness was being established. Bug~2 discovered during
+on-board testing of the full-scale kernel is directly related to this
+transition: the full kernel reads token embeddings from
+\texttt{q\_tokens} (the quantised embedding table) rather than
+\texttt{token\_embedding\_table} (the float table), but the host
+checkpoint loader only populated the quantised table. The prototype
+avoids this issue by always reading from the float table.

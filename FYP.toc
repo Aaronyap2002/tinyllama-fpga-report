@@ -50,37 +50,40 @@
 \contentsline {subsection}{\numberline {4.4.1}Implementation}{36}{subsection.146}%
 \contentsline {subsection}{\numberline {4.4.2}C-Simulation Results}{38}{subsection.168}%
 \contentsline {subsection}{\numberline {4.4.3}HLS Synthesis Results}{39}{subsection.170}%
-\contentsline {section}{\numberline {4.5}Softmax}{42}{section.175}%
-\contentsline {subsection}{\numberline {4.5.1}Implementation}{42}{subsection.176}%
-\contentsline {subsection}{\numberline {4.5.2}C-Simulation Results}{42}{subsection.177}%
-\contentsline {subsection}{\numberline {4.5.3}HLS Synthesis Results}{42}{subsection.178}%
-\contentsline {section}{\numberline {4.6}Grouped-Query Attention}{42}{section.179}%
-\contentsline {subsection}{\numberline {4.6.1}Baseline: Floating-Point Attention}{42}{subsection.180}%
-\contentsline {subsection}{\numberline {4.6.2}Refined: Per-Head INT8 Attention}{42}{subsection.181}%
-\contentsline {subsection}{\numberline {4.6.3}C-Simulation Results}{42}{subsection.182}%
-\contentsline {subsection}{\numberline {4.6.4}HLS Synthesis Results}{42}{subsection.183}%
-\contentsline {section}{\numberline {4.7}SwiGLU Feed-Forward Network}{42}{section.184}%
-\contentsline {subsection}{\numberline {4.7.1}Implementation}{42}{subsection.185}%
-\contentsline {subsection}{\numberline {4.7.2}C-Simulation Results}{42}{subsection.186}%
-\contentsline {subsection}{\numberline {4.7.3}HLS Synthesis Results}{42}{subsection.187}%
-\contentsline {section}{\numberline {4.8}Top-Level Forward Function}{42}{section.188}%
-\contentsline {subsection}{\numberline {4.8.1}AXI Interface and Buffer Layout}{42}{subsection.189}%
-\contentsline {subsection}{\numberline {4.8.2}Layer Loop and KV Cache Management}{42}{subsection.190}%
-\contentsline {subsection}{\numberline {4.8.3}Known Limitations and Design Decisions}{42}{subsection.191}%
-\contentsline {chapter}{\numberline {5}Results and Discussion}{43}{chapter.192}%
-\contentsline {section}{\numberline {5.1}Experimental Setup}{43}{section.193}%
-\contentsline {section}{\numberline {5.2}HLS Synthesis Results}{43}{section.194}%
-\contentsline {section}{\numberline {5.3}Functional Verification}{44}{section.196}%
-\contentsline {section}{\numberline {5.4}Inference Performance}{44}{section.197}%
-\contentsline {section}{\numberline {5.5}Energy Efficiency}{44}{section.199}%
-\contentsline {section}{\numberline {5.6}Comparison Against Prior Work}{45}{section.200}%
-\contentsline {section}{\numberline {5.7}Discussion}{45}{section.202}%
-\contentsline {chapter}{\numberline {6}Conclusion and Future Work}{46}{chapter.203}%
-\contentsline {section}{\numberline {6.1}Conclusion}{46}{section.204}%
-\contentsline {section}{\numberline {6.2}Recommendations for Future Work}{47}{section.205}%
-\contentsline {chapter}{Reflection on Learning Outcome Attainment}{48}{chapter*.206}%
-\contentsline {chapter}{Acknowledging/Declaring the Use of GAI}{49}{chapter*.207}%
-\contentsline {chapter}{References}{49}{chapter*.207}%
-\contentsline {chapter}{\numberline {A}HLS Kernel Source Code}{50}{appendix.208}%
-\contentsline {chapter}{\numberline {B}Vivado Synthesis and Implementation Reports}{51}{appendix.209}%
-\contentsline {chapter}{\numberline {C}Quantisation Calibration Data}{52}{appendix.210}%
+\contentsline {section}{\numberline {4.5}Softmax}{41}{section.175}%
+\contentsline {subsection}{\numberline {4.5.1}Implementation}{41}{subsection.176}%
+\contentsline {subsection}{\numberline {4.5.2}C-Simulation Results}{43}{subsection.177}%
+\contentsline {subsection}{\numberline {4.5.3}HLS Synthesis Results}{44}{subsection.179}%
+\contentsline {section}{\numberline {4.6}Grouped-Query Attention}{46}{section.184}%
+\contentsline {subsection}{\numberline {4.6.1}Baseline: Floating-Point Attention}{46}{subsection.185}%
+\contentsline {subsubsection}{Implementation}{46}{subsubsection*.186}%
+\contentsline {subsubsection}{C-Simulation Results}{47}{subsubsection*.187}%
+\contentsline {subsubsection}{HLS Synthesis Results}{48}{subsubsection*.189}%
+\contentsline {subsection}{\numberline {4.6.2}Refined: Per-Head INT8 Attention}{50}{subsection.194}%
+\contentsline {subsection}{\numberline {4.6.3}C-Simulation Results}{52}{subsection.197}%
+\contentsline {subsection}{\numberline {4.6.4}HLS Synthesis Results}{53}{subsection.199}%
+\contentsline {section}{\numberline {4.7}SwiGLU Feed-Forward Network}{55}{section.202}%
+\contentsline {subsection}{\numberline {4.7.1}Implementation}{55}{subsection.203}%
+\contentsline {subsection}{\numberline {4.7.2}C-Simulation Results}{55}{subsection.204}%
+\contentsline {subsection}{\numberline {4.7.3}HLS Synthesis Results}{55}{subsection.205}%
+\contentsline {section}{\numberline {4.8}Top-Level Forward Function}{55}{section.206}%
+\contentsline {subsection}{\numberline {4.8.1}AXI Interface and Buffer Layout}{55}{subsection.207}%
+\contentsline {subsection}{\numberline {4.8.2}Layer Loop and KV Cache Management}{56}{subsection.209}%
+\contentsline {subsection}{\numberline {4.8.3}Known Limitations and Design Decisions}{57}{subsection.210}%
+\contentsline {chapter}{\numberline {5}Results and Discussion}{59}{chapter.211}%
+\contentsline {section}{\numberline {5.1}Experimental Setup}{59}{section.212}%
+\contentsline {section}{\numberline {5.2}HLS Synthesis Results}{59}{section.213}%
+\contentsline {section}{\numberline {5.3}Functional Verification}{60}{section.215}%
+\contentsline {section}{\numberline {5.4}Inference Performance}{60}{section.216}%
+\contentsline {section}{\numberline {5.5}Energy Efficiency}{60}{section.218}%
+\contentsline {section}{\numberline {5.6}Comparison Against Prior Work}{61}{section.219}%
+\contentsline {section}{\numberline {5.7}Discussion}{61}{section.221}%
+\contentsline {chapter}{\numberline {6}Conclusion and Future Work}{62}{chapter.222}%
+\contentsline {section}{\numberline {6.1}Conclusion}{62}{section.223}%
+\contentsline {section}{\numberline {6.2}Recommendations for Future Work}{63}{section.224}%
+\contentsline {chapter}{Reflection on Learning Outcome Attainment}{64}{chapter*.225}%
+\contentsline {chapter}{Acknowledging/Declaring the Use of GAI}{65}{chapter*.226}%
+\contentsline {chapter}{References}{65}{chapter*.226}%
+\contentsline {chapter}{\numberline {A}HLS Kernel Source Code}{66}{appendix.227}%
+\contentsline {chapter}{\numberline {B}Vivado Synthesis and Implementation Reports}{67}{appendix.228}%
+\contentsline {chapter}{\numberline {C}Quantisation Calibration Data}{68}{appendix.229}%
