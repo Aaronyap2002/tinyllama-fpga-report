@@ -57,13 +57,13 @@ Table~\ref{tab:config_comparison} summarises the two sets of parameters.
 The prototype dimensions were chosen deliberately to keep array sizes small
 enough that HLS C-simulation completes in seconds and synthesis reports are
 straightforward to inspect. With $d_{\text{model}} = 8$ and $GS = 4$, for
-instance, every quantised vector contains exactly two groups, making
+instance, every quantised vector contains two groups, making
 scale-factor indexing trivial to verify by hand. The constraint that $GS
 \leq d_{\text{model}}$ must always hold, since quantising into groups larger
 than the vector itself is undefined. At full scale the group size grows to
 $GS = 64$, which divides evenly into all relevant dimensions in TinyLlama
 (2048, 5632, 256) and aligns with a typical cache line size of 64 bytes,
-making group-boundary loads naturally efficient.
+making group-boundary loads efficient.
 
 % =============================================================================
 \section{RMSNorm}
@@ -78,7 +78,7 @@ The \texttt{rmsnorm<S>} function is declared as a C++ template in
 makes the same source compile correctly for both the prototype configuration
 ($S = d_{\text{model}} = 8$) and the full TinyLlama model
 ($S = d_{\text{model}} = 2048$) without any code changes. The function
-takes three pointer arguments: an output array \texttt{o}, an input
+takes three pointer arguments, namely an output array \texttt{o}, an input
 activation array \texttt{x}, and a learned element-wise weight array
 \texttt{weight}, all of length \texttt{S}.
 
@@ -97,7 +97,7 @@ enabling four simultaneous reads per cycle in both computation loops.
              Data is staged into local buffers before computation so that
              \texttt{ARRAY\_PARTITION} can be applied. The reduction loop
              uses \texttt{UNROLL factor=4} to accumulate four partial sums
-             simultaneously; the normalisation loop uses \texttt{UNROLL
+             simultaneously. The normalisation loop uses \texttt{UNROLL
              factor=64} since it is fully data-parallel.},
   label   = {lst:rmsnorm}
 ]
@@ -136,12 +136,12 @@ norm_and_scale:
 The computation proceeds in two sequential loops with different parallelism
 requirements. The first loop, \texttt{sum\_of\_squares}, accumulates the
 sum of squared activations. This is a reduction with a loop-carried
-dependency on the accumulator \texttt{ss}: each iteration reads the
+dependency on the accumulator \texttt{ss}, because each iteration reads the
 current value of \texttt{ss}, adds to it, and writes it back. This
 dependency means the loop cannot be pipelined to II\,=\,1 on its own
 because the write of iteration $t$ must complete before iteration $t+1$
 can read. The \texttt{UNROLL factor=4} directive resolves this by
-unrolling four iterations into the same pipeline stage: four independent
+unrolling four iterations into the same pipeline stage, so that four independent
 partial products $x_j^2, x_{j+1}^2, x_{j+2}^2, x_{j+3}^2$ are computed
 in parallel and their sum is added to \texttt{ss} once per group, reducing
 the effective number of dependent additions by a factor of four.
@@ -159,17 +159,14 @@ factor=4} partitioning applied to all three local buffers.
 \subsection{C-Simulation Results}
 \label{subsec:rmsnorm_csim}
 
-C-simulation was performed by compiling \texttt{rmsnorm\_top} together
-with a software testbench using GCC on the x86 host. The testbench
+C-simulation was performed for \texttt{rmsnorm\_top}. The testbench
 supplied a fixed eight-element input vector and a corresponding weight
 vector, then compared the kernel output element by element against a
 pure software reference implementation of RMSNorm. The reference
 computes the sum of squares sequentially, derives the reciprocal RMS,
 and applies the element-wise scaling in the same order as the
 mathematical definition in \cref{subsec:rmsnorm}, with no HLS pragmas
-or unrolling.
-
-Table~\ref{tab:rmsnorm_csim} shows the output from both the kernel and
+or unrolling. Table~\ref{tab:rmsnorm_csim} shows the output from both the kernel and
 the software reference for each element of the test vector.
 
 \begin{table}[H]
@@ -191,19 +188,22 @@ the software reference for each element of the test vector.
   \caption{C-simulation output for \texttt{rmsnorm} with input
            $\mathbf{x} = [1, -2, 3, -4, 5, -6, 7, -8]$ and weight
            $\mathbf{g} = [0.5, 1.0, 1.5, 2.0, 0.5, 1.0, 1.5, 2.0]$.
-           All eight elements match the software reference exactly.}
+           All eight elements match the software reference.}
   \label{tab:rmsnorm_csim}
 
 \end{table}
 
 The absolute error is identically zero for every element, meaning the
 kernel and the reference produce bit-identical results on this test
-vector. This outcome is somewhat stricter than expected: because the
+vector. This outcome is stricter than expected, since the
 kernel's \texttt{sum\_of\_squares} loop uses \texttt{UNROLL factor=4},
 HLS may group elements into sets of four and accumulate their squared
 values in a different order from the sequential reference. Floating-point
 addition is not associative, so reordering additions can produce
-different rounding outcomes. In this particular case the zero-error result
+different rounding outcomes. This is because each floating-point addition
+rounds its result to the nearest representable value, and that rounding
+error accumulates differently depending on the order in which operands
+are grouped. In this particular case the zero-error result
 reflects the small scale of the prototype dimensions ($S = 8$), where
 the accumulated rounding differences are below the representational limit
 of single-precision arithmetic. At the full TinyLlama scale ($S = 2048$),
@@ -291,7 +291,7 @@ and Table~\ref{tab:rmsnorm_latency} for the per-stage latency breakdown.
   \end{tabular}
   \caption{Latency breakdown of \texttt{rmsnorm} ($S = 8$) by internal
            pipeline stage at \SI{150}{\mega\hertz}. Total function latency
-           is 144 cycles (\SI{960}{\nano\second}).}
+           is 146 cycles (\SI{973}{\nano\second}).}
   \label{tab:rmsnorm_latency}
 
 \end{table}
@@ -302,7 +302,8 @@ of those cycles despite iterating only twice after the
 \texttt{UNROLL factor=4} collapses the 8-element loop into 2 effective
 iterations. The cause is the loop-carried dependency on the
 floating-point accumulator \texttt{ss}. The Bind Op report shows that
-HLS mapped the floating-point addition to a full-DSP \texttt{fadd} unit
+HLS mapped the floating-point addition to a full-DSP \texttt{fadd}
+(\texttt{faddfsub\_32ns\_32ns\_32\_6\_full\_dsp\_1}) unit
 with a pipeline latency of 5 cycles at this clock frequency. Because each
 iteration must read the current value of \texttt{ss} and write back an
 updated value, the next iteration cannot begin until the adder has
@@ -320,7 +321,7 @@ perfectly. Once the scalar reciprocal RMS \texttt{ss} is available, every
 element's computation is independent of all others, allowing HLS to start
 a new element every clock cycle. The \texttt{UNROLL factor=64} on an
 8-element loop effectively fully unrolls it into 8 parallel datapath
-lanes, which is reflected in the 26 DSPs consumed: 8 floating-point
+lanes, which is reflected in the 26 DSPs consumed. The 8 floating-point
 multipliers for the \texttt{weight\,$\times$\,(ss\,$\times$\,x)}
 computation each map to 3 DSPs, accounting for 24 of the 26 total, with
 the remaining 2 used by the \texttt{fadd} in the reduction.
@@ -332,7 +333,7 @@ are not a property of the \texttt{rmsnorm} logic itself. The
 \texttt{x\_buff}, \texttt{weight\_buff}, and \texttt{out\_buff} at
 $S = 8$ are small enough to be inferred as register files. The estimated
 clock period of \SI{4.867}{\nano\second} leaves \SI{1.800}{\nano\second}
-of uncertainty budget, which exactly meets the \SI{6.667}{\nano\second}
+of uncertainty budget, which meets the \SI{6.667}{\nano\second}
 target with zero slack remaining. This is reflected in the \texttt{Timing}
 issue flag visible in the synthesis summary report. While the design meets
 the timing constraint, the zero-slack condition means there is no margin
@@ -409,9 +410,9 @@ for (int group = 0; group < num_groups; group++) {
 
 A notable implementation detail is the use of \texttt{GS} as a
 compile-time constant from \texttt{config.h} rather than the
-\texttt{runtime\_gs} parameter that is formally passed to the function.
-The reason the parameter exists at all is to prevent the C++ compiler
-from issuing a warning about a shadowed variable: an earlier iteration of
+\texttt{runtime\_gs} parameter passed to the function.
+The parameter exists to prevent the C++ compiler
+from issuing a warning about a shadowed variable. An earlier iteration of
 the code attempted to use a local variable also named \texttt{GS}, which
 conflicted with the global constant. The rename to \texttt{runtime\_gs}
 resolves the shadowing, and the function body then uses the global
@@ -427,21 +428,17 @@ The \texttt{PIPELINE} pragma on the outer group loop combined with
 quantisation loops unpipelined would normally cause HLS to flatten the
 inner loops into the outer pipeline, which at \texttt{GS=4} means four
 sequential comparisons per outer iteration. The \texttt{UNROLL factor=1}
-prevents the outer loop from being unrolled further, ensuring that the
-group-boundary indexing remains predictable.
+prevents the outer loop from being unrolled further.
 
 \subsection{C-Simulation Results}
 \label{subsec:quantize_csim}
 
-C-simulation was performed by compiling \texttt{quantize\_top} together
-with a software testbench using GCC on the x86 host. The testbench supplied
+C-simulation was performed for \texttt{quantize\_top}. The testbench supplied
 an eight-element float vector containing a mix of positive and negative
 values with varying magnitude and compared the kernel output against a
 software reference implementation of the same group-wise symmetric INT8
-quantisation scheme. Two aspects were verified independently: the INT8
-quantised values and the per-group scale factors.
-
-Table~\ref{tab:quantize_csim} shows the INT8 output and scale factors
+quantisation scheme. Two aspects were verified independently, namely the INT8
+quantised values and the per-group scale factors. Table~\ref{tab:quantize_csim} shows the INT8 output and scale factors
 produced by the kernel and the software reference for each element and
 group respectively.
 
@@ -449,35 +446,35 @@ group respectively.
   \centering
   \begin{tabular}{lrrrr}
     \toprule
-    Index & Input ($x$) & HW \texttt{q} & SW \texttt{q} & Match \\
+    Index & Input ($x$) & HW \texttt{q} & SW \texttt{q} & Abs error \\
     \midrule
-    0 &  0.5 &   17 &   17 & \checkmark \\
-    1 & -1.2 &  -41 &  -41 & \checkmark \\
-    2 &  3.7 &  127 &  127 & \checkmark \\
-    3 & -0.3 &  -10 &  -10 & \checkmark \\
-    4 &  2.1 &   59 &   59 & \checkmark \\
-    5 & -4.5 & -127 & -127 & \checkmark \\
-    6 &  1.0 &   28 &   28 & \checkmark \\
-    7 & -2.8 &  -79 &  -79 & \checkmark \\
+    0 &  0.5 &   17 &   17 & 0 \\
+    1 & -1.2 &  -41 &  -41 & 0 \\
+    2 &  3.7 &  127 &  127 & 0 \\
+    3 & -0.3 &  -10 &  -10 & 0 \\
+    4 &  2.1 &   59 &   59 & 0 \\
+    5 & -4.5 & -127 & -127 & 0 \\
+    6 &  1.0 &   28 &   28 & 0 \\
+    7 & -2.8 &  -79 &  -79 & 0 \\
     \midrule
-    Group & & HW scale & SW scale & Abs error \\
+    Group & HW scale & SW scale & Abs error & \\
     \midrule
-    0 & & 0.029134 & 0.029134 & 0 \\
-    1 & & 0.035433 & 0.035433 & 0 \\
+    0 & 0.029134 & 0.029134 & 0 & \\
+    1 & 0.035433 & 0.035433 & 0 & \\
     \bottomrule
   \end{tabular}
   \caption{C-simulation output for \texttt{quantize} with input
            $\mathbf{x} = [0.5, -1.2, 3.7, -0.3, 2.1, -4.5, 1.0, -2.8]$.
            All INT8 values and both scale factors match the software
-           reference exactly. GS\,=\,4 so group~0 covers indices 0--3
+           reference. GS\,=\,4 so group~0 covers indices 0--3
            and group~1 covers indices 4--7.}
   \label{tab:quantize_csim}
 
 \end{table}
 
-All eight INT8 values and both scale factors agree exactly between the
+All eight INT8 values and both scale factors agree between the
 hardware kernel and the software reference. Elements at index~2 and
-index~5 map to the boundary values of $+127$ and $-127$ respectively,
+index~5 map to the boundary values of $127$ and $-127$ respectively,
 confirming that the maximum-magnitude element in each group correctly
 saturates the INT8 range. The scale for group~0 is $3.7 / 127 \approx
 0.02913$, and for group~1 is $4.5 / 127 \approx 0.03543$, both of which
@@ -565,14 +562,14 @@ Table~\ref{tab:quantize_latency} for the per-stage breakdown.
 
 \end{table}
 
-The most striking result is the zero DSP utilisation. In contrast to
+The zero DSP utilisation is the most notable result. In contrast to
 RMSNorm, which consumed 26 DSPs for its floating-point multiplications,
 \texttt{quantize} uses none. The Bind Op report confirms that both
-division operations: computing the group scale as $s =
+division operations, namely computing the group scale as $s =
 \texttt{wmax}/127$ and quantising each element as $q_i = x_i / s$, are
 mapped to fabric-based \texttt{fdiv} units with the \texttt{no\_dsp}
 suffix. This occurs because Xilinx DSP48 blocks natively support only
-multiply-accumulate operations; floating-point division has no direct DSP
+multiply-accumulate operations. Floating-point division has no direct DSP
 mapping and must instead be implemented using LUT-based logic. The
 consequence is higher LUT usage (3{,}275 core LUTs versus 3{,}575 for
 RMSNorm) but zero DSP consumption, which is favourable since DSPs are the
@@ -580,13 +577,14 @@ most scarce resource on the ZCU102 relative to LUTs.
 
 The \texttt{main\_loop} achieves II\,=\,4 across its two group
 iterations, meaning a new group begins every 4 clock cycles. This is
-determined by the inner loop over $GS = 4$ elements within each group:
-since the inner quantisation loop is pipelined at II\,=\,1, processing
+determined by the inner loop over $GS = 4$ elements within each group.
+Since the inner quantisation loop is pipelined at II\,=\,1, processing
 four elements takes four cycles and the outer group loop can start its
 next iteration once those four cycles have elapsed. The iteration latency
-of 41 cycles is dominated by the two \texttt{fdiv} units, each with an
+of 41 cycles is dominated by the two \texttt{fdiv} units
+(\texttt{fdiv\_32ns\_32ns\_32\_12\_no\_dsp\_1}), each with an
 11-cycle pipeline depth at \SI{150}{\mega\hertz}. Two \texttt{fdiv}
-instances are synthesised — one for the scale computation and one for the
+instances are synthesised, one for the scale computation and one for the
 per-element quantisation divisions, allowing the two operations to
 overlap in the pipeline. The intermediate \texttt{QuantizedTensor} struct
 fields \texttt{qt.q} and \texttt{qt.s} are inferred as small register
@@ -594,7 +592,7 @@ files (\texttt{qt\_q\_U} and \texttt{qt\_s\_U}) rather than BRAMs, since
 their sizes of 8 bytes and 32 bytes respectively fall well below the
 BRAM threshold. The timing closure situation is identical to RMSNorm:
 estimated \SI{4.867}{\nano\second} plus \SI{1.80}{\nano\second}
-uncertainty exactly exhausts the \SI{6.667}{\nano\second} budget,
+uncertainty exhausts the \SI{6.667}{\nano\second} budget,
 leaving zero slack.
 
 The \texttt{quantize} implementation was not modified in the second or
@@ -627,13 +625,32 @@ approximately 0.004. This error is acceptable for the attention
 projection inputs but motivates the design decision in the full
 TinyLlama kernel to store KV cache values with per-group scales rather
 than a single scale shared across the full \texttt{kv\_dim}-dimensional
-vector.
+vector. Listing~\ref{lst:dequantize} shows the complete function body.
+
+\begin{lstlisting}[
+  caption = {\texttt{dequantize<S>} implementation from \texttt{forward.h}.
+             Each element is recovered by multiplying its INT8 value by
+             the corresponding group scale. No pragma directives are
+             applied because the loop has no carried dependencies and no
+             memory port conflicts. The division \texttt{i/GS} is
+             replaced by a bitwise right shift by the compiler since
+             \texttt{GS} is a compile-time power of two.},
+  label   = {lst:dequantize}
+]
+template <int S>
+void dequantize(QuantizedTensor<S> *qx, float x[S], int runtime_gs)
+{
+    for (int i = 0; i < S; i++)
+    {
+        x[i] = qx->q[i] * qx->s[i / GS]; // GS is a compile-time constant
+    }
+}
+\end{lstlisting}
 
 \subsection{C-Simulation Results}
 \label{subsec:dequantize_csim}
 
-C-simulation was performed by compiling \texttt{dequantize\_top} together
-with a software testbench using GCC on the x86 host. The testbench
+C-simulation was performed for \texttt{dequantize\_top}. The testbench
 supplied eight known INT8 values along with two explicit group scale
 factors, one per \texttt{GS\,=\,4} element group, then compared the
 kernel output element by element against a software reference computing
@@ -667,13 +684,13 @@ kernel and reference outputs for each element.
 
 \end{table}
 
-All eight dequantised float values agree exactly with the software
+All eight dequantised float values agree with the software
 reference, with zero absolute error across every element. Elements at
-indices 2 and 5, corresponding to the INT8 boundary values $+127$ and
-$-127$, correctly reconstruct to $+3.700018$ and $-4.499991$
+indices 2 and 5, corresponding to the INT8 boundary values $127$ and
+$-127$, correctly reconstruct to $3.700018$ and $-4.499991$
 respectively, confirming that the scale multiplication path handles
 boundary saturation without loss. The zero-error result is expected for
-dequantisation: unlike quantisation, which introduces an irreducible
+dequantisation. Unlike quantisation, which introduces an irreducible
 rounding error at the point of integer conversion, dequantisation is a
 pure floating-point multiplication with no rounding decision, and the
 kernel output is therefore bit-identical to the sequential software
@@ -758,7 +775,7 @@ Table~\ref{tab:dequantize_latency} for the per-stage breakdown.
 
 \end{table}
 
-The synthesis results reveal a significant asymmetry between the two
+There is an asymmetry between the two
 inverse operations. \texttt{Dequantize} is nearly twice as fast (45
 cycles versus 84 cycles), consumes only a twelfth of the core LUTs
 (273 versus 3{,}275), and achieves a perfect II\,=\,1 on its inner
@@ -767,15 +784,16 @@ arithmetic operations each function requires.
 
 \texttt{Dequantize} performs a single floating-point multiplication per
 element, $x_i = q_i \times s_{\lfloor i/GS \rfloor}$, which maps to one
-\texttt{fmul} unit consuming 3 DSP blocks with a 3-cycle pipeline latency.
+\texttt{fmul} (\texttt{fmul\_32ns\_32ns\_32\_4\_max\_dsp\_1}) unit consuming 3 DSP blocks with a 3-cycle pipeline latency.
 Since each element's computation depends only on its own INT8 value and its
 group scale with no dependency on any previous element, there are no loop-carried
 dependencies, and II\,=\,1 is achievable. The 12-cycle iteration latency
-reflects the \texttt{fmul} pipeline depth combined with the AXI read
-latency for loading \texttt{q\_in} and \texttt{s\_in}.
+is dominated by the AXI read latency for loading \texttt{q\_in} and
+\texttt{s\_in} from DDR, with the 3-cycle \texttt{fmul} pipeline depth
+contributing the remainder.
 
-\texttt{Quantize}, by contrast, requires two floating-point divisions per
-group: one to compute $s = \texttt{wmax}/127$ and one per element for
+For the \texttt{quantize} function, two floating-point divisions are required per
+group, one to compute $s = \texttt{wmax}/127$ and one per element for
 $\hat{x}_i = x_i/s$. Unlike multiplication, floating-point division has
 no mapping to Xilinx DSP48 blocks and is implemented entirely in LUT
 fabric, as confirmed by the \texttt{no\_dsp} suffix on both
@@ -786,14 +804,14 @@ with the sequential dependency between scale computation and element
 quantisation within each group, is what drives the 41-cycle iteration
 latency in \texttt{main\_loop}.
 
-An additional artefact visible in the \texttt{quantize} Bind Storage
-report is the presence of two small ROM lookup tables,
+The \texttt{quantize} Bind Storage
+report also shows two small ROM lookup tables,
 \texttt{mask\_table} and \texttt{one\_half\_table}, which HLS infers to
 implement the IEEE~754 round-to-nearest operation used by the
 \texttt{round()} call. These tables are inferred in register fabric
 rather than BRAM at this prototype scale and contribute to the higher
 LUT count. The AXI data width report for \texttt{dequantize} also shows
-an interesting contrast: the \texttt{q\_in} port operates at an 8-bit
+a difference in that the \texttt{q\_in} port operates at an 8-bit
 native width widened to a 32-bit AXI bus width (8\,$\rightarrow$\,32),
 reflecting the fact that INT8 data must be packed into the 32-bit AXI
 data bus in groups of four bytes per transfer.
@@ -819,61 +837,12 @@ $\mathbf{y} \in \mathbb{R}^D$ is returned as a dequantised float vector.
 The function is declared as a C++ template in \texttt{forward.h},
 parameterised by \texttt{N} (input dimension) and \texttt{D} (output
 dimension), and is instantiated at the call sites in \texttt{forward.cpp}
-for the Q, K, V, and output projections.
-
-The implementation is organised into three phases. The first phase
-pre-loads the input vector and its associated scale factors into two
-static local buffers before any row computation begins. The input buffer
-\texttt{x\_buffer[N]} receives the INT8 input values via the
-\texttt{x\_buff} loop with \texttt{UNROLL factor=16}, and the scale buffer
-\texttt{xs\_buffer[N/GS]} receives the per-group float scales via the
-\texttt{xs\_buff} loop with \texttt{UNROLL factor=4}. Both buffers are
-declared \texttt{static} so that HLS allocates them as persistent on-chip
-storage rather than on the call stack, and both are partitioned with
-\texttt{ARRAY\_PARTITION cyclic} to provide sufficient read ports for the
-downstream compute loops. Pre-loading into local buffers serves the same
-purpose as in \texttt{rmsnorm}: it separates the AXI burst reads for the
-input from the per-row AXI burst reads for the weights, preventing
-contention on the shared \texttt{gmem0} port.
-
-The second and third phases execute inside the outer row loop over
-\texttt{D} output elements, which carries the \texttt{\#pragma HLS
-PIPELINE} directive. For each row \texttt{i}, HLS allocates two
-non-static local buffers, \texttt{w\_buffer[N]} and
-\texttt{ws\_buffer[N/GS]}, each partitioned with \texttt{ARRAY\_PARTITION
-cyclic factor=32}. The \texttt{matmul1} loop loads the \texttt{N} INT8
-weight values for row \texttt{i} from DDR into \texttt{w\_buffer}, and
-\texttt{matmul2} loads the corresponding \texttt{N/GS} scale factors into
-\texttt{ws\_buffer}. Crucially, neither of these inner loading loops
-carries an \texttt{UNROLL} pragma: the directives are present in the
-source but commented out. This is a deliberate conservative design
-decision for the prototype. Enabling \texttt{UNROLL} on \texttt{matmul1}
-at full scale ($N = 2048$) would cause HLS to generate 2048 simultaneous
-AXI read requests when the outer loop is pipelined, saturating the AXI
-master adapter's 16-slot outstanding transaction queue and causing a
-circular wait stall. The commented-out state reflects the minimum safe
-configuration for prototype correctness.
-
-The third phase is the grouped integer dot product. The \texttt{matmul3}
-loop iterates over groups of \texttt{GS} consecutive elements, and within
-each group the \texttt{matmul4} loop accumulates the INT8--INT8 products
-into a 32-bit integer accumulator \texttt{ival}. Using \texttt{int32\_t}
-for the accumulator is essential: the product of two INT8 values can reach
-$127 \times 127 = 16{,}129$, and summing \texttt{GS = 4} such products
-gives a maximum of $4 \times 16{,}129 = 64{,}516$, which fits within
-\texttt{int16\_t} but would overflow \texttt{int8\_t}. Accumulating into
-\texttt{int32\_t} prevents any possibility of overflow. After all
-\texttt{GS} products have been accumulated, the group result is
-dequantised inline: the integer sum is cast to float and multiplied by the
-product of the weight group scale \texttt{ws\_buffer[j/GS]} and the input
-group scale \texttt{xs\_buffer[j/GS]}, recovering the floating-point
-partial sum for that group. This per-group dequantisation is added
-directly to the running float accumulator \texttt{val} before moving to
-the next group. Listing~\ref{lst:matmul} shows the core loop structure.
+for the Q, K, V, and output projections. Listing~\ref{lst:matmul} shows
+the core loop structure.
 
 \begin{lstlisting}[
   caption = {Core loop structure of \texttt{matmul<N,D>} from
-             \texttt{forward.h}. The outer row loop is pipelined; the
+             \texttt{forward.h}. The outer row loop is pipelined. The
              inner loading loops (\texttt{matmul1}, \texttt{matmul2})
              and the grouped dot product loops (\texttt{matmul3},
              \texttt{matmul4}) execute sequentially within each pipeline
@@ -904,22 +873,66 @@ matmul4:  for (int k = 0; k < GS; k++) // UNROLL commented out
 }
 \end{lstlisting}
 
+The implementation is organised into three phases. The first phase
+pre-loads the input vector and its associated scale factors into two
+static local buffers before any row computation begins. The input buffer
+\texttt{x\_buffer[N]} receives the INT8 input values via the
+\texttt{x\_buff} loop with \texttt{UNROLL factor=16}, and the scale buffer
+\texttt{xs\_buffer[N/GS]} receives the per-group float scales via the
+\texttt{xs\_buff} loop with \texttt{UNROLL factor=4}. Both buffers are declared \texttt{static} so that HLS allocates them
+as standalone addressable memory structures rather than dissolving them
+into pipeline wires within the datapath. This is necessary because
+\texttt{ARRAY\_PARTITION} can only be applied to a dedicated memory
+structure with a fixed address space; without \texttt{static}, HLS may
+embed the array directly into the pipeline datapath as a set of
+registers without creating a separately partitionable memory bank.
+Both are partitioned with
+\texttt{ARRAY\_PARTITION cyclic} to provide sufficient read ports for the
+downstream compute loops. Pre-loading into local buffers serves the same
+purpose as in \texttt{rmsnorm}, separating the AXI burst reads for the
+input from the per-row AXI burst reads for the weights, preventing
+contention on the shared \texttt{gmem0} port.
+
+The second and third phases execute inside the outer row loop over
+\texttt{D} output elements, which carries the \texttt{\#pragma HLS
+PIPELINE} directive. For each row \texttt{i}, HLS infers two
+non-static local buffers, \texttt{w\_buffer[N]} and
+\texttt{ws\_buffer[N/GS]}, each partitioned with \texttt{ARRAY\_PARTITION
+cyclic factor=32}. The \texttt{matmul1} loop loads the \texttt{N} INT8
+weight values for row \texttt{i} from DDR into \texttt{w\_buffer}, and
+\texttt{matmul2} loads the corresponding \texttt{N/GS} scale factors into
+\texttt{ws\_buffer}.
+
+The third phase is the grouped integer dot product. The \texttt{matmul3}
+loop iterates over groups of \texttt{GS} consecutive elements, and within
+each group the \texttt{matmul4} loop accumulates the products
+into a 32-bit integer accumulator \texttt{ival}. Using \texttt{int32\_t}
+for the accumulator is essential because the product of two INT8 values can reach
+$127 \times 127 = 16{,}129$, and summing \texttt{GS = 4} such products
+gives a maximum of $4 \times 16{,}129 = 64{,}516$, which fits within
+\texttt{int16\_t} but would overflow \texttt{int8\_t}. Accumulating into
+\texttt{int32\_t} prevents any possibility of overflow. After all
+\texttt{GS} products have been accumulated, the group result is
+dequantised inline. The integer sum is cast to float and multiplied by the
+product of the weight group scale \texttt{ws\_buffer[j/GS]} and the input
+group scale \texttt{xs\_buffer[j/GS]}, recovering the floating-point
+partial sum for that group. This per-group dequantisation is added
+directly to the running float accumulator \texttt{val} before moving to
+the next group.
+
 \subsection{C-Simulation Results}
 \label{subsec:matmul_csim}
 
-C-simulation was performed by compiling \texttt{matmul\_top} together
-with a software testbench using GCC on the x86 host. The testbench
+C-simulation was performed for \texttt{matmul\_top}. The testbench
 constructs an $8 \times 8$ weight matrix whose diagonal entries are all
 127 and whose off-diagonal entries are all zero, with all weight scales
 set to $1/127$. With this configuration the computation simplifies to
 $\texttt{xout}[i] = \texttt{xq}[i] \times \texttt{xs}[\lfloor i/GS
-\rfloor]$, which is precisely the dequantised input vector. The testbench
+\rfloor]$, which is the dequantised input vector. The testbench
 reuses the quantised values and scale factors from the \texttt{quantize}
 csim as input, making the three testbenches a matched chain in which
 quantise, identity matrix--vector multiply, and dequantise can be
-cross-validated against one another.
-
-Table~\ref{tab:matmul_csim} shows the output from both the kernel and the
+cross-validated against one another. Table~\ref{tab:matmul_csim} shows the output from both the kernel and the
 software reference for each of the eight output elements.
 
 \begin{table}[H]
@@ -947,15 +960,11 @@ software reference for each of the eight output elements.
 
 \end{table}
 
-All eight output elements agree exactly between the hardware kernel and
-the software reference. The expected round-trip relationship holds: the
-output values are the dequantised equivalents of the original float inputs
+All eight output elements agree between the hardware kernel and
+the software reference. The expected round-trip relationship holds, with
+output values being the dequantised equivalents of the original float inputs
 $[0.5, -1.2, 3.7, -0.3, 2.1, -4.5, 1.0, -2.8]$ to within the precision
-limits of symmetric INT8 quantisation, with the largest absolute
-reconstruction error occurring at index~2 where the original value of
-$3.7$ reconstructs to $3.700018$, a difference of $18 \times 10^{-6}$
-arising from the scale factor $s_0 = 3.7/127 \approx 0.029134$ stored as
-a 32-bit float. The csim run completed with zero errors as reported by
+limits of symmetric INT8 quantisation. The csim run completed with zero errors as reported by
 Vitis HLS.
 
 \subsection{HLS Synthesis Results}
@@ -1041,27 +1050,20 @@ Table~\ref{tab:matmul_latency} for the per-stage latency breakdown.
 
 \end{table}
 
-The central result is that the row loop \texttt{VITIS\_LOOP\_143\_1}
-achieves an II of 10 against a target of 1. Understanding why requires
-examining what the pipeline must accomplish in each iteration: before any
+Before any
 arithmetic can begin on row~\texttt{i}, the pipeline must first issue AXI
 reads for the \texttt{N = 8} INT8 weight values from \texttt{matmul1} and
 the \texttt{N/GS = 2} float scale values from \texttt{matmul2}. Because
 neither loading loop carries an \texttt{UNROLL} pragma, HLS issues these
-reads sequentially: eight weight reads followed by two scale reads, giving
+reads sequentially, with eight weight reads followed by two scale reads, giving
 $8 + 2 = 10$ sequential AXI transactions before the first arithmetic
 operation of the iteration can complete. This sequential load count
-directly determines the achieved II of 10. If the \texttt{UNROLL} pragmas
-were enabled, HLS could issue all ten reads simultaneously, reducing II
-toward~1, but doing so at full scale ($N = 2048$) would generate 2048
-concurrent read requests that would saturate the adapter's outstanding
-transaction limit and cause a deadlock stall, as detailed in
-\cref{subsec:forward_limitations}.
+directly determines the achieved II of 10.
 
 The iteration latency of 42 cycles reflects the time required to complete
-the full body of one row iteration: the sequential weight and scale loads
-followed by the grouped integer dot product across two groups of four
-elements each, culminating in the per-group floating-point dequantisation.
+the full body of one row iteration. The sequential weight and scale loads
+are followed by the grouped integer dot product across two groups of four
+elements each.
 The total row loop latency is therefore $\text{II} \times (D - 1) +
 \text{iteration latency} = 10 \times 7 + 42 = 112$ cycles for the
 arithmetic, with the remaining 8 cycles accounting for pipeline drain and
@@ -1077,20 +1079,13 @@ dequantisation product $\texttt{ival} \times \texttt{ws} \times
 \texttt{xs}$ (3 DSPs), and one \texttt{fadd\_32ns} unit for the
 float accumulator \texttt{val} (2 DSPs), totalling $4 + 3 + 2 = 9$. An
 additional four \texttt{mul\_8s\_8s\_16} instances appear in the report
-with zero DSP assignment; these correspond to the second group's INT8
+with zero DSP assignment. These correspond to the second group's INT8
 multiplications, which HLS chose to implement in LUT fabric rather than
-DSP48 blocks. The asymmetric mapping, with one group in DSPs and the other
-in LUTs, reflects HLS's resource allocation heuristics when the inner
-\texttt{UNROLL} pragma is absent: without a directive forcing all four
-elements of both groups to be instantiated in parallel, the tool schedules
-one group's products through the DSP-backed MAC pipeline and places the
-second group's products in available LUT fabric. The total DSP count of 9
-is notably higher than the zero DSPs consumed by \texttt{quantize} and the
-3 DSPs consumed by \texttt{dequantize}, reflecting that \texttt{matmul} is
-the first primitive that performs both integer and floating-point
-arithmetic requiring DSP48 resources for both. The timing situation is
-identical to all preceding sections: estimated \SI{4.867}{\nano\second}
-plus \SI{1.800}{\nano\second} uncertainty exactly exhausts the
+DSP48 blocks. The total DSP count of 9
+is higher than the zero DSPs consumed by \texttt{quantize} and the
+3 DSPs consumed by \texttt{dequantize}. The timing situation is
+identical to all preceding sections, with an estimated \SI{4.867}{\nano\second}
+plus \SI{1.800}{\nano\second} uncertainty that exhausts the
 \SI{6.667}{\nano\second} budget, leaving zero slack.
 
 The \texttt{matmul} implementation was not modified in the second or
@@ -1130,7 +1125,7 @@ The first loop, \texttt{max}, scans the active \texttt{size} elements
 to find the maximum score value. It carries a \texttt{\#pragma HLS
 PIPELINE} directive and a \texttt{loop\_tripcount} hint, but no
 \texttt{UNROLL}. The reason is that finding the maximum is a
-sequential reduction: each comparison must read the current running
+sequential reduction, as each comparison must read the current running
 maximum and potentially update it before the next iteration can
 proceed. This loop-carried dependency on \texttt{max\_val} prevents
 parallelism in the same way as the \texttt{sum\_of\_squares} reduction
@@ -1142,10 +1137,8 @@ local \texttt{buffer[MAXSIZE]} array. This loop carries both
 \texttt{\#pragma HLS PIPELINE} and \texttt{\#pragma HLS UNROLL
 factor=16}. Because each element's computation is entirely
 independent, the \texttt{UNROLL factor=16} on a
-\texttt{MAXSIZE = 16}-element loop amounts to complete unrolling: HLS
-generates 16 parallel datapath lanes each containing a subtraction
-unit followed by an exponential unit. The exponential function
-\texttt{expf} is a transcendental operation that Vitis HLS maps to
+\texttt{MAXSIZE = 16}-element loop amounts to complete unrolling. The exponential function
+\texttt{expf} is an operation with no direct arithmetic circuit equivalent that Vitis HLS maps to
 the Xilinx \texttt{fexp} floating-point IP core, which requires 7 DSP
 blocks and an 8-cycle pipeline depth. The cost of this operation
 dominates the resource budget of the entire function, as discussed in
@@ -1153,15 +1146,9 @@ the synthesis subsection.
 
 The third loop, \texttt{sum}, accumulates the sum of all
 \texttt{buffer} entries. It carries only a \texttt{loop\_tripcount}
-hint and no \texttt{PIPELINE} or \texttt{UNROLL} pragma. Omitting
-\texttt{PIPELINE} here is the correct choice: the floating-point
-adder has a multi-cycle pipeline latency, and applying
-\texttt{PIPELINE} without a sufficient unroll factor would not
-eliminate the loop-carried dependency on the accumulator \texttt{sum}
-but would force HLS to report an II violation as a warning. The loop
-is left sequential, and the dependency manifests as an achieved II
-equal to the \texttt{fadd} pipeline depth rather than the target of
-1.
+hint and no \texttt{PIPELINE} or \texttt{UNROLL} pragma, because the
+loop-carried dependency on \texttt{sum} means it cannot achieve
+II\,=\,1 regardless.
 
 The fourth loop, \texttt{norm}, divides each \texttt{buffer} entry by
 the total sum to produce the final probability values. Rather than
@@ -1170,12 +1157,13 @@ precomputes the reciprocal \texttt{inv\_sum = 1.0f / sum} as a single
 scalar before the loop, then multiplies each element by
 \texttt{inv\_sum}. This replaces \texttt{MAXSIZE} divisions with one
 division and \texttt{MAXSIZE} multiplications, which is a significant
-saving since \texttt{fdiv} requires 12 cycles and cannot map to
-DSP48 blocks, whereas \texttt{fmul} requires 4 cycles and maps
+saving since \texttt{fdiv} (\texttt{fdiv\_32ns\_32ns\_32\_12\_no\_dsp\_1})
+requires 11 cycles and cannot map to
+DSP48 blocks, whereas \texttt{fmul} (\texttt{fmul\_32ns\_32ns\_32\_4\_max\_dsp\_1})
+requires 3 cycles and maps
 efficiently to DSPs. Like the \texttt{exp} loop, \texttt{norm} carries
 \texttt{PIPELINE} and \texttt{UNROLL factor=16}, fully unrolling the
 16-element loop into 16 parallel multiply lanes.
-
 Listing~\ref{lst:softmax} shows the four-loop structure and its pragma
 assignments.
 
@@ -1227,8 +1215,7 @@ norm:
 \subsection{C-Simulation Results}
 \label{subsec:softmax_csim}
 
-C-simulation was performed by compiling \texttt{softmax\_top} together
-with a software testbench using GCC on the x86 host. The testbench
+C-simulation was performed for \texttt{softmax\_top}. The testbench
 supplied a 16-element input vector with \texttt{size = 8} active
 elements, exercising the variable-length behaviour of the
 \texttt{loop\_tripcount} pragmas. The input vector
@@ -1236,7 +1223,7 @@ $[-1.2, 0.5, 1.8, 4.5, -0.3, 2.1, -2.7, 0.9]$ was chosen to include
 one clearly dominant value (index~3, score $4.5$) so that the
 resulting probability distribution should concentrate most of its mass
 on that position. The testbench verified two independent correctness
-criteria: element-wise agreement with a software reference
+criteria, namely element-wise agreement with a software reference
 implementing the same four-loop algorithm, and a sum-to-unity check
 on the hardware output independent of the reference. Table~\ref{tab:softmax_csim}
 shows the output from both the kernel and the software reference.
@@ -1260,15 +1247,15 @@ shows the output from both the kernel and the software reference.
   \caption{C-simulation output for \texttt{softmax} with input
            $[-1.2, 0.5, 1.8, 4.5, -0.3, 2.1, -2.7, 0.9]$,
            $\texttt{size} = 8$, $\texttt{MAXSIZE} = 16$.
-           All eight elements match the software reference exactly,
+           All eight elements match the software reference,
            and the sum of outputs is $1.00000000$.}
   \label{tab:softmax_csim}
 \end{table}
 
 All eight elements match the software reference with zero absolute
 error, and the independent sum check confirmed that the outputs sum
-to exactly $1.00000000$. The probability mass distribution is strongly
-concentrated at index~3 (probability $0.822$), as expected for the
+to $1.00000000$. The output is strongly
+concentrated at index~3 (probability $0.822$), consistent with the
 dominant score. The output at index~6 is the smallest ($0.000614$),
 corresponding to the most negative input score of $-2.7$. Both extremes
 are handled correctly, confirming that the max-subtract numerical
@@ -1362,8 +1349,7 @@ Table~\ref{tab:softmax_latency} for the per-loop latency breakdown.
   \label{tab:softmax_latency}
 \end{table}
 
-The most immediately striking feature of these results is the
-resource consumption: with 192 DSPs and 38{,}979 core LUTs,
+The resource consumption stands out in these results. With 192 DSPs and 38{,}979 core LUTs,
 \texttt{softmax} consumes more hardware than all four preceding
 primitives combined. The cause is the complete unrolling of the
 \texttt{exp} and \texttt{norm} loops into 16 parallel datapath lanes
@@ -1376,12 +1362,12 @@ unit consuming 2 DSPs, contributing a further $16 \times 2 = 32$ DSPs.
 The 16 multiply-by-reciprocal operations in the \texttt{norm} loop
 each map to an \texttt{fmul} unit consuming 3 DSPs, adding $16 \times
 3 = 48$ DSPs. The total $112 + 32 + 48 = 192$ DSPs is accounted for
-exactly by these three sources, with the \texttt{max} and \texttt{sum}
+by these three sources, with the \texttt{max} and \texttt{sum}
 loops contributing zero DSPs since they use only fabric-based
 comparators and adders respectively.
 
 The \texttt{Bind Storage} section of the synthesis report confirms that
-the \texttt{buffer[16]} array occupies no BRAM: at $16 \times 4 = 64$
+the \texttt{buffer[16]} array occupies no BRAM. At $16 \times 4 = 64$
 bytes, the buffer falls well below the threshold at which HLS infers
 block RAM, and it is instead mapped to flip-flop registers within the
 pipeline datapath.
@@ -1389,7 +1375,7 @@ pipeline datapath.
 The variable latency reported in Table~\ref{tab:softmax_top_latency}
 is the first instance of a non-constant latency across all primitives
 synthesised in this chapter. The minimum of 51 cycles corresponds to
-the degenerate case $\texttt{size} = 1$, where the \texttt{max} loop
+$\texttt{size} = 1$, where the \texttt{max} loop
 has zero iterations (its lower bound is $i = 1$), the \texttt{exp}
 loop computes a single element, the \texttt{sum} loop performs one
 accumulation, and the \texttt{norm} loop normalises one value. The
@@ -1400,28 +1386,31 @@ parameter, which is passed through the S-AXILite control register
 interface and therefore cannot be statically resolved by HLS during
 synthesis. The \texttt{loop\_tripcount} hints on all four loops inform
 the latency estimator of the expected range but do not constrain the
-hardware; the actual execution length is always determined at runtime.
+hardware. The actual execution length is always determined at runtime.
 
 The \texttt{sum} loop is the dominant contributor to worst-case
 latency at 97 cycles, nearly five times the combined contribution of
 the other three loops. The cause is the loop-carried dependency on the
-floating-point accumulator \texttt{sum}: each iteration must wait for
-the preceding \texttt{fadd} to complete before it can add the next
-element, and \texttt{fadd} has a pipeline depth of 6 cycles at
-\SI{150}{\mega\hertz}, yielding an achieved II of 6 rather than the
-target of 1. Across 16 iterations this gives $6 \times 16 - 6 + 8 =
+floating-point accumulator \texttt{sum}, as each iteration must wait for
+the preceding \texttt{fadd} (\texttt{faddfsub\_32ns\_32ns\_32\_6\_full\_dsp\_1})
+to complete before it can add the next
+element. The \texttt{fadd} unit has a scheduled pipeline depth of 5 cycles at
+\SI{150}{\mega\hertz}, and the additional cycle required to write the
+updated accumulator value back and make it available for the next
+read gives an effective II of 6. Across 16 iterations this gives $6 \times 16 - 6 + 8 =
 98 - 1 = 97$ cycles for the loop body alone. This is the same
 loop-carried dependency pattern observed in the
 \texttt{sum\_of\_squares} reduction in \texttt{rmsnorm}. The
 \texttt{rmsnorm} implementation partially mitigated this with
 \texttt{UNROLL factor=4} to maintain four independent partial sum
-lanes; applying the same technique to \texttt{sum} would reduce the
-II from 6 to approximately 2, saving roughly 64 cycles per softmax
+lanes. Applying the same technique to \texttt{sum} would, with four
+independent lanes and a 5-cycle \texttt{fadd} pipeline depth, reduce the
+II from 6 to approximately $\lceil 5/4 \rceil = 2$, saving roughly 64 cycles per softmax
 call and is identified as a future optimisation.
 
 The timing result follows the same pattern as all preceding sections:
 the estimated path of \SI{4.867}{\nano\second} plus the
-\SI{1.800}{\nano\second} uncertainty exactly exhausts the
+\SI{1.800}{\nano\second} uncertainty exhausts the
 \SI{6.667}{\nano\second} target, leaving zero slack. The \texttt{exp}
 pipeline sub-module is the most timing-critical path, with only
 \SI{0.09}{\nano\second} of slack above the timing constraint prior to
@@ -1441,7 +1430,7 @@ factor=16} on the \texttt{sum} reduction loop. These two changes are
 directly motivated by the II\,=\,6 violation identified in the
 iteration~1 synthesis analysis, which attributed the 97-cycle \texttt{sum}
 latency to a loop-carried dependency on the floating-point accumulator.
-The array partition is a prerequisite for the unroll: without 16
+The array partition is a prerequisite for the unroll. Without 16
 independent memory banks on \texttt{buffer}, adding 16 parallel read
 accesses from an unpartitioned array would cause HLS to serialise the
 reads rather than parallelise them.
@@ -1450,9 +1439,9 @@ reads rather than parallelise them.
 \label{subsubsec:softmax_iter3_csim}
 
 Because the function body is identical to iteration~1, the C-simulation
-produces bit-identical outputs: all eight active elements match the
+produces bit-identical outputs, with all eight active elements matching the
 software reference with zero absolute error, and the sum-to-unity check
-passes with a reported sum of exactly $1.00000000$. The csim run
+passes with a reported sum of $1.00000000$. The csim run
 completed with zero errors.
 
 \subsubsection{HLS Synthesis Results}
@@ -1529,7 +1518,7 @@ iteration~1, the \texttt{sum} loop had trip count~16, achieved II\,=\,6,
 and a total latency of 97 cycles. In iteration~3, the complete unroll
 collapses the loop to a single effective iteration (trip count~1), but
 that single iteration has a latency of 97 cycles and an II of 96,
-giving a total of 185 cycles — nearly double the iteration~1 cost.
+giving a total of 185 cycles, nearly double the iteration~1 cost.
 The worst-case total function latency increased from 205 to 295 cycles
 as a result.
 
@@ -1538,8 +1527,8 @@ HLS generates to reduce 16 parallel partial sums down to a single
 scalar. Fully unrolling the 16-element loop creates 16 independent
 \texttt{fadd} units operating in parallel, which then feed into a
 tree of adders with $\log_2(16) = 4$ levels. Each level contains
-floating-point adders with a pipeline depth of 6 cycles, so the
-minimum reduction latency is approximately $4 \times 6 = 24$ cycles.
+floating-point adders with a scheduled pipeline depth of 5 cycles, so the
+minimum reduction latency is approximately $4 \times 5 = 20$ cycles.
 However, the resulting combinational network is wide enough that
 routing introduces additional path delay, causing the \SI{0.217}{\nano\second}
 timing violation visible in Table~\ref{tab:softmax_iter3_timing}. This
@@ -1553,7 +1542,7 @@ example two or four, rather than sixteen. Maintaining four independent
 partial sum registers and merging them at the end would reduce the
 effective II from 6 to approximately 2 while keeping the reduction tree
 shallow enough to close timing. The lesson from this result is that
-loop unrolling for reduction operations requires careful sizing: the
+loop unrolling for reduction operations requires careful sizing, as the
 number of parallel lanes must be matched to the adder pipeline depth,
 not simply maximised, and the resulting hardware cost and routing
 complexity must be validated through synthesis rather than assumed to
@@ -1588,7 +1577,7 @@ The baseline attention block is contained in the
 after the QKV matrix--vector multiplications and before the residual
 addition, operating on the float query vector \texttt{q[dim]} and the
 float KV cache arrays \texttt{key\_cache} and \texttt{value\_cache}.
-The block is not a standalone function in the baseline: it is embedded
+The block is not a standalone function in the baseline, as it is embedded
 directly inside the \texttt{forward} kernel's layer loop, and the KV
 cache arrays are shared on the same \texttt{gmem0} AXI bundle as the
 transformer weight struct.
@@ -1622,7 +1611,7 @@ below.
 A critical design consideration concerns the \texttt{PIPELINE} pragma
 placement on the \texttt{iterate} and \texttt{acc} outer loops. At
 prototype scale (\texttt{seq\_len = 16}, \texttt{head\_size = 4}),
-pipelining the outer position loop is safe: the inner unrolled element
+pipelining the outer position loop is safe because the inner unrolled element
 loop generates four concurrent AXI read requests per outer iteration,
 which the adapter's 16-slot transaction queue can accommodate without
 stalling indefinitely. At full TinyLlama scale (\texttt{seq\_len =
@@ -1635,14 +1624,13 @@ clear, creating a circular wait that locks the kernel. This AXI
 interface deadlock is one of the three critical bugs encountered during
 on-board testing and is discussed further in
 \cref{subsec:forward_limitations}.
-
 Listing~\ref{lst:attn_baseline} shows the \texttt{iterate} and
 \texttt{acc} loop bodies extracted from \texttt{forward.cpp}.
 
 \begin{lstlisting}[
   caption = {Baseline float attention \texttt{iterate} and \texttt{acc}
              loops from \texttt{forward.cpp}. Both outer loops carry
-             \texttt{PIPELINE}; both inner loops carry \texttt{UNROLL}
+             \texttt{PIPELINE}. Both inner loops carry \texttt{UNROLL}
              (complete) over \texttt{head\_size\,=\,4} elements.
              The key and value cache values are read as float directly
              from DDR with no intermediate buffering.},
@@ -1677,8 +1665,7 @@ acc:
 \subsubsection{C-Simulation Results}
 \label{subsubsec:attn_fp32_csim}
 
-C-simulation was performed by compiling \texttt{attn\_baseline\_top}
-together with a software testbench using GCC on the x86 host. The
+C-simulation was performed for \texttt{attn\_baseline\_top}. The
 testbench exercised the kernel at \texttt{pos\,=\,3} and
 \texttt{loff\,=\,0}, covering four attended positions across both query
 heads. The query vector was set to linearly spaced values $[0.1, 0.2,
@@ -1715,11 +1702,11 @@ and the software reference.
   \label{tab:attn_fp32_csim}
 \end{table}
 
-All eight output elements agree exactly with the software reference,
+All eight output elements agree with the software reference,
 confirming that the three phases of the attention computation, score
 dot products, softmax normalisation, and value accumulation, all
 produce correct results when composed together. The zero-error outcome
-is expected for this test configuration: all arithmetic is performed in
+is expected for this test configuration, as all arithmetic is performed in
 float32 using the same operation sequence in both the kernel and the
 reference, so no rounding divergence can arise. The csim run completed
 with zero errors as reported by Vitis HLS.
@@ -1811,8 +1798,8 @@ per-pipeline-module breakdown.
 \end{table}
 
 The resource figures reflect the composition of the attention block
-with the softmax function it calls internally. The 192 DSPs and 53{,}650
-core LUTs match the softmax standalone synthesis results almost exactly,
+with the softmax function it instantiates internally. The 192 DSPs and 53{,}650
+core LUTs match the softmax standalone synthesis results,
 confirming that the floating-point exponential units from the 16 fully
 unrolled \texttt{fexp} instances dominate the resource budget of the
 entire attention block. The compute logic for the score dot products
@@ -1820,7 +1807,7 @@ and value accumulation consumes relatively few resources in comparison:
 the \texttt{iterate} pipeline module uses only 2{,}005 LUTs and zero
 DSPs, and the \texttt{acc} module uses only 1{,}136 LUTs and zero DSPs.
 
-The two most important II violations appear in the \texttt{iterate} and
+The II violations in the \texttt{iterate} and
 \texttt{acc} loops. The \texttt{iterate} loop achieves II\,=\,4 against
 a target of 1. With \texttt{\#pragma HLS PIPELINE} on the outer
 position loop and \texttt{\#pragma HLS UNROLL} (complete) on the inner
@@ -1839,8 +1826,9 @@ The \texttt{acc} loop achieves II\,=\,6. The inner element loop is
 again completely unrolled, but the accumulation
 $\texttt{xb\_buf}[i] \mathrel{+}= a \times \texttt{value\_cache}[i +
 \texttt{v\_offset}]$ introduces a float multiply-add chain through the
-accumulator. The \texttt{fmul}--\texttt{fadd} dependency has a combined
-pipeline depth of 6 cycles at \SI{150}{\mega\hertz}, preventing the
+accumulator. The \texttt{fmul}--\texttt{fadd} dependency chain runs through
+the 5-cycle \texttt{fadd} unit, and the additional write-back cycle before
+the updated accumulator is available gives an effective II of 6, preventing the
 outer loop from starting the next position until the previous
 accumulation has propagated through both the multiplier and the adder.
 This II\,=\,6 is identical to the accumulator dependency that was
@@ -1878,7 +1866,7 @@ position loop begins, the implementation scans the
 \texttt{h} to find the maximum absolute value, computes a per-head scale
 $s_Q = \texttt{max\_val} / 127$, and quantises the slice into a local
 \texttt{int8\_t q\_int8[head\_size]} array. The reciprocal trick from the
-quantise primitive is applied: a single \texttt{fdiv} computes
+quantise primitive is applied, whereby a single \texttt{fdiv} computes
 $1 / s_Q$ before the element loop, and each element is then quantised
 by multiplying by this reciprocal rather than dividing, replacing
 \texttt{head\_size} divisions with one division and \texttt{head\_size}
@@ -1933,10 +1921,9 @@ accumulation target \texttt{xb\_accum[head\_size]} is declared with
 \texttt{\#pragma HLS ARRAY\_PARTITION variable=xb\_accum complete},
 which maps it to four independent registers rather than a BRAM array.
 This is important because the accumulation loop updates all four
-elements of \texttt{xb\_accum} in each pipeline iteration: a BRAM-based
+elements of \texttt{xb\_accum} in each pipeline iteration. A BRAM-based
 array would introduce read-after-write latency on the same address,
 whereas a register file supports simultaneous access to all four ports.
-
 Listing~\ref{lst:attn_int8} shows the Step~1 per-head Q quantisation
 and the Step~2 INT32 dot product, which together constitute the core
 change from the baseline.
@@ -1982,7 +1969,7 @@ for (int t = 0; t <= pos; t++) {
 \end{lstlisting}
 
 C-simulation was performed for both implementations using the same
-test configuration: \texttt{pos\,=\,3}, \texttt{loff\,=\,0}, with
+test configuration of \texttt{pos\,=\,3} and \texttt{loff\,=\,0}, with
 identical query, key cache, and value cache values. This allows the
 outputs to be compared directly as a measure of the quantisation error
 introduced by the INT8 redesign. Table~\ref{tab:attn_csim_compare}
@@ -2083,7 +2070,7 @@ breakdown was presented in Table~\ref{tab:attn_fp32_latency}.
   \label{tab:attn_int8_latency}
 \end{table}
 
-The most significant change in the resource comparison is the DSP
+The largest change in the resource comparison is the DSP
 reduction from 192 to 122, a saving of 70 DSP48E2 blocks. In the
 baseline, the 192 DSPs are almost entirely accounted for by the 16
 parallel \texttt{fexp} units inside \texttt{softmax<16>} (112 DSPs)
@@ -2101,7 +2088,7 @@ chain, is implemented in LUT fabric without consuming DSP blocks.
 
 The BRAM increase from 0 to 32 core BRAMs reflects two new memory
 consumers in the refined design. The first is the \texttt{softmax<257>}
-internal \texttt{buffer[257]} array: at $257 \times 4 = 1{,}028$ bytes
+internal \texttt{buffer[257]} array. At $257 \times 4 = 1{,}028$ bytes
 this exceeds the register inference threshold and is partitioned by HLS
 into 8 BRAM banks of 2 BRAM\_18K each, consuming 16 BRAM\_18K blocks
 in total. The second is the \texttt{generic\_round\_double\_s} IP core
@@ -2113,10 +2100,10 @@ in double precision, analogous to the \texttt{mask\_table} and
 \texttt{quantize} standalone synthesis.
 
 The \texttt{iterate} loop maintains II\,=\,4 in the refined design,
-unchanged from the baseline. The root cause is identical: the on-the-fly
-K loading inside the pipelined position loop generates four concurrent
+unchanged from the baseline. The root cause is identical, with the on-the-fly
+K loading inside the pipelined position loop generating four concurrent
 AXI read requests through the shared \texttt{gmem0} port, and the
-adapter's transaction queue limits the sustainable request rate to one
+adapter's transaction queue limiting the sustainable request rate to one
 group of four reads per 4 clock cycles. The on-the-fly K quantisation
 steps that are unique to the refined design add substantially to the
 iteration latency (73 cycles versus 42 in the baseline), but do not
@@ -2156,10 +2143,10 @@ slice requires two scale factors, and the scale arrays are indexed with
 a separate \texttt{loff\_scale} offset computed as $l \times
 \texttt{seq\_len} \times (\texttt{kv\_dim}/\texttt{GS})$.
 
-Inside the \texttt{iterate} loop, the on-the-fly K loading from iteration~2
---- which required loading float K, scanning for the maximum, computing
-$s_K$, and quantising element by element --- is replaced by two direct
-reads: a burst read of \texttt{head\_size} INT8 values from
+Inside the \texttt{iterate} loop, the on-the-fly K loading from iteration~2,
+which required loading float K, scanning for the maximum, computing
+$s_K$, and quantising element by element, is replaced by two direct
+reads, namely a burst read of \texttt{head\_size} INT8 values from
 \texttt{key\_cache} and a single float read of the pre-stored scale from
 \texttt{key\_scales}. The INT32 dot product and dequantisation formula
 are unchanged from Equation~\ref{eq:int8_score}. Inside the \texttt{acc}
@@ -2180,7 +2167,6 @@ in this header also includes the \texttt{UNROLL factor=16} on the
 \texttt{sum} loop and the buffer partition discussed in
 \cref{subsec:softmax_iter3}, so the attention block inherits both the
 performance regression and the timing violation of that unrolled softmax.
-
 Listing~\ref{lst:attn_kvint8} contrasts the \texttt{iterate} loop bodies
 of iterations~2 and~3 side by side, making the elimination of on-the-fly
 K quantisation concrete.
@@ -2254,7 +2240,7 @@ errors against their respective software references.
 \end{table}
 
 The iteration~3 outputs are noticeably closer to the float baseline
-than the iteration~2 outputs: the maximum absolute difference from
+than the iteration~2 outputs. The maximum absolute difference from
 the float baseline reduces from approximately $0.006$ (iteration~2) to
 approximately $0.001$ (iteration~3). This improvement occurs because
 iteration~3 stores K and V with group-wise scales computed over
@@ -2291,7 +2277,7 @@ the per-pipeline-module latency for iteration~3.
   \caption{Resource utilisation across all three attention iterations
            on the \texttt{xczu9eg-ffvb1156-2-e} at \SI{150}{\mega\hertz}.
            Core figures for iterations~1 and~2 exclude the AXI master
-           adapter and S-AXILite control interface; the same exclusions
+           adapter and S-AXILite control interface. The same exclusions
            apply to the iteration~3 core column.}
   \label{tab:attn_all_resources}
 \end{table}
@@ -2320,16 +2306,15 @@ the per-pipeline-module latency for iteration~3.
   \label{tab:attn_kvint8_latency}
 \end{table}
 
-The most notable change in iteration~3 is the sharp reduction in
-\texttt{iterate} iteration latency from 42 cycles (baseline) and 73
+In iteration~3, the \texttt{iterate} iteration latency drops from 42 cycles (baseline) and 73
 cycles (iteration~2) to 26 cycles. This directly reflects the
 elimination of the on-the-fly K quantisation sequence. Where
 iteration~2's \texttt{iterate} body spent the majority of its 73
 cycles on the max-scan, scale computation, and element-wise
 quantisation of the loaded float K vector, iteration~3 instead
-issues two AXI reads --- a burst of \texttt{head\_size} INT8 bytes
+issues two AXI reads, a burst of \texttt{head\_size} INT8 bytes
 from \texttt{key\_cache} and a single float from
-\texttt{key\_scales} --- and proceeds directly to the integer dot
+\texttt{key\_scales}, and then proceeds directly to the integer dot
 product. The achieved II is 5 rather than the 4 observed in the
 baseline and iteration~2, because the two separate AXI read streams
 (\texttt{key\_cache} and \texttt{key\_scales}) now issue through the
@@ -2346,7 +2331,7 @@ pipeline depth of approximately 10 cycles. Total \texttt{acc} latency
 at 124 cycles is slightly more than the baseline's 112 cycles, as the
 on-the-fly V scale load adds one extra memory access per iteration.
 
-The resource comparison reveals a significant increase in LUT usage
+LUT usage increases
 from iteration~2 (45,186 core) to iteration~3 (70,514 core). The
 primary driver is not the attention block itself but the
 \texttt{sum} pipeline module inherited from the iteration~3 softmax
@@ -2396,7 +2381,7 @@ Vitis HLS via \texttt{set\_top forward} and is the only
 \texttt{extern~"C"} function in the design. All the primitives
 described in Sections~\ref{sec:rmsnorm_impl}
 through~\ref{sec:attn_impl} are inlined into this single synthesised
-module: Vitis HLS resolves the template instantiations at compile time
+module, as Vitis HLS resolves the template instantiations at compile time
 and merges the function bodies into one hardware design with shared
 AXI interfaces and shared on-chip buffers. The top-level function is
 therefore the composition point where all prior design decisions
@@ -2497,7 +2482,7 @@ applied to \texttt{x}, writing the normalised result into \texttt{xb}.
 The activation \texttt{xb} is then quantised into the
 \texttt{QuantizedTensor} struct \texttt{xq} via \texttt{quantize(\&xq,
 xb, GS)}. Three \texttt{matmul} calls consume \texttt{xq} to compute
-the Q, K, and V projections: \texttt{matmul<dim,dim>} for Q,
+the Q, K, and V projections, using \texttt{matmul<dim,dim>} for Q,
 \texttt{matmul<dim,kv\_dim>} for K, and \texttt{matmul<dim,kv\_dim>}
 for V, where \texttt{kv\_dim = (dim\,$\times$\,n\_kv\_heads) /
 n\_heads}. At prototype scale where \texttt{n\_kv\_heads = n\_heads =
@@ -2516,7 +2501,7 @@ The multihead attention block then executes as described in
 \cref{sec:attn_impl}, reading from the accumulated KV cache entries at
 positions 0 through \texttt{pos} and producing the weighted value
 accumulation in \texttt{xb}. The output projection matrix
-$\mathbf{W}_O$ is not applied in the prototype: the commented-out
+$\mathbf{W}_O$ is not applied in the prototype. The commented-out
 \texttt{matmul<dim,dim>} call for \texttt{wo} means that \texttt{xb}
 is used directly in the residual addition rather than \texttt{xb2}.
 The residual loop then adds \texttt{xb} element-wise into \texttt{x}
@@ -2581,7 +2566,7 @@ prototype because it avoids the additional quantise-before-write and
 dequantise-on-read steps, keeping the attention data path simpler while
 functional correctness was being established. Bug~2 discovered during
 on-board testing of the full-scale kernel is directly related to this
-transition: the full kernel reads token embeddings from
+transition. The full kernel reads token embeddings from
 \texttt{q\_tokens} (the quantised embedding table) rather than
 \texttt{token\_embedding\_table} (the float table), but the host
 checkpoint loader only populated the quantised table. The prototype

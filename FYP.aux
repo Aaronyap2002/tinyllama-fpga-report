@@ -257,29 +257,29 @@
 \@writefile{toc}{\contentsline {subsection}{\numberline {4.1.1}Implementation}{24}{subsection.66}\protected@file@percent }
 \newlabel{subsec:rmsnorm_impl}{{4.1.1}{24}{Implementation}{subsection.66}{}}
 \newlabel{subsec:rmsnorm_impl@cref}{{[subsection][1][4,1]4.1.1}{[1][23][]24}{}{}{}}
-\newlabel{lst:rmsnorm}{{4.1}{24}{\texttt {rmsnorm<S>} implementation from \texttt {forward.h}. Data is staged into local buffers before computation so that \texttt {ARRAY\_PARTITION} can be applied. The reduction loop uses \texttt {UNROLL factor=4} to accumulate four partial sums simultaneously; the normalisation loop uses \texttt {UNROLL factor=64} since it is fully data-parallel}{lstlisting.67}{}}
+\newlabel{lst:rmsnorm}{{4.1}{24}{\texttt {rmsnorm<S>} implementation from \texttt {forward.h}. Data is staged into local buffers before computation so that \texttt {ARRAY\_PARTITION} can be applied. The reduction loop uses \texttt {UNROLL factor=4} to accumulate four partial sums simultaneously. The normalisation loop uses \texttt {UNROLL factor=64} since it is fully data-parallel}{lstlisting.67}{}}
 \newlabel{lst:rmsnorm@cref}{{[listing][1][4]4.1}{[1][24][]24}{}{}{}}
-\@writefile{lol}{\contentsline {lstlisting}{\numberline {4.1}{\ignorespaces \texttt  {rmsnorm<S>} implementation from \texttt  {forward.h}. Data is staged into local buffers before computation so that \texttt  {ARRAY\_PARTITION} can be applied. The reduction loop uses \texttt  {UNROLL factor=4} to accumulate four partial sums simultaneously; the normalisation loop uses \texttt  {UNROLL factor=64} since it is fully data-parallel.}}{24}{lstlisting.67}\protected@file@percent }
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {4.1}{\ignorespaces \texttt  {rmsnorm<S>} implementation from \texttt  {forward.h}. Data is staged into local buffers before computation so that \texttt  {ARRAY\_PARTITION} can be applied. The reduction loop uses \texttt  {UNROLL factor=4} to accumulate four partial sums simultaneously. The normalisation loop uses \texttt  {UNROLL factor=64} since it is fully data-parallel.}}{24}{lstlisting.67}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {4.1.2}C-Simulation Results}{25}{subsection.98}\protected@file@percent }
 \newlabel{subsec:rmsnorm_csim}{{4.1.2}{25}{C-Simulation Results}{subsection.98}{}}
 \newlabel{subsec:rmsnorm_csim@cref}{{[subsection][2][4,1]4.1.2}{[1][25][]25}{}{}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {4.2}{\ignorespaces C-simulation output for \texttt  {rmsnorm} with input $\mathbf  {x} = [1, -2, 3, -4, 5, -6, 7, -8]$ and weight $\mathbf  {g} = [0.5, 1.0, 1.5, 2.0, 0.5, 1.0, 1.5, 2.0]$. All eight elements match the software reference exactly.}}{26}{table.caption.99}\protected@file@percent }
-\newlabel{tab:rmsnorm_csim}{{4.2}{26}{C-simulation output for \texttt {rmsnorm} with input $\mathbf {x} = [1, -2, 3, -4, 5, -6, 7, -8]$ and weight $\mathbf {g} = [0.5, 1.0, 1.5, 2.0, 0.5, 1.0, 1.5, 2.0]$. All eight elements match the software reference exactly}{table.caption.99}{}}
-\newlabel{tab:rmsnorm_csim@cref}{{[table][2][4]4.2}{[1][26][]26}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4.2}{\ignorespaces C-simulation output for \texttt  {rmsnorm} with input $\mathbf  {x} = [1, -2, 3, -4, 5, -6, 7, -8]$ and weight $\mathbf  {g} = [0.5, 1.0, 1.5, 2.0, 0.5, 1.0, 1.5, 2.0]$. All eight elements match the software reference.}}{26}{table.caption.99}\protected@file@percent }
+\newlabel{tab:rmsnorm_csim}{{4.2}{26}{C-simulation output for \texttt {rmsnorm} with input $\mathbf {x} = [1, -2, 3, -4, 5, -6, 7, -8]$ and weight $\mathbf {g} = [0.5, 1.0, 1.5, 2.0, 0.5, 1.0, 1.5, 2.0]$. All eight elements match the software reference}{table.caption.99}{}}
+\newlabel{tab:rmsnorm_csim@cref}{{[table][2][4]4.2}{[1][25][]26}{}{}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {4.1.3}HLS Synthesis Results}{26}{subsection.100}\protected@file@percent }
 \newlabel{subsec:rmsnorm_csyn}{{4.1.3}{26}{HLS Synthesis Results}{subsection.100}{}}
 \newlabel{subsec:rmsnorm_csyn@cref}{{[subsection][3][4,1]4.1.3}{[1][26][]26}{}{}{}}
 \@writefile{lot}{\contentsline {table}{\numberline {4.3}{\ignorespaces Timing summary for \texttt  {rmsnorm\_top} at the \SI {150}{\mega \hertz } (\SI {6.667}{\nano \second }) target clock.}}{27}{table.caption.101}\protected@file@percent }
 \newlabel{tab:rmsnorm_timing}{{4.3}{27}{Timing summary for \texttt {rmsnorm\_top} at the \SI {150}{\mega \hertz } (\SI {6.667}{\nano \second }) target clock}{table.caption.101}{}}
-\newlabel{tab:rmsnorm_timing@cref}{{[table][3][4]4.3}{[1][27][]27}{}{}{}}
+\newlabel{tab:rmsnorm_timing@cref}{{[table][3][4]4.3}{[1][26][]27}{}{}{}}
 \@writefile{lot}{\contentsline {table}{\numberline {4.4}{\ignorespaces Top-level latency summary for \texttt  {rmsnorm\_top} at \SI {150}{\mega \hertz }.}}{27}{table.caption.102}\protected@file@percent }
 \newlabel{tab:rmsnorm_top_latency}{{4.4}{27}{Top-level latency summary for \texttt {rmsnorm\_top} at \SI {150}{\mega \hertz }}{table.caption.102}{}}
 \newlabel{tab:rmsnorm_top_latency@cref}{{[table][4][4]4.4}{[1][27][]27}{}{}{}}
 \@writefile{lot}{\contentsline {table}{\numberline {4.5}{\ignorespaces Resource utilisation of the \texttt  {rmsnorm} function synthesised at $S = 8$ on the ZCU102 (\texttt  {xczu9eg-ffvb1156-2-e}). Figures in the core-only column exclude the AXI master adapter overhead, which is not present when the function is inlined into the full kernel.}}{27}{table.caption.103}\protected@file@percent }
 \newlabel{tab:rmsnorm_resources}{{4.5}{27}{Resource utilisation of the \texttt {rmsnorm} function synthesised at $S = 8$ on the ZCU102 (\texttt {xczu9eg-ffvb1156-2-e}). Figures in the core-only column exclude the AXI master adapter overhead, which is not present when the function is inlined into the full kernel}{table.caption.103}{}}
 \newlabel{tab:rmsnorm_resources@cref}{{[table][5][4]4.5}{[1][27][]27}{}{}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {4.6}{\ignorespaces Latency breakdown of \texttt  {rmsnorm} ($S = 8$) by internal pipeline stage at \SI {150}{\mega \hertz }. Total function latency is 144 cycles (\SI {960}{\nano \second }).}}{27}{table.caption.104}\protected@file@percent }
-\newlabel{tab:rmsnorm_latency}{{4.6}{27}{Latency breakdown of \texttt {rmsnorm} ($S = 8$) by internal pipeline stage at \SI {150}{\mega \hertz }. Total function latency is 144 cycles (\SI {960}{\nano \second })}{table.caption.104}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4.6}{\ignorespaces Latency breakdown of \texttt  {rmsnorm} ($S = 8$) by internal pipeline stage at \SI {150}{\mega \hertz }. Total function latency is 146 cycles (\SI {973}{\nano \second }).}}{27}{table.caption.104}\protected@file@percent }
+\newlabel{tab:rmsnorm_latency}{{4.6}{27}{Latency breakdown of \texttt {rmsnorm} ($S = 8$) by internal pipeline stage at \SI {150}{\mega \hertz }. Total function latency is 146 cycles (\SI {973}{\nano \second })}{table.caption.104}{}}
 \newlabel{tab:rmsnorm_latency@cref}{{[table][6][4]4.6}{[1][27][]27}{}{}{}}
 \@writefile{toc}{\contentsline {section}{\numberline {4.2}Quantisation}{28}{section.105}\protected@file@percent }
 \newlabel{sec:quantize_impl}{{4.2}{28}{Quantisation}{section.105}{}}
@@ -293,8 +293,8 @@
 \@writefile{toc}{\contentsline {subsection}{\numberline {4.2.2}C-Simulation Results}{30}{subsection.129}\protected@file@percent }
 \newlabel{subsec:quantize_csim}{{4.2.2}{30}{C-Simulation Results}{subsection.129}{}}
 \newlabel{subsec:quantize_csim@cref}{{[subsection][2][4,2]4.2.2}{[1][30][]30}{}{}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {4.7}{\ignorespaces C-simulation output for \texttt  {quantize} with input $\mathbf  {x} = [0.5, -1.2, 3.7, -0.3, 2.1, -4.5, 1.0, -2.8]$. All INT8 values and both scale factors match the software reference exactly. GS\,=\,4 so group~0 covers indices 0--3 and group~1 covers indices 4--7.}}{31}{table.caption.130}\protected@file@percent }
-\newlabel{tab:quantize_csim}{{4.7}{31}{C-simulation output for \texttt {quantize} with input $\mathbf {x} = [0.5, -1.2, 3.7, -0.3, 2.1, -4.5, 1.0, -2.8]$. All INT8 values and both scale factors match the software reference exactly. GS\,=\,4 so group~0 covers indices 0--3 and group~1 covers indices 4--7}{table.caption.130}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4.7}{\ignorespaces C-simulation output for \texttt  {quantize} with input $\mathbf  {x} = [0.5, -1.2, 3.7, -0.3, 2.1, -4.5, 1.0, -2.8]$. All INT8 values and both scale factors match the software reference. GS\,=\,4 so group~0 covers indices 0--3 and group~1 covers indices 4--7.}}{31}{table.caption.130}\protected@file@percent }
+\newlabel{tab:quantize_csim}{{4.7}{31}{C-simulation output for \texttt {quantize} with input $\mathbf {x} = [0.5, -1.2, 3.7, -0.3, 2.1, -4.5, 1.0, -2.8]$. All INT8 values and both scale factors match the software reference. GS\,=\,4 so group~0 covers indices 0--3 and group~1 covers indices 4--7}{table.caption.130}{}}
 \newlabel{tab:quantize_csim@cref}{{[table][7][4]4.7}{[1][30][]31}{}{}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {4.2.3}HLS Synthesis Results}{31}{subsection.131}\protected@file@percent }
 \newlabel{subsec:quantize_csyn}{{4.2.3}{31}{HLS Synthesis Results}{subsection.131}{}}
@@ -317,274 +317,277 @@
 \@writefile{toc}{\contentsline {subsection}{\numberline {4.3.1}Implementation}{33}{subsection.137}\protected@file@percent }
 \newlabel{subsec:dequantize_impl}{{4.3.1}{33}{Implementation}{subsection.137}{}}
 \newlabel{subsec:dequantize_impl@cref}{{[subsection][1][4,3]4.3.1}{[1][33][]33}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.3.2}C-Simulation Results}{33}{subsection.138}\protected@file@percent }
-\newlabel{subsec:dequantize_csim}{{4.3.2}{33}{C-Simulation Results}{subsection.138}{}}
-\newlabel{subsec:dequantize_csim@cref}{{[subsection][2][4,3]4.3.2}{[1][33][]33}{}{}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {4.12}{\ignorespaces C-simulation output for \texttt  {dequantize} with group scales $s_0 = 0.029134$ (indices 0--3) and $s_1 = 0.035433$ (indices 4--7). All eight dequantised float values match the software reference with zero absolute error.}}{34}{table.caption.139}\protected@file@percent }
-\newlabel{tab:dequantize_csim}{{4.12}{34}{C-simulation output for \texttt {dequantize} with group scales $s_0 = 0.029134$ (indices 0--3) and $s_1 = 0.035433$ (indices 4--7). All eight dequantised float values match the software reference with zero absolute error}{table.caption.139}{}}
-\newlabel{tab:dequantize_csim@cref}{{[table][12][4]4.12}{[1][33][]34}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.3.3}HLS Synthesis Results}{34}{subsection.140}\protected@file@percent }
-\newlabel{subsec:dequantize_csyn}{{4.3.3}{34}{HLS Synthesis Results}{subsection.140}{}}
-\newlabel{subsec:dequantize_csyn@cref}{{[subsection][3][4,3]4.3.3}{[1][34][]34}{}{}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {4.13}{\ignorespaces Timing summary for \texttt  {dequantize\_top} at \SI {150}{\mega \hertz }.}}{34}{table.caption.141}\protected@file@percent }
-\newlabel{tab:dequantize_timing}{{4.13}{34}{Timing summary for \texttt {dequantize\_top} at \SI {150}{\mega \hertz }}{table.caption.141}{}}
-\newlabel{tab:dequantize_timing@cref}{{[table][13][4]4.13}{[1][34][]34}{}{}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {4.14}{\ignorespaces Top-level latency summary for \texttt  {dequantize\_top} at \SI {150}{\mega \hertz }.}}{35}{table.caption.142}\protected@file@percent }
-\newlabel{tab:dequantize_top_latency}{{4.14}{35}{Top-level latency summary for \texttt {dequantize\_top} at \SI {150}{\mega \hertz }}{table.caption.142}{}}
-\newlabel{tab:dequantize_top_latency@cref}{{[table][14][4]4.14}{[1][34][]35}{}{}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {4.15}{\ignorespaces Resource utilisation of \texttt  {dequantize} synthesised at $S = 8$ on the ZCU102. The core-only column excludes the AXI master adapter.}}{35}{table.caption.143}\protected@file@percent }
-\newlabel{tab:dequantize_resources}{{4.15}{35}{Resource utilisation of \texttt {dequantize} synthesised at $S = 8$ on the ZCU102. The core-only column excludes the AXI master adapter}{table.caption.143}{}}
+\newlabel{lst:dequantize}{{4.3}{33}{\texttt {dequantize<S>} implementation from \texttt {forward.h}. Each element is recovered by multiplying its INT8 value by the corresponding group scale. No pragma directives are applied because the loop has no carried dependencies and no memory port conflicts. The division \texttt {i/GS} is replaced by a bitwise right shift by the compiler since \texttt {GS} is a compile-time power of two}{lstlisting.138}{}}
+\newlabel{lst:dequantize@cref}{{[listing][3][4]4.3}{[1][33][]33}{}{}{}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {4.3}{\ignorespaces \texttt  {dequantize<S>} implementation from \texttt  {forward.h}. Each element is recovered by multiplying its INT8 value by the corresponding group scale. No pragma directives are applied because the loop has no carried dependencies and no memory port conflicts. The division \texttt  {i/GS} is replaced by a bitwise right shift by the compiler since \texttt  {GS} is a compile-time power of two.}}{33}{lstlisting.138}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3.2}C-Simulation Results}{34}{subsection.147}\protected@file@percent }
+\newlabel{subsec:dequantize_csim}{{4.3.2}{34}{C-Simulation Results}{subsection.147}{}}
+\newlabel{subsec:dequantize_csim@cref}{{[subsection][2][4,3]4.3.2}{[1][34][]34}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4.12}{\ignorespaces C-simulation output for \texttt  {dequantize} with group scales $s_0 = 0.029134$ (indices 0--3) and $s_1 = 0.035433$ (indices 4--7). All eight dequantised float values match the software reference with zero absolute error.}}{34}{table.caption.148}\protected@file@percent }
+\newlabel{tab:dequantize_csim}{{4.12}{34}{C-simulation output for \texttt {dequantize} with group scales $s_0 = 0.029134$ (indices 0--3) and $s_1 = 0.035433$ (indices 4--7). All eight dequantised float values match the software reference with zero absolute error}{table.caption.148}{}}
+\newlabel{tab:dequantize_csim@cref}{{[table][12][4]4.12}{[1][34][]34}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3.3}HLS Synthesis Results}{35}{subsection.149}\protected@file@percent }
+\newlabel{subsec:dequantize_csyn}{{4.3.3}{35}{HLS Synthesis Results}{subsection.149}{}}
+\newlabel{subsec:dequantize_csyn@cref}{{[subsection][3][4,3]4.3.3}{[1][35][]35}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4.13}{\ignorespaces Timing summary for \texttt  {dequantize\_top} at \SI {150}{\mega \hertz }.}}{35}{table.caption.150}\protected@file@percent }
+\newlabel{tab:dequantize_timing}{{4.13}{35}{Timing summary for \texttt {dequantize\_top} at \SI {150}{\mega \hertz }}{table.caption.150}{}}
+\newlabel{tab:dequantize_timing@cref}{{[table][13][4]4.13}{[1][35][]35}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4.14}{\ignorespaces Top-level latency summary for \texttt  {dequantize\_top} at \SI {150}{\mega \hertz }.}}{35}{table.caption.151}\protected@file@percent }
+\newlabel{tab:dequantize_top_latency}{{4.14}{35}{Top-level latency summary for \texttt {dequantize\_top} at \SI {150}{\mega \hertz }}{table.caption.151}{}}
+\newlabel{tab:dequantize_top_latency@cref}{{[table][14][4]4.14}{[1][35][]35}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4.15}{\ignorespaces Resource utilisation of \texttt  {dequantize} synthesised at $S = 8$ on the ZCU102. The core-only column excludes the AXI master adapter.}}{35}{table.caption.152}\protected@file@percent }
+\newlabel{tab:dequantize_resources}{{4.15}{35}{Resource utilisation of \texttt {dequantize} synthesised at $S = 8$ on the ZCU102. The core-only column excludes the AXI master adapter}{table.caption.152}{}}
 \newlabel{tab:dequantize_resources@cref}{{[table][15][4]4.15}{[1][35][]35}{}{}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {4.16}{\ignorespaces Latency breakdown of \texttt  {dequantize} ($S = 8$, $GS = 4$) at \SI {150}{\mega \hertz }. Total function latency is 45 cycles (\SI {300}{\nano \second }).}}{35}{table.caption.144}\protected@file@percent }
-\newlabel{tab:dequantize_latency}{{4.16}{35}{Latency breakdown of \texttt {dequantize} ($S = 8$, $GS = 4$) at \SI {150}{\mega \hertz }. Total function latency is 45 cycles (\SI {300}{\nano \second })}{table.caption.144}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4.16}{\ignorespaces Latency breakdown of \texttt  {dequantize} ($S = 8$, $GS = 4$) at \SI {150}{\mega \hertz }. Total function latency is 45 cycles (\SI {300}{\nano \second }).}}{35}{table.caption.153}\protected@file@percent }
+\newlabel{tab:dequantize_latency}{{4.16}{35}{Latency breakdown of \texttt {dequantize} ($S = 8$, $GS = 4$) at \SI {150}{\mega \hertz }. Total function latency is 45 cycles (\SI {300}{\nano \second })}{table.caption.153}{}}
 \newlabel{tab:dequantize_latency@cref}{{[table][16][4]4.16}{[1][35][]35}{}{}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {4.4}Matrix--Vector Multiplication}{36}{section.145}\protected@file@percent }
-\newlabel{sec:matmul_impl}{{4.4}{36}{Matrix--Vector Multiplication}{section.145}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {4.4}Matrix--Vector Multiplication}{36}{section.154}\protected@file@percent }
+\newlabel{sec:matmul_impl}{{4.4}{36}{Matrix--Vector Multiplication}{section.154}{}}
 \newlabel{sec:matmul_impl@cref}{{[section][4][4]4.4}{[1][36][]36}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.4.1}Implementation}{36}{subsection.146}\protected@file@percent }
-\newlabel{subsec:matmul_impl}{{4.4.1}{36}{Implementation}{subsection.146}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4.1}Implementation}{36}{subsection.155}\protected@file@percent }
+\newlabel{subsec:matmul_impl}{{4.4.1}{36}{Implementation}{subsection.155}{}}
 \newlabel{subsec:matmul_impl@cref}{{[subsection][1][4,4]4.4.1}{[1][36][]36}{}{}{}}
-\newlabel{lst:matmul}{{4.3}{37}{Core loop structure of \texttt {matmul<N,D>} from \texttt {forward.h}. The outer row loop is pipelined; the inner loading loops (\texttt {matmul1}, \texttt {matmul2}) and the grouped dot product loops (\texttt {matmul3}, \texttt {matmul4}) execute sequentially within each pipeline iteration. The \texttt {UNROLL} pragmas on \texttt {matmul1} and \texttt {matmul2} are commented out to prevent AXI interface flooding at full scale}{lstlisting.147}{}}
-\newlabel{lst:matmul@cref}{{[listing][3][4]4.3}{[1][37][]37}{}{}{}}
-\@writefile{lol}{\contentsline {lstlisting}{\numberline {4.3}{\ignorespaces Core loop structure of \texttt  {matmul<N,D>} from \texttt  {forward.h}. The outer row loop is pipelined; the inner loading loops (\texttt  {matmul1}, \texttt  {matmul2}) and the grouped dot product loops (\texttt  {matmul3}, \texttt  {matmul4}) execute sequentially within each pipeline iteration. The \texttt  {UNROLL} pragmas on \texttt  {matmul1} and \texttt  {matmul2} are commented out to prevent AXI interface flooding at full scale.}}{37}{lstlisting.147}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.4.2}C-Simulation Results}{38}{subsection.168}\protected@file@percent }
-\newlabel{subsec:matmul_csim}{{4.4.2}{38}{C-Simulation Results}{subsection.168}{}}
+\newlabel{lst:matmul}{{4.4}{37}{Core loop structure of \texttt {matmul<N,D>} from \texttt {forward.h}. The outer row loop is pipelined. The inner loading loops (\texttt {matmul1}, \texttt {matmul2}) and the grouped dot product loops (\texttt {matmul3}, \texttt {matmul4}) execute sequentially within each pipeline iteration. The \texttt {UNROLL} pragmas on \texttt {matmul1} and \texttt {matmul2} are commented out to prevent AXI interface flooding at full scale}{lstlisting.156}{}}
+\newlabel{lst:matmul@cref}{{[listing][4][4]4.4}{[1][37][]37}{}{}{}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {4.4}{\ignorespaces Core loop structure of \texttt  {matmul<N,D>} from \texttt  {forward.h}. The outer row loop is pipelined. The inner loading loops (\texttt  {matmul1}, \texttt  {matmul2}) and the grouped dot product loops (\texttt  {matmul3}, \texttt  {matmul4}) execute sequentially within each pipeline iteration. The \texttt  {UNROLL} pragmas on \texttt  {matmul1} and \texttt  {matmul2} are commented out to prevent AXI interface flooding at full scale.}}{37}{lstlisting.156}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4.2}C-Simulation Results}{38}{subsection.177}\protected@file@percent }
+\newlabel{subsec:matmul_csim}{{4.4.2}{38}{C-Simulation Results}{subsection.177}{}}
 \newlabel{subsec:matmul_csim@cref}{{[subsection][2][4,4]4.4.2}{[1][38][]38}{}{}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {4.17}{\ignorespaces C-simulation output for \texttt  {matmul} with quantised input $\hat  {\mathbf  {x}} = [17, -41, 127, -10, 59, -127, 28, -79]$ (group scales $s_0 = 0.029134$, $s_1 = 0.035433$) and an $8 \times 8$ scaled identity weight matrix. All eight output elements match the software reference within tolerance.}}{39}{table.caption.169}\protected@file@percent }
-\newlabel{tab:matmul_csim}{{4.17}{39}{C-simulation output for \texttt {matmul} with quantised input $\hat {\mathbf {x}} = [17, -41, 127, -10, 59, -127, 28, -79]$ (group scales $s_0 = 0.029134$, $s_1 = 0.035433$) and an $8 \times 8$ scaled identity weight matrix. All eight output elements match the software reference within tolerance}{table.caption.169}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4.17}{\ignorespaces C-simulation output for \texttt  {matmul} with quantised input $\hat  {\mathbf  {x}} = [17, -41, 127, -10, 59, -127, 28, -79]$ (group scales $s_0 = 0.029134$, $s_1 = 0.035433$) and an $8 \times 8$ scaled identity weight matrix. All eight output elements match the software reference within tolerance.}}{39}{table.caption.178}\protected@file@percent }
+\newlabel{tab:matmul_csim}{{4.17}{39}{C-simulation output for \texttt {matmul} with quantised input $\hat {\mathbf {x}} = [17, -41, 127, -10, 59, -127, 28, -79]$ (group scales $s_0 = 0.029134$, $s_1 = 0.035433$) and an $8 \times 8$ scaled identity weight matrix. All eight output elements match the software reference within tolerance}{table.caption.178}{}}
 \newlabel{tab:matmul_csim@cref}{{[table][17][4]4.17}{[1][38][]39}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.4.3}HLS Synthesis Results}{39}{subsection.170}\protected@file@percent }
-\newlabel{subsec:matmul_csyn}{{4.4.3}{39}{HLS Synthesis Results}{subsection.170}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4.3}HLS Synthesis Results}{39}{subsection.179}\protected@file@percent }
+\newlabel{subsec:matmul_csyn}{{4.4.3}{39}{HLS Synthesis Results}{subsection.179}{}}
 \newlabel{subsec:matmul_csyn@cref}{{[subsection][3][4,4]4.4.3}{[1][39][]39}{}{}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {4.18}{\ignorespaces Timing summary for \texttt  {matmul\_top} at the \SI {150}{\mega \hertz } (\SI {6.667}{\nano \second }) target clock.}}{39}{table.caption.171}\protected@file@percent }
-\newlabel{tab:matmul_timing}{{4.18}{39}{Timing summary for \texttt {matmul\_top} at the \SI {150}{\mega \hertz } (\SI {6.667}{\nano \second }) target clock}{table.caption.171}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4.18}{\ignorespaces Timing summary for \texttt  {matmul\_top} at the \SI {150}{\mega \hertz } (\SI {6.667}{\nano \second }) target clock.}}{39}{table.caption.180}\protected@file@percent }
+\newlabel{tab:matmul_timing}{{4.18}{39}{Timing summary for \texttt {matmul\_top} at the \SI {150}{\mega \hertz } (\SI {6.667}{\nano \second }) target clock}{table.caption.180}{}}
 \newlabel{tab:matmul_timing@cref}{{[table][18][4]4.18}{[1][39][]39}{}{}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {4.19}{\ignorespaces Top-level latency summary for \texttt  {matmul\_top} at \SI {150}{\mega \hertz }.}}{40}{table.caption.172}\protected@file@percent }
-\newlabel{tab:matmul_top_latency}{{4.19}{40}{Top-level latency summary for \texttt {matmul\_top} at \SI {150}{\mega \hertz }}{table.caption.172}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4.19}{\ignorespaces Top-level latency summary for \texttt  {matmul\_top} at \SI {150}{\mega \hertz }.}}{40}{table.caption.181}\protected@file@percent }
+\newlabel{tab:matmul_top_latency}{{4.19}{40}{Top-level latency summary for \texttt {matmul\_top} at \SI {150}{\mega \hertz }}{table.caption.181}{}}
 \newlabel{tab:matmul_top_latency@cref}{{[table][19][4]4.19}{[1][39][]40}{}{}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {4.20}{\ignorespaces Resource utilisation of \texttt  {matmul} synthesised at $N = D = 8$ on the ZCU102 (\texttt  {xczu9eg-ffvb1156-2-e}). The core-only column excludes the AXI master adapter and S-AXILite control interface, which are not present when the function is inlined into the full kernel.}}{40}{table.caption.173}\protected@file@percent }
-\newlabel{tab:matmul_resources}{{4.20}{40}{Resource utilisation of \texttt {matmul} synthesised at $N = D = 8$ on the ZCU102 (\texttt {xczu9eg-ffvb1156-2-e}). The core-only column excludes the AXI master adapter and S-AXILite control interface, which are not present when the function is inlined into the full kernel}{table.caption.173}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4.20}{\ignorespaces Resource utilisation of \texttt  {matmul} synthesised at $N = D = 8$ on the ZCU102 (\texttt  {xczu9eg-ffvb1156-2-e}). The core-only column excludes the AXI master adapter and S-AXILite control interface, which are not present when the function is inlined into the full kernel.}}{40}{table.caption.182}\protected@file@percent }
+\newlabel{tab:matmul_resources}{{4.20}{40}{Resource utilisation of \texttt {matmul} synthesised at $N = D = 8$ on the ZCU102 (\texttt {xczu9eg-ffvb1156-2-e}). The core-only column excludes the AXI master adapter and S-AXILite control interface, which are not present when the function is inlined into the full kernel}{table.caption.182}{}}
 \newlabel{tab:matmul_resources@cref}{{[table][20][4]4.20}{[1][40][]40}{}{}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {4.21}{\ignorespaces Latency breakdown of \texttt  {matmul} ($N = D = 8$, $GS = 4$) at \SI {150}{\mega \hertz }. Total function latency is 146 cycles (\SI {973}{\nano \second }).}}{40}{table.caption.174}\protected@file@percent }
-\newlabel{tab:matmul_latency}{{4.21}{40}{Latency breakdown of \texttt {matmul} ($N = D = 8$, $GS = 4$) at \SI {150}{\mega \hertz }. Total function latency is 146 cycles (\SI {973}{\nano \second })}{table.caption.174}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4.21}{\ignorespaces Latency breakdown of \texttt  {matmul} ($N = D = 8$, $GS = 4$) at \SI {150}{\mega \hertz }. Total function latency is 146 cycles (\SI {973}{\nano \second }).}}{40}{table.caption.183}\protected@file@percent }
+\newlabel{tab:matmul_latency}{{4.21}{40}{Latency breakdown of \texttt {matmul} ($N = D = 8$, $GS = 4$) at \SI {150}{\mega \hertz }. Total function latency is 146 cycles (\SI {973}{\nano \second })}{table.caption.183}{}}
 \newlabel{tab:matmul_latency@cref}{{[table][21][4]4.21}{[1][40][]40}{}{}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {4.5}Softmax}{41}{section.175}\protected@file@percent }
-\newlabel{sec:softmax_impl}{{4.5}{41}{Softmax}{section.175}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {4.5}Softmax}{41}{section.184}\protected@file@percent }
+\newlabel{sec:softmax_impl}{{4.5}{41}{Softmax}{section.184}{}}
 \newlabel{sec:softmax_impl@cref}{{[section][5][4]4.5}{[1][41][]41}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.5.1}Implementation}{41}{subsection.176}\protected@file@percent }
-\newlabel{subsec:softmax_impl}{{4.5.1}{41}{Implementation}{subsection.176}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.5.1}Implementation}{41}{subsection.185}\protected@file@percent }
+\newlabel{subsec:softmax_impl}{{4.5.1}{41}{Implementation}{subsection.185}{}}
 \newlabel{subsec:softmax_impl@cref}{{[subsection][1][4,5]4.5.1}{[1][41][]41}{}{}{}}
-\newlabel{lst:softmax}{{4.4}{43}{\texttt {softmax<MAXSIZE>} implementation from \texttt {forward.h} (baseline iteration). The \texttt {max} and \texttt {sum} loops carry no \texttt {UNROLL} because of their loop-carried dependencies on \texttt {max\_val} and \texttt {sum} respectively. The \texttt {exp} and \texttt {norm} loops are fully unrolled into 16 parallel datapath lanes. The \texttt {inv\_sum} reciprocal hoists the single division out of the \texttt {norm} loop body}{lstlisting.177}{}}
-\newlabel{lst:softmax@cref}{{[listing][4][4]4.4}{[1][43][]43}{}{}{}}
-\@writefile{lol}{\contentsline {lstlisting}{\numberline {4.4}{\ignorespaces \texttt  {softmax<MAXSIZE>} implementation from \texttt  {forward.h} (baseline iteration). The \texttt  {max} and \texttt  {sum} loops carry no \texttt  {UNROLL} because of their loop-carried dependencies on \texttt  {max\_val} and \texttt  {sum} respectively. The \texttt  {exp} and \texttt  {norm} loops are fully unrolled into 16 parallel datapath lanes. The \texttt  {inv\_sum} reciprocal hoists the single division out of the \texttt  {norm} loop body.}}{43}{lstlisting.177}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.5.2}C-Simulation Results}{44}{subsection.210}\protected@file@percent }
-\newlabel{subsec:softmax_csim}{{4.5.2}{44}{C-Simulation Results}{subsection.210}{}}
-\newlabel{subsec:softmax_csim@cref}{{[subsection][2][4,5]4.5.2}{[1][44][]44}{}{}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {4.22}{\ignorespaces C-simulation output for \texttt  {softmax} with input $[-1.2, 0.5, 1.8, 4.5, -0.3, 2.1, -2.7, 0.9]$, $\texttt  {size} = 8$, $\texttt  {MAXSIZE} = 16$. All eight elements match the software reference exactly, and the sum of outputs is $1.00000000$.}}{44}{table.caption.211}\protected@file@percent }
-\newlabel{tab:softmax_csim}{{4.22}{44}{C-simulation output for \texttt {softmax} with input $[-1.2, 0.5, 1.8, 4.5, -0.3, 2.1, -2.7, 0.9]$, $\texttt {size} = 8$, $\texttt {MAXSIZE} = 16$. All eight elements match the software reference exactly, and the sum of outputs is $1.00000000$}{table.caption.211}{}}
-\newlabel{tab:softmax_csim@cref}{{[table][22][4]4.22}{[1][44][]44}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.5.3}HLS Synthesis Results}{45}{subsection.212}\protected@file@percent }
-\newlabel{subsec:softmax_csyn}{{4.5.3}{45}{HLS Synthesis Results}{subsection.212}{}}
-\newlabel{subsec:softmax_csyn@cref}{{[subsection][3][4,5]4.5.3}{[1][45][]45}{}{}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {4.23}{\ignorespaces Timing summary for \texttt  {softmax\_top} at the \SI {150}{\mega \hertz } (\SI {6.667}{\nano \second }) target clock.}}{45}{table.caption.213}\protected@file@percent }
-\newlabel{tab:softmax_timing}{{4.23}{45}{Timing summary for \texttt {softmax\_top} at the \SI {150}{\mega \hertz } (\SI {6.667}{\nano \second }) target clock}{table.caption.213}{}}
-\newlabel{tab:softmax_timing@cref}{{[table][23][4]4.23}{[1][45][]45}{}{}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {4.24}{\ignorespaces Top-level latency summary for \texttt  {softmax\_top} at \SI {150}{\mega \hertz }. The minimum corresponds to $\texttt  {size} = 1$ and the maximum to $\texttt  {size} = \texttt  {MAXSIZE} = 16$.}}{45}{table.caption.214}\protected@file@percent }
-\newlabel{tab:softmax_top_latency}{{4.24}{45}{Top-level latency summary for \texttt {softmax\_top} at \SI {150}{\mega \hertz }. The minimum corresponds to $\texttt {size} = 1$ and the maximum to $\texttt {size} = \texttt {MAXSIZE} = 16$}{table.caption.214}{}}
-\newlabel{tab:softmax_top_latency@cref}{{[table][24][4]4.24}{[1][45][]45}{}{}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {4.25}{\ignorespaces Resource utilisation of \texttt  {softmax} synthesised at $\texttt  {MAXSIZE} = 16$ on the ZCU102 (\texttt  {xczu9eg-ffvb1156-2-e}). The core-only column excludes the AXI master adapter and S-AXILite control interface.}}{45}{table.caption.215}\protected@file@percent }
-\newlabel{tab:softmax_resources}{{4.25}{45}{Resource utilisation of \texttt {softmax} synthesised at $\texttt {MAXSIZE} = 16$ on the ZCU102 (\texttt {xczu9eg-ffvb1156-2-e}). The core-only column excludes the AXI master adapter and S-AXILite control interface}{table.caption.215}{}}
+\newlabel{lst:softmax}{{4.5}{42}{\texttt {softmax<MAXSIZE>} implementation from \texttt {forward.h} (baseline iteration). The \texttt {max} and \texttt {sum} loops carry no \texttt {UNROLL} because of their loop-carried dependencies on \texttt {max\_val} and \texttt {sum} respectively. The \texttt {exp} and \texttt {norm} loops are fully unrolled into 16 parallel datapath lanes. The \texttt {inv\_sum} reciprocal hoists the single division out of the \texttt {norm} loop body}{lstlisting.186}{}}
+\newlabel{lst:softmax@cref}{{[listing][5][4]4.5}{[1][42][]42}{}{}{}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {4.5}{\ignorespaces \texttt  {softmax<MAXSIZE>} implementation from \texttt  {forward.h} (baseline iteration). The \texttt  {max} and \texttt  {sum} loops carry no \texttt  {UNROLL} because of their loop-carried dependencies on \texttt  {max\_val} and \texttt  {sum} respectively. The \texttt  {exp} and \texttt  {norm} loops are fully unrolled into 16 parallel datapath lanes. The \texttt  {inv\_sum} reciprocal hoists the single division out of the \texttt  {norm} loop body.}}{42}{lstlisting.186}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.5.2}C-Simulation Results}{43}{subsection.219}\protected@file@percent }
+\newlabel{subsec:softmax_csim}{{4.5.2}{43}{C-Simulation Results}{subsection.219}{}}
+\newlabel{subsec:softmax_csim@cref}{{[subsection][2][4,5]4.5.2}{[1][43][]43}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4.22}{\ignorespaces C-simulation output for \texttt  {softmax} with input $[-1.2, 0.5, 1.8, 4.5, -0.3, 2.1, -2.7, 0.9]$, $\texttt  {size} = 8$, $\texttt  {MAXSIZE} = 16$. All eight elements match the software reference, and the sum of outputs is $1.00000000$.}}{44}{table.caption.220}\protected@file@percent }
+\newlabel{tab:softmax_csim}{{4.22}{44}{C-simulation output for \texttt {softmax} with input $[-1.2, 0.5, 1.8, 4.5, -0.3, 2.1, -2.7, 0.9]$, $\texttt {size} = 8$, $\texttt {MAXSIZE} = 16$. All eight elements match the software reference, and the sum of outputs is $1.00000000$}{table.caption.220}{}}
+\newlabel{tab:softmax_csim@cref}{{[table][22][4]4.22}{[1][43][]44}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.5.3}HLS Synthesis Results}{44}{subsection.221}\protected@file@percent }
+\newlabel{subsec:softmax_csyn}{{4.5.3}{44}{HLS Synthesis Results}{subsection.221}{}}
+\newlabel{subsec:softmax_csyn@cref}{{[subsection][3][4,5]4.5.3}{[1][44][]44}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4.23}{\ignorespaces Timing summary for \texttt  {softmax\_top} at the \SI {150}{\mega \hertz } (\SI {6.667}{\nano \second }) target clock.}}{44}{table.caption.222}\protected@file@percent }
+\newlabel{tab:softmax_timing}{{4.23}{44}{Timing summary for \texttt {softmax\_top} at the \SI {150}{\mega \hertz } (\SI {6.667}{\nano \second }) target clock}{table.caption.222}{}}
+\newlabel{tab:softmax_timing@cref}{{[table][23][4]4.23}{[1][44][]44}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4.24}{\ignorespaces Top-level latency summary for \texttt  {softmax\_top} at \SI {150}{\mega \hertz }. The minimum corresponds to $\texttt  {size} = 1$ and the maximum to $\texttt  {size} = \texttt  {MAXSIZE} = 16$.}}{45}{table.caption.223}\protected@file@percent }
+\newlabel{tab:softmax_top_latency}{{4.24}{45}{Top-level latency summary for \texttt {softmax\_top} at \SI {150}{\mega \hertz }. The minimum corresponds to $\texttt {size} = 1$ and the maximum to $\texttt {size} = \texttt {MAXSIZE} = 16$}{table.caption.223}{}}
+\newlabel{tab:softmax_top_latency@cref}{{[table][24][4]4.24}{[1][44][]45}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4.25}{\ignorespaces Resource utilisation of \texttt  {softmax} synthesised at $\texttt  {MAXSIZE} = 16$ on the ZCU102 (\texttt  {xczu9eg-ffvb1156-2-e}). The core-only column excludes the AXI master adapter and S-AXILite control interface.}}{45}{table.caption.224}\protected@file@percent }
+\newlabel{tab:softmax_resources}{{4.25}{45}{Resource utilisation of \texttt {softmax} synthesised at $\texttt {MAXSIZE} = 16$ on the ZCU102 (\texttt {xczu9eg-ffvb1156-2-e}). The core-only column excludes the AXI master adapter and S-AXILite control interface}{table.caption.224}{}}
 \newlabel{tab:softmax_resources@cref}{{[table][25][4]4.25}{[1][45][]45}{}{}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {4.26}{\ignorespaces Per-loop latency breakdown of \texttt  {softmax} ($\texttt  {MAXSIZE} = 16$) at \SI {150}{\mega \hertz }. The \texttt  {exp} and \texttt  {norm} loops report trip count~1 because \texttt  {UNROLL factor=16} on a 16-element loop collapses all iterations into a single parallel pipeline stage.}}{46}{table.caption.216}\protected@file@percent }
-\newlabel{tab:softmax_latency}{{4.26}{46}{Per-loop latency breakdown of \texttt {softmax} ($\texttt {MAXSIZE} = 16$) at \SI {150}{\mega \hertz }. The \texttt {exp} and \texttt {norm} loops report trip count~1 because \texttt {UNROLL factor=16} on a 16-element loop collapses all iterations into a single parallel pipeline stage}{table.caption.216}{}}
-\newlabel{tab:softmax_latency@cref}{{[table][26][4]4.26}{[1][45][]46}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.5.4}Iteration 3: Sum Loop Unroll}{47}{subsection.217}\protected@file@percent }
-\newlabel{subsec:softmax_iter3}{{4.5.4}{47}{Iteration 3: Sum Loop Unroll}{subsection.217}{}}
-\newlabel{subsec:softmax_iter3@cref}{{[subsection][4][4,5]4.5.4}{[1][47][]47}{}{}{}}
-\@writefile{toc}{\contentsline {subsubsection}{C-Simulation Results}{47}{subsubsection*.218}\protected@file@percent }
-\newlabel{subsubsec:softmax_iter3_csim}{{4.5.4}{47}{C-Simulation Results}{subsubsection*.218}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4.26}{\ignorespaces Per-loop latency breakdown of \texttt  {softmax} ($\texttt  {MAXSIZE} = 16$) at \SI {150}{\mega \hertz }. The \texttt  {exp} and \texttt  {norm} loops report trip count~1 because \texttt  {UNROLL factor=16} on a 16-element loop collapses all iterations into a single parallel pipeline stage.}}{45}{table.caption.225}\protected@file@percent }
+\newlabel{tab:softmax_latency}{{4.26}{45}{Per-loop latency breakdown of \texttt {softmax} ($\texttt {MAXSIZE} = 16$) at \SI {150}{\mega \hertz }. The \texttt {exp} and \texttt {norm} loops report trip count~1 because \texttt {UNROLL factor=16} on a 16-element loop collapses all iterations into a single parallel pipeline stage}{table.caption.225}{}}
+\newlabel{tab:softmax_latency@cref}{{[table][26][4]4.26}{[1][45][]45}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.5.4}Iteration 3: Sum Loop Unroll}{47}{subsection.226}\protected@file@percent }
+\newlabel{subsec:softmax_iter3}{{4.5.4}{47}{Iteration 3: Sum Loop Unroll}{subsection.226}{}}
+\newlabel{subsec:softmax_iter3@cref}{{[subsection][4][4,5]4.5.4}{[1][46][]47}{}{}{}}
+\@writefile{toc}{\contentsline {subsubsection}{C-Simulation Results}{47}{subsubsection*.227}\protected@file@percent }
+\newlabel{subsubsec:softmax_iter3_csim}{{4.5.4}{47}{C-Simulation Results}{subsubsection*.227}{}}
 \newlabel{subsubsec:softmax_iter3_csim@cref}{{[subsection][4][4,5]4.5.4}{[1][47][]47}{}{}{}}
-\@writefile{toc}{\contentsline {subsubsection}{HLS Synthesis Results}{48}{subsubsection*.219}\protected@file@percent }
-\newlabel{subsubsec:softmax_iter3_csyn}{{4.5.4}{48}{HLS Synthesis Results}{subsubsection*.219}{}}
-\newlabel{subsubsec:softmax_iter3_csyn@cref}{{[subsection][4][4,5]4.5.4}{[1][47][]48}{}{}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {4.27}{\ignorespaces Timing summary for \texttt  {softmax\_kvint8\_top} at the \SI {150}{\mega \hertz } target clock. The estimated path of \SI {5.084}{\nano \second } plus the \SI {1.800}{\nano \second } uncertainty exceeds the \SI {6.667}{\nano \second } budget by \SI {0.217}{\nano \second }, constituting a timing violation.}}{48}{table.caption.220}\protected@file@percent }
-\newlabel{tab:softmax_iter3_timing}{{4.27}{48}{Timing summary for \texttt {softmax\_kvint8\_top} at the \SI {150}{\mega \hertz } target clock. The estimated path of \SI {5.084}{\nano \second } plus the \SI {1.800}{\nano \second } uncertainty exceeds the \SI {6.667}{\nano \second } budget by \SI {0.217}{\nano \second }, constituting a timing violation}{table.caption.220}{}}
-\newlabel{tab:softmax_iter3_timing@cref}{{[table][27][4]4.27}{[1][48][]48}{}{}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {4.28}{\ignorespaces Per-loop latency breakdown of the iteration~3 \texttt  {softmax} ($\texttt  {MAXSIZE} = 16$) at \SI {150}{\mega \hertz }. The \texttt  {sum} loop collapses to a single effective iteration (trip count~1) due to the \texttt  {UNROLL factor=16}, but its total latency increases from 97 to 185 cycles compared to iteration~1.}}{48}{table.caption.221}\protected@file@percent }
-\newlabel{tab:softmax_iter3_latency}{{4.28}{48}{Per-loop latency breakdown of the iteration~3 \texttt {softmax} ($\texttt {MAXSIZE} = 16$) at \SI {150}{\mega \hertz }. The \texttt {sum} loop collapses to a single effective iteration (trip count~1) due to the \texttt {UNROLL factor=16}, but its total latency increases from 97 to 185 cycles compared to iteration~1}{table.caption.221}{}}
-\newlabel{tab:softmax_iter3_latency@cref}{{[table][28][4]4.28}{[1][48][]48}{}{}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {4.29}{\ignorespaces Resource utilisation comparison between the iteration~1 baseline and the iteration~3 \texttt  {softmax} designs, both at $\texttt  {MAXSIZE} = 16$ on the \texttt  {xczu9eg-ffvb1156-2-e}. Core figures exclude the AXI adapter and S-AXILite control interface.}}{48}{table.caption.222}\protected@file@percent }
-\newlabel{tab:softmax_iter3_resources}{{4.29}{48}{Resource utilisation comparison between the iteration~1 baseline and the iteration~3 \texttt {softmax} designs, both at $\texttt {MAXSIZE} = 16$ on the \texttt {xczu9eg-ffvb1156-2-e}. Core figures exclude the AXI adapter and S-AXILite control interface}{table.caption.222}{}}
+\@writefile{toc}{\contentsline {subsubsection}{HLS Synthesis Results}{47}{subsubsection*.228}\protected@file@percent }
+\newlabel{subsubsec:softmax_iter3_csyn}{{4.5.4}{47}{HLS Synthesis Results}{subsubsection*.228}{}}
+\newlabel{subsubsec:softmax_iter3_csyn@cref}{{[subsection][4][4,5]4.5.4}{[1][47][]47}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4.27}{\ignorespaces Timing summary for \texttt  {softmax\_kvint8\_top} at the \SI {150}{\mega \hertz } target clock. The estimated path of \SI {5.084}{\nano \second } plus the \SI {1.800}{\nano \second } uncertainty exceeds the \SI {6.667}{\nano \second } budget by \SI {0.217}{\nano \second }, constituting a timing violation.}}{47}{table.caption.229}\protected@file@percent }
+\newlabel{tab:softmax_iter3_timing}{{4.27}{47}{Timing summary for \texttt {softmax\_kvint8\_top} at the \SI {150}{\mega \hertz } target clock. The estimated path of \SI {5.084}{\nano \second } plus the \SI {1.800}{\nano \second } uncertainty exceeds the \SI {6.667}{\nano \second } budget by \SI {0.217}{\nano \second }, constituting a timing violation}{table.caption.229}{}}
+\newlabel{tab:softmax_iter3_timing@cref}{{[table][27][4]4.27}{[1][47][]47}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4.28}{\ignorespaces Per-loop latency breakdown of the iteration~3 \texttt  {softmax} ($\texttt  {MAXSIZE} = 16$) at \SI {150}{\mega \hertz }. The \texttt  {sum} loop collapses to a single effective iteration (trip count~1) due to the \texttt  {UNROLL factor=16}, but its total latency increases from 97 to 185 cycles compared to iteration~1.}}{48}{table.caption.230}\protected@file@percent }
+\newlabel{tab:softmax_iter3_latency}{{4.28}{48}{Per-loop latency breakdown of the iteration~3 \texttt {softmax} ($\texttt {MAXSIZE} = 16$) at \SI {150}{\mega \hertz }. The \texttt {sum} loop collapses to a single effective iteration (trip count~1) due to the \texttt {UNROLL factor=16}, but its total latency increases from 97 to 185 cycles compared to iteration~1}{table.caption.230}{}}
+\newlabel{tab:softmax_iter3_latency@cref}{{[table][28][4]4.28}{[1][47][]48}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4.29}{\ignorespaces Resource utilisation comparison between the iteration~1 baseline and the iteration~3 \texttt  {softmax} designs, both at $\texttt  {MAXSIZE} = 16$ on the \texttt  {xczu9eg-ffvb1156-2-e}. Core figures exclude the AXI adapter and S-AXILite control interface.}}{48}{table.caption.231}\protected@file@percent }
+\newlabel{tab:softmax_iter3_resources}{{4.29}{48}{Resource utilisation comparison between the iteration~1 baseline and the iteration~3 \texttt {softmax} designs, both at $\texttt {MAXSIZE} = 16$ on the \texttt {xczu9eg-ffvb1156-2-e}. Core figures exclude the AXI adapter and S-AXILite control interface}{table.caption.231}{}}
 \newlabel{tab:softmax_iter3_resources@cref}{{[table][29][4]4.29}{[1][48][]48}{}{}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {4.6}Grouped-Query Attention}{49}{section.223}\protected@file@percent }
-\newlabel{sec:attn_impl}{{4.6}{49}{Grouped-Query Attention}{section.223}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {4.6}Grouped-Query Attention}{49}{section.232}\protected@file@percent }
+\newlabel{sec:attn_impl}{{4.6}{49}{Grouped-Query Attention}{section.232}{}}
 \newlabel{sec:attn_impl@cref}{{[section][6][4]4.6}{[1][49][]49}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.6.1}Baseline: Floating-Point Attention}{50}{subsection.224}\protected@file@percent }
-\newlabel{subsec:attn_fp32}{{4.6.1}{50}{Baseline: Floating-Point Attention}{subsection.224}{}}
-\newlabel{subsec:attn_fp32@cref}{{[subsection][1][4,6]4.6.1}{[1][49][]50}{}{}{}}
-\@writefile{toc}{\contentsline {subsubsection}{Implementation}{50}{subsubsection*.225}\protected@file@percent }
-\newlabel{subsubsec:attn_fp32_impl}{{4.6.1}{50}{Implementation}{subsubsection*.225}{}}
-\newlabel{subsubsec:attn_fp32_impl@cref}{{[subsection][1][4,6]4.6.1}{[1][49][]50}{}{}{}}
-\newlabel{lst:attn_baseline}{{4.5}{51}{Baseline float attention \texttt {iterate} and \texttt {acc} loops from \texttt {forward.cpp}. Both outer loops carry \texttt {PIPELINE}; both inner loops carry \texttt {UNROLL} (complete) over \texttt {head\_size\,=\,4} elements. The key and value cache values are read as float directly from DDR with no intermediate buffering}{lstlisting.226}{}}
-\newlabel{lst:attn_baseline@cref}{{[listing][5][4]4.5}{[1][51][]51}{}{}{}}
-\@writefile{lol}{\contentsline {lstlisting}{\numberline {4.5}{\ignorespaces Baseline float attention \texttt  {iterate} and \texttt  {acc} loops from \texttt  {forward.cpp}. Both outer loops carry \texttt  {PIPELINE}; both inner loops carry \texttt  {UNROLL} (complete) over \texttt  {head\_size\,=\,4} elements. The key and value cache values are read as float directly from DDR with no intermediate buffering.}}{51}{lstlisting.226}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsubsection}{C-Simulation Results}{52}{subsubsection*.251}\protected@file@percent }
-\newlabel{subsubsec:attn_fp32_csim}{{4.6.1}{52}{C-Simulation Results}{subsubsection*.251}{}}
-\newlabel{subsubsec:attn_fp32_csim@cref}{{[subsection][1][4,6]4.6.1}{[1][51][]52}{}{}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {4.30}{\ignorespaces C-simulation output for the baseline float attention kernel (\texttt  {attn\_baseline\_top}) at \texttt  {pos\,=\,3}, \texttt  {loff\,=\,0}. All eight elements of the weighted value accumulation \texttt  {xb} match the software reference with zero absolute error.}}{52}{table.caption.252}\protected@file@percent }
-\newlabel{tab:attn_fp32_csim}{{4.30}{52}{C-simulation output for the baseline float attention kernel (\texttt {attn\_baseline\_top}) at \texttt {pos\,=\,3}, \texttt {loff\,=\,0}. All eight elements of the weighted value accumulation \texttt {xb} match the software reference with zero absolute error}{table.caption.252}{}}
-\newlabel{tab:attn_fp32_csim@cref}{{[table][30][4]4.30}{[1][52][]52}{}{}{}}
-\@writefile{toc}{\contentsline {subsubsection}{HLS Synthesis Results}{52}{subsubsection*.253}\protected@file@percent }
-\newlabel{subsubsec:attn_fp32_csyn}{{4.6.1}{52}{HLS Synthesis Results}{subsubsection*.253}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.6.1}Baseline: Floating-Point Attention}{49}{subsection.233}\protected@file@percent }
+\newlabel{subsec:attn_fp32}{{4.6.1}{49}{Baseline: Floating-Point Attention}{subsection.233}{}}
+\newlabel{subsec:attn_fp32@cref}{{[subsection][1][4,6]4.6.1}{[1][49][]49}{}{}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Implementation}{49}{subsubsection*.234}\protected@file@percent }
+\newlabel{subsubsec:attn_fp32_impl}{{4.6.1}{49}{Implementation}{subsubsection*.234}{}}
+\newlabel{subsubsec:attn_fp32_impl@cref}{{[subsection][1][4,6]4.6.1}{[1][49][]49}{}{}{}}
+\newlabel{lst:attn_baseline}{{4.6}{50}{Baseline float attention \texttt {iterate} and \texttt {acc} loops from \texttt {forward.cpp}. Both outer loops carry \texttt {PIPELINE}. Both inner loops carry \texttt {UNROLL} (complete) over \texttt {head\_size\,=\,4} elements. The key and value cache values are read as float directly from DDR with no intermediate buffering}{lstlisting.235}{}}
+\newlabel{lst:attn_baseline@cref}{{[listing][6][4]4.6}{[1][50][]50}{}{}{}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {4.6}{\ignorespaces Baseline float attention \texttt  {iterate} and \texttt  {acc} loops from \texttt  {forward.cpp}. Both outer loops carry \texttt  {PIPELINE}. Both inner loops carry \texttt  {UNROLL} (complete) over \texttt  {head\_size\,=\,4} elements. The key and value cache values are read as float directly from DDR with no intermediate buffering.}}{50}{lstlisting.235}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{C-Simulation Results}{51}{subsubsection*.260}\protected@file@percent }
+\newlabel{subsubsec:attn_fp32_csim}{{4.6.1}{51}{C-Simulation Results}{subsubsection*.260}{}}
+\newlabel{subsubsec:attn_fp32_csim@cref}{{[subsection][1][4,6]4.6.1}{[1][51][]51}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4.30}{\ignorespaces C-simulation output for the baseline float attention kernel (\texttt  {attn\_baseline\_top}) at \texttt  {pos\,=\,3}, \texttt  {loff\,=\,0}. All eight elements of the weighted value accumulation \texttt  {xb} match the software reference with zero absolute error.}}{52}{table.caption.261}\protected@file@percent }
+\newlabel{tab:attn_fp32_csim}{{4.30}{52}{C-simulation output for the baseline float attention kernel (\texttt {attn\_baseline\_top}) at \texttt {pos\,=\,3}, \texttt {loff\,=\,0}. All eight elements of the weighted value accumulation \texttt {xb} match the software reference with zero absolute error}{table.caption.261}{}}
+\newlabel{tab:attn_fp32_csim@cref}{{[table][30][4]4.30}{[1][51][]52}{}{}{}}
+\@writefile{toc}{\contentsline {subsubsection}{HLS Synthesis Results}{52}{subsubsection*.262}\protected@file@percent }
+\newlabel{subsubsec:attn_fp32_csyn}{{4.6.1}{52}{HLS Synthesis Results}{subsubsection*.262}{}}
 \newlabel{subsubsec:attn_fp32_csyn@cref}{{[subsection][1][4,6]4.6.1}{[1][52][]52}{}{}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {4.31}{\ignorespaces Timing summary for \texttt  {attn\_baseline\_top} at the \SI {150}{\mega \hertz } (\SI {6.667}{\nano \second }) target clock.}}{53}{table.caption.254}\protected@file@percent }
-\newlabel{tab:attn_fp32_timing}{{4.31}{53}{Timing summary for \texttt {attn\_baseline\_top} at the \SI {150}{\mega \hertz } (\SI {6.667}{\nano \second }) target clock}{table.caption.254}{}}
-\newlabel{tab:attn_fp32_timing@cref}{{[table][31][4]4.31}{[1][52][]53}{}{}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {4.32}{\ignorespaces Top-level latency summary for \texttt  {attn\_baseline\_top} at \SI {150}{\mega \hertz }. The minimum corresponds to \texttt  {pos\,=\,0} (one attended position) and the maximum to \texttt  {pos\,=\,seq\_len\,$-$\,1\,=\,15} (sixteen attended positions).}}{53}{table.caption.255}\protected@file@percent }
-\newlabel{tab:attn_fp32_top_latency}{{4.32}{53}{Top-level latency summary for \texttt {attn\_baseline\_top} at \SI {150}{\mega \hertz }. The minimum corresponds to \texttt {pos\,=\,0} (one attended position) and the maximum to \texttt {pos\,=\,seq\_len\,$-$\,1\,=\,15} (sixteen attended positions)}{table.caption.255}{}}
-\newlabel{tab:attn_fp32_top_latency@cref}{{[table][32][4]4.32}{[1][53][]53}{}{}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {4.33}{\ignorespaces Resource utilisation of the baseline float attention block synthesised at prototype scale on the ZCU102 (\texttt  {xczu9eg-ffvb1156-2-e}). The core-only column excludes the AXI master adapter and S-AXILite control interface.}}{53}{table.caption.256}\protected@file@percent }
-\newlabel{tab:attn_fp32_resources}{{4.33}{53}{Resource utilisation of the baseline float attention block synthesised at prototype scale on the ZCU102 (\texttt {xczu9eg-ffvb1156-2-e}). The core-only column excludes the AXI master adapter and S-AXILite control interface}{table.caption.256}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4.31}{\ignorespaces Timing summary for \texttt  {attn\_baseline\_top} at the \SI {150}{\mega \hertz } (\SI {6.667}{\nano \second }) target clock.}}{52}{table.caption.263}\protected@file@percent }
+\newlabel{tab:attn_fp32_timing}{{4.31}{52}{Timing summary for \texttt {attn\_baseline\_top} at the \SI {150}{\mega \hertz } (\SI {6.667}{\nano \second }) target clock}{table.caption.263}{}}
+\newlabel{tab:attn_fp32_timing@cref}{{[table][31][4]4.31}{[1][52][]52}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4.32}{\ignorespaces Top-level latency summary for \texttt  {attn\_baseline\_top} at \SI {150}{\mega \hertz }. The minimum corresponds to \texttt  {pos\,=\,0} (one attended position) and the maximum to \texttt  {pos\,=\,seq\_len\,$-$\,1\,=\,15} (sixteen attended positions).}}{53}{table.caption.264}\protected@file@percent }
+\newlabel{tab:attn_fp32_top_latency}{{4.32}{53}{Top-level latency summary for \texttt {attn\_baseline\_top} at \SI {150}{\mega \hertz }. The minimum corresponds to \texttt {pos\,=\,0} (one attended position) and the maximum to \texttt {pos\,=\,seq\_len\,$-$\,1\,=\,15} (sixteen attended positions)}{table.caption.264}{}}
+\newlabel{tab:attn_fp32_top_latency@cref}{{[table][32][4]4.32}{[1][52][]53}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4.33}{\ignorespaces Resource utilisation of the baseline float attention block synthesised at prototype scale on the ZCU102 (\texttt  {xczu9eg-ffvb1156-2-e}). The core-only column excludes the AXI master adapter and S-AXILite control interface.}}{53}{table.caption.265}\protected@file@percent }
+\newlabel{tab:attn_fp32_resources}{{4.33}{53}{Resource utilisation of the baseline float attention block synthesised at prototype scale on the ZCU102 (\texttt {xczu9eg-ffvb1156-2-e}). The core-only column excludes the AXI master adapter and S-AXILite control interface}{table.caption.265}{}}
 \newlabel{tab:attn_fp32_resources@cref}{{[table][33][4]4.33}{[1][53][]53}{}{}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {4.34}{\ignorespaces Per-pipeline-module latency breakdown of the baseline float attention block at \SI {150}{\mega \hertz }, for one head at maximum context length (\texttt  {pos\,=\,15}). The outer \texttt  {multihead\_attention} loop over \texttt  {n\_heads\,=\,2} runs sequentially, so the per-head cost is incurred twice.}}{53}{table.caption.257}\protected@file@percent }
-\newlabel{tab:attn_fp32_latency}{{4.34}{53}{Per-pipeline-module latency breakdown of the baseline float attention block at \SI {150}{\mega \hertz }, for one head at maximum context length (\texttt {pos\,=\,15}). The outer \texttt {multihead\_attention} loop over \texttt {n\_heads\,=\,2} runs sequentially, so the per-head cost is incurred twice}{table.caption.257}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4.34}{\ignorespaces Per-pipeline-module latency breakdown of the baseline float attention block at \SI {150}{\mega \hertz }, for one head at maximum context length (\texttt  {pos\,=\,15}). The outer \texttt  {multihead\_attention} loop over \texttt  {n\_heads\,=\,2} runs sequentially, so the per-head cost is incurred twice.}}{53}{table.caption.266}\protected@file@percent }
+\newlabel{tab:attn_fp32_latency}{{4.34}{53}{Per-pipeline-module latency breakdown of the baseline float attention block at \SI {150}{\mega \hertz }, for one head at maximum context length (\texttt {pos\,=\,15}). The outer \texttt {multihead\_attention} loop over \texttt {n\_heads\,=\,2} runs sequentially, so the per-head cost is incurred twice}{table.caption.266}{}}
 \newlabel{tab:attn_fp32_latency@cref}{{[table][34][4]4.34}{[1][53][]53}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.6.2}Refined: Per-Head INT8 Attention}{54}{subsection.258}\protected@file@percent }
-\newlabel{subsec:attn_int8}{{4.6.2}{54}{Refined: Per-Head INT8 Attention}{subsection.258}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.6.2}Refined: Per-Head INT8 Attention}{54}{subsection.267}\protected@file@percent }
+\newlabel{subsec:attn_int8}{{4.6.2}{54}{Refined: Per-Head INT8 Attention}{subsection.267}{}}
 \newlabel{subsec:attn_int8@cref}{{[subsection][2][4,6]4.6.2}{[1][54][]54}{}{}{}}
-\newlabel{eq:int8_score}{{4.1}{55}{Refined: Per-Head INT8 Attention}{equation.259}{}}
+\newlabel{eq:int8_score}{{4.1}{55}{Refined: Per-Head INT8 Attention}{equation.268}{}}
 \newlabel{eq:int8_score@cref}{{[equation][1][4]4.1}{[1][55][]55}{}{}{}}
-\newlabel{eq:int8_value_acc}{{4.2}{56}{Refined: Per-Head INT8 Attention}{equation.260}{}}
-\newlabel{eq:int8_value_acc@cref}{{[equation][2][4]4.2}{[1][55][]56}{}{}{}}
-\newlabel{lst:attn_int8}{{4.6}{56}{Per-head Q quantisation (Step~1) and INT32 score dot product (Step~2) from \texttt {forward\_fyp.cpp}. Step~1 executes once per head before the position loop; Step~2 executes for each attended position inside \texttt {iterate}. The reciprocal trick replaces \texttt {head\_size} divisions with one \texttt {fdiv} and \texttt {head\_size} \texttt {fmul} calls}{lstlisting.261}{}}
-\newlabel{lst:attn_int8@cref}{{[listing][6][4]4.6}{[1][56][]56}{}{}{}}
-\@writefile{lol}{\contentsline {lstlisting}{\numberline {4.6}{\ignorespaces Per-head Q quantisation (Step~1) and INT32 score dot product (Step~2) from \texttt  {forward\_fyp.cpp}. Step~1 executes once per head before the position loop; Step~2 executes for each attended position inside \texttt  {iterate}. The reciprocal trick replaces \texttt  {head\_size} divisions with one \texttt  {fdiv} and \texttt  {head\_size} \texttt  {fmul} calls.}}{56}{lstlisting.261}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {4.35}{\ignorespaces Comparison of \texttt  {xb} outputs from the baseline float attention and the refined per-head INT8 attention for identical inputs at \texttt  {pos\,=\,3}. The absolute difference in each element reflects the quantisation error introduced by the INT8 arithmetic path. Both kernels passed their respective csim runs with zero errors against their own software references.}}{57}{table.caption.291}\protected@file@percent }
-\newlabel{tab:attn_csim_compare}{{4.35}{57}{Comparison of \texttt {xb} outputs from the baseline float attention and the refined per-head INT8 attention for identical inputs at \texttt {pos\,=\,3}. The absolute difference in each element reflects the quantisation error introduced by the INT8 arithmetic path. Both kernels passed their respective csim runs with zero errors against their own software references}{table.caption.291}{}}
+\newlabel{eq:int8_value_acc}{{4.2}{55}{Refined: Per-Head INT8 Attention}{equation.269}{}}
+\newlabel{eq:int8_value_acc@cref}{{[equation][2][4]4.2}{[1][55][]55}{}{}{}}
+\newlabel{lst:attn_int8}{{4.7}{56}{Per-head Q quantisation (Step~1) and INT32 score dot product (Step~2) from \texttt {forward\_fyp.cpp}. Step~1 executes once per head before the position loop; Step~2 executes for each attended position inside \texttt {iterate}. The reciprocal trick replaces \texttt {head\_size} divisions with one \texttt {fdiv} and \texttt {head\_size} \texttt {fmul} calls}{lstlisting.270}{}}
+\newlabel{lst:attn_int8@cref}{{[listing][7][4]4.7}{[1][56][]56}{}{}{}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {4.7}{\ignorespaces Per-head Q quantisation (Step~1) and INT32 score dot product (Step~2) from \texttt  {forward\_fyp.cpp}. Step~1 executes once per head before the position loop; Step~2 executes for each attended position inside \texttt  {iterate}. The reciprocal trick replaces \texttt  {head\_size} divisions with one \texttt  {fdiv} and \texttt  {head\_size} \texttt  {fmul} calls.}}{56}{lstlisting.270}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {4.35}{\ignorespaces Comparison of \texttt  {xb} outputs from the baseline float attention and the refined per-head INT8 attention for identical inputs at \texttt  {pos\,=\,3}. The absolute difference in each element reflects the quantisation error introduced by the INT8 arithmetic path. Both kernels passed their respective csim runs with zero errors against their own software references.}}{57}{table.caption.300}\protected@file@percent }
+\newlabel{tab:attn_csim_compare}{{4.35}{57}{Comparison of \texttt {xb} outputs from the baseline float attention and the refined per-head INT8 attention for identical inputs at \texttt {pos\,=\,3}. The absolute difference in each element reflects the quantisation error introduced by the INT8 arithmetic path. Both kernels passed their respective csim runs with zero errors against their own software references}{table.caption.300}{}}
 \newlabel{tab:attn_csim_compare@cref}{{[table][35][4]4.35}{[1][57][]57}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.6.3}HLS Synthesis Results}{58}{subsection.292}\protected@file@percent }
-\newlabel{subsec:attn_csyn}{{4.6.3}{58}{HLS Synthesis Results}{subsection.292}{}}
-\newlabel{subsec:attn_csyn@cref}{{[subsection][3][4,6]4.6.3}{[1][58][]58}{}{}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {4.36}{\ignorespaces Resource utilisation comparison between the baseline float attention and the refined per-head INT8 attention, both synthesised at prototype scale on the \texttt  {xczu9eg-ffvb1156-2-e} at \SI {150}{\mega \hertz }. Core-only figures exclude the AXI master adapter and S-AXILite control interface.}}{58}{table.caption.293}\protected@file@percent }
-\newlabel{tab:attn_compare_resources}{{4.36}{58}{Resource utilisation comparison between the baseline float attention and the refined per-head INT8 attention, both synthesised at prototype scale on the \texttt {xczu9eg-ffvb1156-2-e} at \SI {150}{\mega \hertz }. Core-only figures exclude the AXI master adapter and S-AXILite control interface}{table.caption.293}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.6.3}HLS Synthesis Results}{58}{subsection.301}\protected@file@percent }
+\newlabel{subsec:attn_csyn}{{4.6.3}{58}{HLS Synthesis Results}{subsection.301}{}}
+\newlabel{subsec:attn_csyn@cref}{{[subsection][3][4,6]4.6.3}{[1][57][]58}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4.36}{\ignorespaces Resource utilisation comparison between the baseline float attention and the refined per-head INT8 attention, both synthesised at prototype scale on the \texttt  {xczu9eg-ffvb1156-2-e} at \SI {150}{\mega \hertz }. Core-only figures exclude the AXI master adapter and S-AXILite control interface.}}{58}{table.caption.302}\protected@file@percent }
+\newlabel{tab:attn_compare_resources}{{4.36}{58}{Resource utilisation comparison between the baseline float attention and the refined per-head INT8 attention, both synthesised at prototype scale on the \texttt {xczu9eg-ffvb1156-2-e} at \SI {150}{\mega \hertz }. Core-only figures exclude the AXI master adapter and S-AXILite control interface}{table.caption.302}{}}
 \newlabel{tab:attn_compare_resources@cref}{{[table][36][4]4.36}{[1][58][]58}{}{}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {4.37}{\ignorespaces Per-pipeline-module latency breakdown of the refined per-head INT8 attention block at \SI {150}{\mega \hertz }, for one head at maximum context (\texttt  {pos\,=\,256}, \texttt  {MAXSIZE\,=\,257}). The outer \texttt  {multihead\_attention} loop over \texttt  {n\_heads\,=\,2} runs sequentially, giving a worst-case total of approximately 9{,}332 cycles.}}{59}{table.caption.294}\protected@file@percent }
-\newlabel{tab:attn_int8_latency}{{4.37}{59}{Per-pipeline-module latency breakdown of the refined per-head INT8 attention block at \SI {150}{\mega \hertz }, for one head at maximum context (\texttt {pos\,=\,256}, \texttt {MAXSIZE\,=\,257}). The outer \texttt {multihead\_attention} loop over \texttt {n\_heads\,=\,2} runs sequentially, giving a worst-case total of approximately 9{,}332 cycles}{table.caption.294}{}}
-\newlabel{tab:attn_int8_latency@cref}{{[table][37][4]4.37}{[1][58][]59}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.6.4}Iteration 3: INT8 KV Cache}{60}{subsection.295}\protected@file@percent }
-\newlabel{subsec:attn_kvint8}{{4.6.4}{60}{Iteration 3: INT8 KV Cache}{subsection.295}{}}
-\newlabel{subsec:attn_kvint8@cref}{{[subsection][4][4,6]4.6.4}{[1][60][]60}{}{}{}}
-\newlabel{lst:attn_kvint8}{{4.7}{61}{Contrast between the \texttt {iterate} loop bodies of iteration~2 (\texttt {forward\_fyp.cpp}) and iteration~3 (\texttt {forward\_fyp\_kvint8.cpp}). Iteration~2 loads float K and performs a full max-scan, scale-compute, and quantise sequence per position. Iteration~3 replaces the entire sequence with two direct reads from the pre-quantised cache arrays}{lstlisting.296}{}}
-\newlabel{lst:attn_kvint8@cref}{{[listing][7][4]4.7}{[1][61][]61}{}{}{}}
-\@writefile{lol}{\contentsline {lstlisting}{\numberline {4.7}{\ignorespaces Contrast between the \texttt  {iterate} loop bodies of iteration~2 (\texttt  {forward\_fyp.cpp}) and iteration~3 (\texttt  {forward\_fyp\_kvint8.cpp}). Iteration~2 loads float K and performs a full max-scan, scale-compute, and quantise sequence per position. Iteration~3 replaces the entire sequence with two direct reads from the pre-quantised cache arrays.}}{61}{lstlisting.296}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {4.38}{\ignorespaces C-simulation \texttt  {xb} outputs for all three attention iterations at identical inputs (\texttt  {pos\,=\,3}, \texttt  {loff\,=\,0}). Iteration~3 outputs are substantially closer to the float baseline than iteration~2, reflecting the higher fidelity of pre-quantised group-scale storage compared to per-position on-the-fly quantisation.}}{62}{table.caption.325}\protected@file@percent }
-\newlabel{tab:attn_csim_all}{{4.38}{62}{C-simulation \texttt {xb} outputs for all three attention iterations at identical inputs (\texttt {pos\,=\,3}, \texttt {loff\,=\,0}). Iteration~3 outputs are substantially closer to the float baseline than iteration~2, reflecting the higher fidelity of pre-quantised group-scale storage compared to per-position on-the-fly quantisation}{table.caption.325}{}}
-\newlabel{tab:attn_csim_all@cref}{{[table][38][4]4.38}{[1][62][]62}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.6.5}HLS Synthesis Results}{63}{subsection.326}\protected@file@percent }
-\newlabel{subsec:attn_csyn}{{4.6.5}{63}{HLS Synthesis Results}{subsection.326}{}}
-\newlabel{subsec:attn_csyn@cref}{{[subsection][5][4,6]4.6.5}{[1][62][]63}{}{}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {4.39}{\ignorespaces Resource utilisation across all three attention iterations on the \texttt  {xczu9eg-ffvb1156-2-e} at \SI {150}{\mega \hertz }. Core figures for iterations~1 and~2 exclude the AXI master adapter and S-AXILite control interface; the same exclusions apply to the iteration~3 core column.}}{63}{table.caption.327}\protected@file@percent }
-\newlabel{tab:attn_all_resources}{{4.39}{63}{Resource utilisation across all three attention iterations on the \texttt {xczu9eg-ffvb1156-2-e} at \SI {150}{\mega \hertz }. Core figures for iterations~1 and~2 exclude the AXI master adapter and S-AXILite control interface; the same exclusions apply to the iteration~3 core column}{table.caption.327}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4.37}{\ignorespaces Per-pipeline-module latency breakdown of the refined per-head INT8 attention block at \SI {150}{\mega \hertz }, for one head at maximum context (\texttt  {pos\,=\,256}, \texttt  {MAXSIZE\,=\,257}). The outer \texttt  {multihead\_attention} loop over \texttt  {n\_heads\,=\,2} runs sequentially, giving a worst-case total of approximately 9{,}332 cycles.}}{58}{table.caption.303}\protected@file@percent }
+\newlabel{tab:attn_int8_latency}{{4.37}{58}{Per-pipeline-module latency breakdown of the refined per-head INT8 attention block at \SI {150}{\mega \hertz }, for one head at maximum context (\texttt {pos\,=\,256}, \texttt {MAXSIZE\,=\,257}). The outer \texttt {multihead\_attention} loop over \texttt {n\_heads\,=\,2} runs sequentially, giving a worst-case total of approximately 9{,}332 cycles}{table.caption.303}{}}
+\newlabel{tab:attn_int8_latency@cref}{{[table][37][4]4.37}{[1][58][]58}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.6.4}Iteration 3: INT8 KV Cache}{59}{subsection.304}\protected@file@percent }
+\newlabel{subsec:attn_kvint8}{{4.6.4}{59}{Iteration 3: INT8 KV Cache}{subsection.304}{}}
+\newlabel{subsec:attn_kvint8@cref}{{[subsection][4][4,6]4.6.4}{[1][59][]59}{}{}{}}
+\newlabel{lst:attn_kvint8}{{4.8}{60}{Contrast between the \texttt {iterate} loop bodies of iteration~2 (\texttt {forward\_fyp.cpp}) and iteration~3 (\texttt {forward\_fyp\_kvint8.cpp}). Iteration~2 loads float K and performs a full max-scan, scale-compute, and quantise sequence per position. Iteration~3 replaces the entire sequence with two direct reads from the pre-quantised cache arrays}{lstlisting.305}{}}
+\newlabel{lst:attn_kvint8@cref}{{[listing][8][4]4.8}{[1][60][]60}{}{}{}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {4.8}{\ignorespaces Contrast between the \texttt  {iterate} loop bodies of iteration~2 (\texttt  {forward\_fyp.cpp}) and iteration~3 (\texttt  {forward\_fyp\_kvint8.cpp}). Iteration~2 loads float K and performs a full max-scan, scale-compute, and quantise sequence per position. Iteration~3 replaces the entire sequence with two direct reads from the pre-quantised cache arrays.}}{60}{lstlisting.305}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {4.38}{\ignorespaces C-simulation \texttt  {xb} outputs for all three attention iterations at identical inputs (\texttt  {pos\,=\,3}, \texttt  {loff\,=\,0}). Iteration~3 outputs are substantially closer to the float baseline than iteration~2, reflecting the higher fidelity of pre-quantised group-scale storage compared to per-position on-the-fly quantisation.}}{62}{table.caption.334}\protected@file@percent }
+\newlabel{tab:attn_csim_all}{{4.38}{62}{C-simulation \texttt {xb} outputs for all three attention iterations at identical inputs (\texttt {pos\,=\,3}, \texttt {loff\,=\,0}). Iteration~3 outputs are substantially closer to the float baseline than iteration~2, reflecting the higher fidelity of pre-quantised group-scale storage compared to per-position on-the-fly quantisation}{table.caption.334}{}}
+\newlabel{tab:attn_csim_all@cref}{{[table][38][4]4.38}{[1][61][]62}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.6.5}HLS Synthesis Results}{62}{subsection.335}\protected@file@percent }
+\newlabel{subsec:attn_csyn}{{4.6.5}{62}{HLS Synthesis Results}{subsection.335}{}}
+\newlabel{subsec:attn_csyn@cref}{{[subsection][5][4,6]4.6.5}{[1][62][]62}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4.39}{\ignorespaces Resource utilisation across all three attention iterations on the \texttt  {xczu9eg-ffvb1156-2-e} at \SI {150}{\mega \hertz }. Core figures for iterations~1 and~2 exclude the AXI master adapter and S-AXILite control interface. The same exclusions apply to the iteration~3 core column.}}{63}{table.caption.336}\protected@file@percent }
+\newlabel{tab:attn_all_resources}{{4.39}{63}{Resource utilisation across all three attention iterations on the \texttt {xczu9eg-ffvb1156-2-e} at \SI {150}{\mega \hertz }. Core figures for iterations~1 and~2 exclude the AXI master adapter and S-AXILite control interface. The same exclusions apply to the iteration~3 core column}{table.caption.336}{}}
 \newlabel{tab:attn_all_resources@cref}{{[table][39][4]4.39}{[1][62][]63}{}{}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {4.40}{\ignorespaces Per-pipeline-module latency breakdown of the iteration~3 INT8-KV attention block at \SI {150}{\mega \hertz }, for one head at \texttt  {pos\,=\,15}. The \texttt  {sum} stage reflects the unrolled softmax from \cref  {subsec:softmax_iter3}.}}{63}{table.caption.328}\protected@file@percent }
-\newlabel{tab:attn_kvint8_latency}{{4.40}{63}{Per-pipeline-module latency breakdown of the iteration~3 INT8-KV attention block at \SI {150}{\mega \hertz }, for one head at \texttt {pos\,=\,15}. The \texttt {sum} stage reflects the unrolled softmax from \cref {subsec:softmax_iter3}}{table.caption.328}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4.40}{\ignorespaces Per-pipeline-module latency breakdown of the iteration~3 INT8-KV attention block at \SI {150}{\mega \hertz }, for one head at \texttt  {pos\,=\,15}. The \texttt  {sum} stage reflects the unrolled softmax from \cref  {subsec:softmax_iter3}.}}{63}{table.caption.337}\protected@file@percent }
+\newlabel{tab:attn_kvint8_latency}{{4.40}{63}{Per-pipeline-module latency breakdown of the iteration~3 INT8-KV attention block at \SI {150}{\mega \hertz }, for one head at \texttt {pos\,=\,15}. The \texttt {sum} stage reflects the unrolled softmax from \cref {subsec:softmax_iter3}}{table.caption.337}{}}
 \newlabel{tab:attn_kvint8_latency@cref}{{[table][40][4]4.40}{[1][63][]63}{}{}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {4.7}SwiGLU Feed-Forward Network}{64}{section.329}\protected@file@percent }
-\newlabel{sec:ffn_impl}{{4.7}{64}{SwiGLU Feed-Forward Network}{section.329}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {4.7}SwiGLU Feed-Forward Network}{64}{section.338}\protected@file@percent }
+\newlabel{sec:ffn_impl}{{4.7}{64}{SwiGLU Feed-Forward Network}{section.338}{}}
 \newlabel{sec:ffn_impl@cref}{{[section][7][4]4.7}{[1][64][]64}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.7.1}Implementation}{64}{subsection.330}\protected@file@percent }
-\newlabel{subsec:ffn_impl_detail}{{4.7.1}{64}{Implementation}{subsection.330}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.7.1}Implementation}{64}{subsection.339}\protected@file@percent }
+\newlabel{subsec:ffn_impl_detail}{{4.7.1}{64}{Implementation}{subsection.339}{}}
 \newlabel{subsec:ffn_impl_detail@cref}{{[subsection][1][4,7]4.7.1}{[1][64][]64}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.7.2}C-Simulation Results}{64}{subsection.331}\protected@file@percent }
-\newlabel{subsec:ffn_csim}{{4.7.2}{64}{C-Simulation Results}{subsection.331}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.7.2}C-Simulation Results}{64}{subsection.340}\protected@file@percent }
+\newlabel{subsec:ffn_csim}{{4.7.2}{64}{C-Simulation Results}{subsection.340}{}}
 \newlabel{subsec:ffn_csim@cref}{{[subsection][2][4,7]4.7.2}{[1][64][]64}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.7.3}HLS Synthesis Results}{64}{subsection.332}\protected@file@percent }
-\newlabel{subsec:ffn_csyn}{{4.7.3}{64}{HLS Synthesis Results}{subsection.332}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.7.3}HLS Synthesis Results}{64}{subsection.341}\protected@file@percent }
+\newlabel{subsec:ffn_csyn}{{4.7.3}{64}{HLS Synthesis Results}{subsection.341}{}}
 \newlabel{subsec:ffn_csyn@cref}{{[subsection][3][4,7]4.7.3}{[1][64][]64}{}{}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {4.8}Top-Level Forward Function}{64}{section.333}\protected@file@percent }
-\newlabel{sec:forward_impl}{{4.8}{64}{Top-Level Forward Function}{section.333}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {4.8}Top-Level Forward Function}{64}{section.342}\protected@file@percent }
+\newlabel{sec:forward_impl}{{4.8}{64}{Top-Level Forward Function}{section.342}{}}
 \newlabel{sec:forward_impl@cref}{{[section][8][4]4.8}{[1][64][]64}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.8.1}AXI Interface and Buffer Layout}{65}{subsection.334}\protected@file@percent }
-\newlabel{subsec:forward_axi}{{4.8.1}{65}{AXI Interface and Buffer Layout}{subsection.334}{}}
-\newlabel{subsec:forward_axi@cref}{{[subsection][1][4,8]4.8.1}{[1][65][]65}{}{}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {4.41}{\ignorespaces AXI master bundle assignment in the prototype \texttt  {forward} kernel (\texttt  {forward.cpp}). All weight and KV cache traffic shares a single AXI master port on \texttt  {gmem0}.}}{65}{table.caption.335}\protected@file@percent }
-\newlabel{tab:axi_bundles}{{4.41}{65}{AXI master bundle assignment in the prototype \texttt {forward} kernel (\texttt {forward.cpp}). All weight and KV cache traffic shares a single AXI master port on \texttt {gmem0}}{table.caption.335}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.8.1}AXI Interface and Buffer Layout}{65}{subsection.343}\protected@file@percent }
+\newlabel{subsec:forward_axi}{{4.8.1}{65}{AXI Interface and Buffer Layout}{subsection.343}{}}
+\newlabel{subsec:forward_axi@cref}{{[subsection][1][4,8]4.8.1}{[1][64][]65}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4.41}{\ignorespaces AXI master bundle assignment in the prototype \texttt  {forward} kernel (\texttt  {forward.cpp}). All weight and KV cache traffic shares a single AXI master port on \texttt  {gmem0}.}}{65}{table.caption.344}\protected@file@percent }
+\newlabel{tab:axi_bundles}{{4.41}{65}{AXI master bundle assignment in the prototype \texttt {forward} kernel (\texttt {forward.cpp}). All weight and KV cache traffic shares a single AXI master port on \texttt {gmem0}}{table.caption.344}{}}
 \newlabel{tab:axi_bundles@cref}{{[table][41][4]4.41}{[1][65][]65}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.8.2}Layer Loop and KV Cache Management}{66}{subsection.336}\protected@file@percent }
-\newlabel{subsec:forward_layers}{{4.8.2}{66}{Layer Loop and KV Cache Management}{subsection.336}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.8.2}Layer Loop and KV Cache Management}{66}{subsection.345}\protected@file@percent }
+\newlabel{subsec:forward_layers}{{4.8.2}{66}{Layer Loop and KV Cache Management}{subsection.345}{}}
 \newlabel{subsec:forward_layers@cref}{{[subsection][2][4,8]4.8.2}{[1][66][]66}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.8.3}Known Limitations and Design Decisions}{67}{subsection.337}\protected@file@percent }
-\newlabel{subsec:forward_limitations}{{4.8.3}{67}{Known Limitations and Design Decisions}{subsection.337}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.8.3}Known Limitations and Design Decisions}{67}{subsection.346}\protected@file@percent }
+\newlabel{subsec:forward_limitations}{{4.8.3}{67}{Known Limitations and Design Decisions}{subsection.346}{}}
 \newlabel{subsec:forward_limitations@cref}{{[subsection][3][4,8]4.8.3}{[1][67][]67}{}{}{}}
-\@writefile{toc}{\contentsline {chapter}{\numberline {5}Results and Discussion}{69}{chapter.338}\protected@file@percent }
+\@writefile{toc}{\contentsline {chapter}{\numberline {5}Results and Discussion}{69}{chapter.347}\protected@file@percent }
 \@writefile{lof}{\addvspace {10\p@ }}
 \@writefile{lot}{\addvspace {10\p@ }}
-\newlabel{ch:results}{{5}{69}{Results and Discussion}{chapter.338}{}}
+\newlabel{ch:results}{{5}{69}{Results and Discussion}{chapter.347}{}}
 \newlabel{ch:results@cref}{{[chapter][5][]5}{[1][69][]69}{}{}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {5.1}Experimental Setup}{69}{section.339}\protected@file@percent }
-\newlabel{sec:exp_setup}{{5.1}{69}{Experimental Setup}{section.339}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {5.1}Experimental Setup}{69}{section.348}\protected@file@percent }
+\newlabel{sec:exp_setup}{{5.1}{69}{Experimental Setup}{section.348}{}}
 \newlabel{sec:exp_setup@cref}{{[section][1][5]5.1}{[1][69][]69}{}{}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {5.2}HLS Synthesis Results}{69}{section.340}\protected@file@percent }
-\newlabel{sec:synthesis_results}{{5.2}{69}{HLS Synthesis Results}{section.340}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {5.2}HLS Synthesis Results}{69}{section.349}\protected@file@percent }
+\newlabel{sec:synthesis_results}{{5.2}{69}{HLS Synthesis Results}{section.349}{}}
 \newlabel{sec:synthesis_results@cref}{{[section][2][5]5.2}{[1][69][]69}{}{}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {5.1}{\ignorespaces FPGA resource utilisation after Vivado implementation on the ZCU102 (xczu9eg-ffvb1156-2-e). Percentages are relative to total available resources on the device.}}{69}{table.caption.341}\protected@file@percent }
-\newlabel{tab:resource_util}{{5.1}{69}{FPGA resource utilisation after Vivado implementation on the ZCU102 (xczu9eg-ffvb1156-2-e). Percentages are relative to total available resources on the device}{table.caption.341}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {5.1}{\ignorespaces FPGA resource utilisation after Vivado implementation on the ZCU102 (xczu9eg-ffvb1156-2-e). Percentages are relative to total available resources on the device.}}{69}{table.caption.350}\protected@file@percent }
+\newlabel{tab:resource_util}{{5.1}{69}{FPGA resource utilisation after Vivado implementation on the ZCU102 (xczu9eg-ffvb1156-2-e). Percentages are relative to total available resources on the device}{table.caption.350}{}}
 \newlabel{tab:resource_util@cref}{{[table][1][5]5.1}{[1][69][]69}{}{}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {5.3}Functional Verification}{70}{section.342}\protected@file@percent }
-\newlabel{sec:functional_verification}{{5.3}{70}{Functional Verification}{section.342}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {5.3}Functional Verification}{70}{section.351}\protected@file@percent }
+\newlabel{sec:functional_verification}{{5.3}{70}{Functional Verification}{section.351}{}}
 \newlabel{sec:functional_verification@cref}{{[section][3][5]5.3}{[1][70][]70}{}{}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {5.4}Inference Performance}{70}{section.343}\protected@file@percent }
-\newlabel{sec:performance}{{5.4}{70}{Inference Performance}{section.343}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {5.4}Inference Performance}{70}{section.352}\protected@file@percent }
+\newlabel{sec:performance}{{5.4}{70}{Inference Performance}{section.352}{}}
 \newlabel{sec:performance@cref}{{[section][4][5]5.4}{[1][70][]70}{}{}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {5.2}{\ignorespaces Inference performance comparison between the FPGA implementation and a CPU software baseline. Throughput is measured as the average number of tokens generated per second during the decode phase over a 128-token generation run.}}{70}{table.caption.344}\protected@file@percent }
-\newlabel{tab:performance}{{5.2}{70}{Inference performance comparison between the FPGA implementation and a CPU software baseline. Throughput is measured as the average number of tokens generated per second during the decode phase over a 128-token generation run}{table.caption.344}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {5.2}{\ignorespaces Inference performance comparison between the FPGA implementation and a CPU software baseline. Throughput is measured as the average number of tokens generated per second during the decode phase over a 128-token generation run.}}{70}{table.caption.353}\protected@file@percent }
+\newlabel{tab:performance}{{5.2}{70}{Inference performance comparison between the FPGA implementation and a CPU software baseline. Throughput is measured as the average number of tokens generated per second during the decode phase over a 128-token generation run}{table.caption.353}{}}
 \newlabel{tab:performance@cref}{{[table][2][5]5.2}{[1][70][]70}{}{}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {5.5}Energy Efficiency}{70}{section.345}\protected@file@percent }
-\newlabel{sec:energy}{{5.5}{70}{Energy Efficiency}{section.345}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {5.5}Energy Efficiency}{70}{section.354}\protected@file@percent }
+\newlabel{sec:energy}{{5.5}{70}{Energy Efficiency}{section.354}{}}
 \newlabel{sec:energy@cref}{{[section][5][5]5.5}{[1][70][]70}{}{}{}}
 \abx@aux@cite{0}{PLACEHOLDER}
 \abx@aux@segm{0}{0}{PLACEHOLDER}
 \abx@aux@cite{0}{PLACEHOLDER}
 \abx@aux@segm{0}{0}{PLACEHOLDER}
-\@writefile{toc}{\contentsline {section}{\numberline {5.6}Comparison Against Prior Work}{71}{section.346}\protected@file@percent }
-\newlabel{sec:comparison}{{5.6}{71}{Comparison Against Prior Work}{section.346}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {5.6}Comparison Against Prior Work}{71}{section.355}\protected@file@percent }
+\newlabel{sec:comparison}{{5.6}{71}{Comparison Against Prior Work}{section.355}{}}
 \newlabel{sec:comparison@cref}{{[section][6][5]5.6}{[1][71][]71}{}{}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {5.3}{\ignorespaces Comparison of this work against prior FPGA-based transformer accelerators reported in the literature.}}{71}{table.caption.347}\protected@file@percent }
-\newlabel{tab:comparison}{{5.3}{71}{Comparison of this work against prior FPGA-based transformer accelerators reported in the literature}{table.caption.347}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {5.3}{\ignorespaces Comparison of this work against prior FPGA-based transformer accelerators reported in the literature.}}{71}{table.caption.356}\protected@file@percent }
+\newlabel{tab:comparison}{{5.3}{71}{Comparison of this work against prior FPGA-based transformer accelerators reported in the literature}{table.caption.356}{}}
 \newlabel{tab:comparison@cref}{{[table][3][5]5.3}{[1][71][]71}{}{}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {5.7}Discussion}{71}{section.348}\protected@file@percent }
-\newlabel{sec:discussion}{{5.7}{71}{Discussion}{section.348}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {5.7}Discussion}{71}{section.357}\protected@file@percent }
+\newlabel{sec:discussion}{{5.7}{71}{Discussion}{section.357}{}}
 \newlabel{sec:discussion@cref}{{[section][7][5]5.7}{[1][71][]71}{}{}{}}
-\@writefile{toc}{\contentsline {chapter}{\numberline {6}Conclusion and Future Work}{72}{chapter.349}\protected@file@percent }
+\@writefile{toc}{\contentsline {chapter}{\numberline {6}Conclusion and Future Work}{72}{chapter.358}\protected@file@percent }
 \@writefile{lof}{\addvspace {10\p@ }}
 \@writefile{lot}{\addvspace {10\p@ }}
-\newlabel{ch:conclusion}{{6}{72}{Conclusion and Future Work}{chapter.349}{}}
+\newlabel{ch:conclusion}{{6}{72}{Conclusion and Future Work}{chapter.358}{}}
 \newlabel{ch:conclusion@cref}{{[chapter][6][]6}{[1][72][]72}{}{}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {6.1}Conclusion}{72}{section.350}\protected@file@percent }
-\newlabel{sec:conclusion}{{6.1}{72}{Conclusion}{section.350}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {6.1}Conclusion}{72}{section.359}\protected@file@percent }
+\newlabel{sec:conclusion}{{6.1}{72}{Conclusion}{section.359}{}}
 \newlabel{sec:conclusion@cref}{{[section][1][6]6.1}{[1][72][]72}{}{}{}}
 \abx@aux@cite{0}{PLACEHOLDER}
 \abx@aux@segm{0}{0}{PLACEHOLDER}
-\@writefile{toc}{\contentsline {section}{\numberline {6.2}Recommendations for Future Work}{73}{section.351}\protected@file@percent }
-\newlabel{sec:future_work}{{6.2}{73}{Recommendations for Future Work}{section.351}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {6.2}Recommendations for Future Work}{73}{section.360}\protected@file@percent }
+\newlabel{sec:future_work}{{6.2}{73}{Recommendations for Future Work}{section.360}{}}
 \newlabel{sec:future_work@cref}{{[section][2][6]6.2}{[1][73][]73}{}{}{}}
-\@writefile{toc}{\contentsline {chapter}{Reflection on Learning Outcome Attainment}{74}{chapter*.352}\protected@file@percent }
-\@writefile{toc}{\contentsline {chapter}{Acknowledging/Declaring the Use of GAI}{75}{chapter*.353}\protected@file@percent }
-\@writefile{toc}{\contentsline {chapter}{References}{75}{chapter*.353}\protected@file@percent }
-\@writefile{toc}{\contentsline {chapter}{\numberline {A}HLS Kernel Source Code}{76}{appendix.354}\protected@file@percent }
+\@writefile{toc}{\contentsline {chapter}{Reflection on Learning Outcome Attainment}{74}{chapter*.361}\protected@file@percent }
+\@writefile{toc}{\contentsline {chapter}{Acknowledging/Declaring the Use of GAI}{75}{chapter*.362}\protected@file@percent }
+\@writefile{toc}{\contentsline {chapter}{References}{75}{chapter*.362}\protected@file@percent }
+\@writefile{toc}{\contentsline {chapter}{\numberline {A}HLS Kernel Source Code}{76}{appendix.363}\protected@file@percent }
 \@writefile{lof}{\addvspace {10\p@ }}
 \@writefile{lot}{\addvspace {10\p@ }}
-\newlabel{app:hls_source}{{A}{76}{HLS Kernel Source Code}{appendix.354}{}}
+\newlabel{app:hls_source}{{A}{76}{HLS Kernel Source Code}{appendix.363}{}}
 \newlabel{app:hls_source@cref}{{[chapter][1][]A}{[1][76][]76}{}{}{}}
-\@writefile{toc}{\contentsline {chapter}{\numberline {B}Vivado Synthesis and Implementation Reports}{77}{appendix.355}\protected@file@percent }
+\@writefile{toc}{\contentsline {chapter}{\numberline {B}Vivado Synthesis and Implementation Reports}{77}{appendix.364}\protected@file@percent }
 \@writefile{lof}{\addvspace {10\p@ }}
 \@writefile{lot}{\addvspace {10\p@ }}
-\newlabel{app:vivado_reports}{{B}{77}{Vivado Synthesis and Implementation Reports}{appendix.355}{}}
+\newlabel{app:vivado_reports}{{B}{77}{Vivado Synthesis and Implementation Reports}{appendix.364}{}}
 \newlabel{app:vivado_reports@cref}{{[chapter][2][]B}{[1][77][]77}{}{}{}}
-\@writefile{toc}{\contentsline {chapter}{\numberline {C}Quantisation Calibration Data}{78}{appendix.356}\protected@file@percent }
+\@writefile{toc}{\contentsline {chapter}{\numberline {C}Quantisation Calibration Data}{78}{appendix.365}\protected@file@percent }
 \@writefile{lof}{\addvspace {10\p@ }}
 \@writefile{lot}{\addvspace {10\p@ }}
-\newlabel{app:calibration}{{C}{78}{Quantisation Calibration Data}{appendix.356}{}}
+\newlabel{app:calibration}{{C}{78}{Quantisation Calibration Data}{appendix.365}{}}
 \newlabel{app:calibration@cref}{{[chapter][3][]C}{[1][78][]78}{}{}{}}
 \abx@aux@read@bbl@mdfivesum{E75D7E0DB03F09D45B25DF2F538BB294}
 \abx@aux@read@bblrerun

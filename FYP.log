@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.28 (TeX Live 2025) (preloaded format=pdflatex 2026.3.1)  15 MAR 2026 20:40
+This is pdfTeX, Version 3.141592653-2.6-1.40.28 (TeX Live 2025) (preloaded format=pdflatex 2026.3.1)  17 MAR 2026 20:18
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -1010,12 +1010,12 @@ Overfull \hbox (9.33884pt too wide) in paragraph at lines 33--33
  \OT1/ptm/m/n/12 on a 16-element loop col-lapses all it-er-a-tions into a sin-gle par-al-lel pipeline 
  []
 
-[10]
+
 Overfull \hbox (4.17757pt too wide) in paragraph at lines 34--34
  [][] [][][]\OT1/ptm/m/n/12 Timing sum-mary for \OT1/zi4/m/n/12 softmax[]kvint8[]top \OT1/ptm/m/n/12 at the $\OT1/ztmcm/m/n/12 150$$[]$ \OT1/ptm/m/n/12 tar-get clock. 
  []
 
-
+[10]
 Overfull \hbox (75.22536pt too wide) in paragraph at lines 36--36
  \OT1/ptm/m/n/12 the it-er-a-tion 3 \OT1/zi4/m/n/12 softmax \OT1/ptm/m/n/12 de-signs, both at $[] \OT1/ztmcm/m/n/12 = 16$ \OT1/ptm/m/n/12 on the \OT1/zi4/m/n/12 xczu9eg-ffvb1156-2-e\OT1/ptm/m/n/12 . 
  []
@@ -1025,7 +1025,7 @@ Overfull \hbox (43.03598pt too wide) in paragraph at lines 37--37
  [][] [][][]\OT1/ptm/m/n/12 C-simulation out-put for the base-line float at-ten-tion ker-nel (\OT1/zi4/m/n/12 attn[]baseline[]top\OT1/ptm/m/n/12 ) 
  []
 
-[11]
+
 Overfull \hbox (11.022pt too wide) in paragraph at lines 44--44
  \OT1/ptm/m/n/12 at-ten-tion block at $\OT1/ztmcm/m/n/12 150$$[]$\OT1/ptm/m/n/12 , for one head at max-i-mum con-text (\OT1/zi4/m/n/12 pos=256\OT1/ptm/m/n/12 , 
  []
@@ -1035,7 +1035,7 @@ Overfull \hbox (9.77257pt too wide) in paragraph at lines 44--44
  \OT1/zi4/m/n/12 MAXSIZE=257\OT1/ptm/m/n/12 ). The outer \OT1/zi4/m/n/12 multihead[]attention \OT1/ptm/m/n/12 loop over \OT1/zi4/m/n/12 n[]heads=2 
  []
 
-
+[11]
 Overfull \hbox (76.11923pt too wide) in paragraph at lines 46--46
  [][] [][][]\OT1/ptm/m/n/12 Resource util-i-sa-tion across all three at-ten-tion it-er-a-tions on the \OT1/zi4/m/n/12 xczu9eg-ffvb1156-2-e 
  []
@@ -1169,7 +1169,7 @@ LaTeX Warning: Citation 'PLACEHOLDER' on page 11 undefined on input line 563.
 LaTeX Warning: Citation 'PLACEHOLDER' on page 11 undefined on input line 572.
 
 [11]
-<Chapter2/media/sparse_transformer_patterns.png, id=790, 823.27576pt x 410.7345pt>
+<Chapter2/media/sparse_transformer_patterns.png, id=789, 823.27576pt x 410.7345pt>
 File: Chapter2/media/sparse_transformer_patterns.png Graphic file (type png)
 <use Chapter2/media/sparse_transformer_patterns.png>
 Package pdftex.def Info: Chapter2/media/sparse_transformer_patterns.png  used on input line 582.
@@ -1240,7 +1240,7 @@ LaTeX Warning: Citation 'PLACEHOLDER' on page 14 undefined on input line 726.
 
 LaTeX Warning: Citation 'PLACEHOLDER' on page 15 undefined on input line 739.
 
-<Chapter2/media/hls_pipeline.png, id=807, 259.56975pt x 111.41624pt>
+<Chapter2/media/hls_pipeline.png, id=806, 259.56975pt x 111.41624pt>
 File: Chapter2/media/hls_pipeline.png Graphic file (type png)
 <use Chapter2/media/hls_pipeline.png>
 Package pdftex.def Info: Chapter2/media/hls_pipeline.png  used on input line 744.
@@ -1254,7 +1254,7 @@ LaTeX Warning: Citation 'PLACEHOLDER' on page 15 undefined on input line 747.
 
 LaTeX Warning: Citation 'PLACEHOLDER' on page 15 undefined on input line 755.
 
-<Chapter2/media/hls_unrolling.png, id=808, 604.05675pt x 86.12175pt>
+<Chapter2/media/hls_unrolling.png, id=807, 604.05675pt x 86.12175pt>
 File: Chapter2/media/hls_unrolling.png Graphic file (type png)
 <use Chapter2/media/hls_unrolling.png>
 Package pdftex.def Info: Chapter2/media/hls_unrolling.png  used on input line 766.
@@ -1301,17 +1301,17 @@ Overfull \hbox (3.93605pt too wide) in paragraph at lines 57--67
 ]
 Package hyperref Info: bookmark level for unknown lstlisting defaults to 0 on input line 103.
 LaTeX Font Info:    Font shape `OT1/zi4/m/n' will be
-(Font)              scaled to size 10.95pt on input line 103.
+(Font)              scaled to size 10.0pt on input line 103.
 LaTeX Font Info:    Font shape `OT1/zi4/b/n' will be
-(Font)              scaled to size 10.95pt on input line 104.
- [24]
+(Font)              scaled to size 10.0pt on input line 104.
+
 
 LaTeX Font Warning: Font shape `OT1/zi4/m/it' undefined
 (Font)              using `OT1/zi4/m/n' instead on input line 124.
 
 LaTeX Font Info:    Font shape `OT1/zi4/m/it' will be
-(Font)              scaled to size 10.95pt on input line 124.
-[25] [26]
+(Font)              scaled to size 10.0pt on input line 124.
+[24] [25] [26]
 LaTeX Font Info:    Trying to load font information for TS1+ptm on input line 250.
  (c:/texlive/2025/texmf-dist/tex/latex/psnfss/ts1ptm.fd
 File: ts1ptm.fd 2001/06/04 font definitions for TS1/ptm.
@@ -1321,131 +1321,141 @@ Overfull \hbox (5.29675pt too wide) in paragraph at lines 282--294
  []
 
 [27]
-Overfull \hbox (4.90921pt too wide) in paragraph at lines 318--327
-\OT1/ptm/m/n/12 flected in the 26 DSPs con-sumed: 8 floating-point mul-ti-pli-ers for the \OT1/zi4/m/n/12 weight$\OMS/ztmcm/m/n/12 ^^B$\OT1/zi4/m/n/12 (ss$\OMS/ztmcm/m/n/12 ^^B$\OT1/zi4/m/n/12 x)
+Overfull \hbox (25.63327pt too wide) in paragraph at lines 319--328
+\OT1/ptm/m/n/12 flected in the 26 DSPs con-sumed. The 8 floating-point mul-ti-pli-ers for the \OT1/zi4/m/n/12 weight$\OMS/ztmcm/m/n/12 ^^B$\OT1/zi4/m/n/12 (ss$\OMS/ztmcm/m/n/12 ^^B$\OT1/zi4/m/n/12 x)
  []
 
 
-Overfull \hbox (19.28827pt too wide) in paragraph at lines 354--363
+Overfull \hbox (19.28827pt too wide) in paragraph at lines 355--364
 \OT1/ptm/m/n/12 pa-ram-e-terised by the vec-tor length \OT1/zi4/m/n/12 S\OT1/ptm/m/n/12 , and out-puts re-sults through the \OT1/zi4/m/n/12 QuantizedTensor<S>
  []
 
 [28] [29]
-Underfull \hbox (badness 10000) in paragraph at lines 473--473
+Underfull \hbox (badness 10000) in paragraph at lines 470--470
 []\OT1/ptm/m/n/12 Table 4.7: |C-simulation out-put for \OT1/zi4/m/n/12 quantize \OT1/ptm/m/n/12 with in-put $\OT1/ptm/b/n/12 x \OT1/ztmcm/m/n/12 =
  []
 
 
-Underfull \hbox (badness 1082) in paragraph at lines 473--473
+Underfull \hbox (badness 1082) in paragraph at lines 470--470
 \OT1/ztmcm/m/n/12 [0\OML/ztmcm/m/it/12 :\OT1/ztmcm/m/n/12 5\OML/ztmcm/m/it/12 ; \OMS/ztmcm/m/n/12 ^^@\OT1/ztmcm/m/n/12 1\OML/ztmcm/m/it/12 :\OT1/ztmcm/m/n/12 2\OML/ztmcm/m/it/12 ; \OT1/ztmcm/m/n/12 3\OML/ztmcm/m/it/12 :\OT1/ztmcm/m/n/12 7\OML/ztmcm/m/it/12 ; \OMS/ztmcm/m/n/12 ^^@\OT1/ztmcm/m/n/12 0\OML/ztmcm/m/it/12 :\OT1/ztmcm/m/n/12 3\OML/ztmcm/m/it/12 ; \OT1/ztmcm/m/n/12 2\OML/ztmcm/m/it/12 :\OT1/ztmcm/m/n/12 1\OML/ztmcm/m/it/12 ; \OMS/ztmcm/m/n/12 ^^@\OT1/ztmcm/m/n/12 4\OML/ztmcm/m/it/12 :\OT1/ztmcm/m/n/12 5\OML/ztmcm/m/it/12 ; \OT1/ztmcm/m/n/12 1\OML/ztmcm/m/it/12 :\OT1/ztmcm/m/n/12 0\OML/ztmcm/m/it/12 ; \OMS/ztmcm/m/n/12 ^^@\OT1/ztmcm/m/n/12 2\OML/ztmcm/m/it/12 :\OT1/ztmcm/m/n/12 8]$\OT1/ptm/m/n/12 . All INT8 val-ues and both scale fac-
  []
 
 [30]
-Overfull \hbox (61.32971pt too wide) in paragraph at lines 490--496
+Overfull \hbox (61.32971pt too wide) in paragraph at lines 487--493
 []\OT1/ptm/m/n/12 The \OT1/zi4/m/n/12 quantize \OT1/ptm/m/n/12 func-tion was syn-the-sised in iso-la-tion at $\OT1/ztmcm/m/n/12 150$$[]$ \OT1/ptm/m/n/12 on the \OT1/zi4/m/n/12 xczu9eg-ffvb1156-2-e
  []
 
 [31] [32] [33] [34]
-Overfull \hbox (20.24821pt too wide) in paragraph at lines 747--756
+Overfull \hbox (20.24821pt too wide) in paragraph at lines 764--773
  [][] 
  []
 
-[35] [36] [37]
-Underfull \hbox (badness 7685) in paragraph at lines 945--945
+[35]
+Overfull \hbox (2.58453pt too wide) in paragraph at lines 807--818
+\OT1/zi4/m/n/12 mask[]table \OT1/ptm/m/n/12 and \OT1/zi4/m/n/12 one[]half[]table\OT1/ptm/m/n/12 , which HLS in-fers to im-ple-ment the IEEE 754 round-
+ []
+
+[36] [37]
+Underfull \hbox (badness 7685) in paragraph at lines 958--958
 []\OT1/ptm/m/n/12 Table 4.17: |C-simulation out-put for \OT1/zi4/m/n/12 matmul \OT1/ptm/m/n/12 with quan-tised in-put $[] \OT1/ztmcm/m/n/12 =
  []
 
-[38]
-Overfull \hbox (26.57896pt too wide) in paragraph at lines 950--960
-\OT1/ptm/m/n/12 de-quan-tised equiv-a-lents of the orig-i-nal float in-puts $\OT1/ztmcm/m/n/12 [0\OML/ztmcm/m/it/12 :\OT1/ztmcm/m/n/12 5\OML/ztmcm/m/it/12 ; \OMS/ztmcm/m/n/12 ^^@\OT1/ztmcm/m/n/12 1\OML/ztmcm/m/it/12 :\OT1/ztmcm/m/n/12 2\OML/ztmcm/m/it/12 ; \OT1/ztmcm/m/n/12 3\OML/ztmcm/m/it/12 :\OT1/ztmcm/m/n/12 7\OML/ztmcm/m/it/12 ; \OMS/ztmcm/m/n/12 ^^@\OT1/ztmcm/m/n/12 0\OML/ztmcm/m/it/12 :\OT1/ztmcm/m/n/12 3\OML/ztmcm/m/it/12 ; \OT1/ztmcm/m/n/12 2\OML/ztmcm/m/it/12 :\OT1/ztmcm/m/n/12 1\OML/ztmcm/m/it/12 ; \OMS/ztmcm/m/n/12 ^^@\OT1/ztmcm/m/n/12 4\OML/ztmcm/m/it/12 :\OT1/ztmcm/m/n/12 5\OML/ztmcm/m/it/12 ; \OT1/ztmcm/m/n/12 1\OML/ztmcm/m/it/12 :\OT1/ztmcm/m/n/12 0\OML/ztmcm/m/it/12 ; \OMS/ztmcm/m/n/12 ^^@\OT1/ztmcm/m/n/12 2\OML/ztmcm/m/it/12 :\OT1/ztmcm/m/n/12 8]$
- []
-
-[39]
-Overfull \hbox (45.71216pt too wide) in paragraph at lines 1029--1039
+[38] [39]
+Overfull \hbox (45.71216pt too wide) in paragraph at lines 1038--1048
  [][] 
  []
 
-[40] [41] [42] [43]
-Underfull \hbox (badness 10000) in paragraph at lines 1264--1264
+[40] [41] [42]
+Overfull \hbox (3.25258pt too wide) in paragraph at lines 1218--1230
+[]\OT1/ptm/m/n/12 C-simulation was per-formed for \OT1/zi4/m/n/12 softmax[]top\OT1/ptm/m/n/12 . The test-bench sup-plied a 16-element
+ []
+
+
+Overfull \hbox (5.90454pt too wide) in paragraph at lines 1218--1230
+\OT1/ptm/m/n/12 the \OT1/zi4/m/n/12 loop[]tripcount \OT1/ptm/m/n/12 prag-mas. The in-put vec-tor $\OT1/ztmcm/m/n/12 [\OMS/ztmcm/m/n/12 ^^@\OT1/ztmcm/m/n/12 1\OML/ztmcm/m/it/12 :\OT1/ztmcm/m/n/12 2\OML/ztmcm/m/it/12 ; \OT1/ztmcm/m/n/12 0\OML/ztmcm/m/it/12 :\OT1/ztmcm/m/n/12 5\OML/ztmcm/m/it/12 ; \OT1/ztmcm/m/n/12 1\OML/ztmcm/m/it/12 :\OT1/ztmcm/m/n/12 8\OML/ztmcm/m/it/12 ; \OT1/ztmcm/m/n/12 4\OML/ztmcm/m/it/12 :\OT1/ztmcm/m/n/12 5\OML/ztmcm/m/it/12 ; \OMS/ztmcm/m/n/12 ^^@\OT1/ztmcm/m/n/12 0\OML/ztmcm/m/it/12 :\OT1/ztmcm/m/n/12 3\OML/ztmcm/m/it/12 ; \OT1/ztmcm/m/n/12 2\OML/ztmcm/m/it/12 :\OT1/ztmcm/m/n/12 1\OML/ztmcm/m/it/12 ; \OMS/ztmcm/m/n/12 ^^@\OT1/ztmcm/m/n/12 2\OML/ztmcm/m/it/12 :\OT1/ztmcm/m/n/12 7\OML/ztmcm/m/it/12 ; \OT1/ztmcm/m/n/12 0\OML/ztmcm/m/it/12 :\OT1/ztmcm/m/n/12 9]$
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1251--1251
 []\OT1/ptm/m/n/12 Table 4.22: |C-simulation out-put for \OT1/zi4/m/n/12 softmax \OT1/ptm/m/n/12 with in-put
  []
 
-[44] [45] [46]
-Overfull \hbox (0.31346pt too wide) in paragraph at lines 1434--1448
+[43] [44] [45]
+Overfull \hbox (0.31346pt too wide) in paragraph at lines 1423--1437
 []\OT1/ptm/m/n/12 The third ker-nel it-er-a-tion (\OT1/zi4/m/n/12 forward[]fyp[]kvint8.cpp\OT1/ptm/m/n/12 ) in-tro-duces two pragma mod-
  []
 
-[47] [48]
+[46] [47] [48]
 
-LaTeX Warning: Reference `subsec:attn_csim' on page 1 undefined on input line 1577.
+LaTeX Warning: Reference `subsec:attn_csim' on page 1 undefined on input line 1566.
 
 [49]
-Overfull \hbox (30.43396pt too wide) in paragraph at lines 1613--1621
+Overfull \hbox (30.43396pt too wide) in paragraph at lines 1602--1610
 []\OT1/ptm/m/n/12 The lo-cal buffers \OT1/zi4/m/n/12 q[]buf\OT1/ptm/m/n/12 , \OT1/zi4/m/n/12 att[]buf\OT1/ptm/m/n/12 , and \OT1/zi4/m/n/12 xb[]buf \OT1/ptm/m/n/12 are each par-ti-tioned with \OT1/zi4/m/n/12 ARRAY[]PARTITION
  []
 
-[50] [51]
-Underfull \hbox (badness 10000) in paragraph at lines 1714--1714
+[50]
+Underfull \hbox (badness 10000) in paragraph at lines 1701--1701
 []\OT1/ptm/m/n/12 Table 4.30: |C-simulation out-put for the base-line float at-ten-tion ker-nel
  []
 
-
-Overfull \hbox (25.71663pt too wide) in paragraph at lines 1730--1737
+[51]
+Overfull \hbox (25.71663pt too wide) in paragraph at lines 1717--1724
 []\OT1/ptm/m/n/12 The base-line at-ten-tion block was syn-the-sised in iso-la-tion on the \OT1/zi4/m/n/12 xczu9eg-ffvb1156-2-e
  []
 
-[52]
-Underfull \hbox (badness 1087) in paragraph at lines 1767--1767
+
+Underfull \hbox (badness 1087) in paragraph at lines 1754--1754
 \OT1/ptm/m/n/12 min-i-mum cor-re-sponds to \OT1/zi4/m/n/12 pos=0 \OT1/ptm/m/n/12 (one at-tended po-si-tion) and the max-i-mum to
  []
 
-[53]
-Overfull \hbox (5.34052pt too wide) in paragraph at lines 1856--1871
+[52] [53]
+Overfull \hbox (5.34052pt too wide) in paragraph at lines 1844--1859
 []\OT1/ptm/m/n/12 The sec-ond it-er-a-tion of the at-ten-tion mech-a-nism, im-ple-mented in \OT1/zi4/m/n/12 forward[]fyp.cpp\OT1/ptm/m/n/12 ,
  []
 
-[54] [55]
-Overfull \hbox (33.76175pt too wide) in paragraph at lines 1931--1939
+[54]
+Overfull \hbox (33.76175pt too wide) in paragraph at lines 1919--1930
 \OT1/ptm/m/n/12 where $[]$ is the INT8 quan-tised value el-e-ment. The ac-cu-mu-la-tion tar-get \OT1/zi4/m/n/12 xb[]accum[head[]size]
  []
 
-[56] [57]
-Underfull \hbox (badness 3118) in paragraph at lines 2082--2082
+[55] [56] [57]
+Underfull \hbox (badness 3118) in paragraph at lines 2069--2069
 \OT1/ptm/m/n/12 at-ten-tion block at $\OT1/ztmcm/m/n/12 150$$[]$\OT1/ptm/m/n/12 , for one head at max-i-mum con-text (\OT1/zi4/m/n/12 pos=256\OT1/ptm/m/n/12 ,
  []
 
 [58] [59]
-Overfull \hbox (2.61717pt too wide) in paragraph at lines 2149--2158
+Overfull \hbox (2.61717pt too wide) in paragraph at lines 2136--2145
 []\OT1/ptm/m/n/12 The func-tion sig-na-ture gains two new AXI ar-gu-ments. \OT1/zi4/m/n/12 key[]cache \OT1/ptm/m/n/12 and \OT1/zi4/m/n/12 value[]cache
  []
 
 [60] [61]
-Underfull \hbox (badness 2662) in paragraph at lines 2295--2295
+Underfull \hbox (badness 2662) in paragraph at lines 2281--2281
 []\OT1/ptm/m/n/12 Table 4.39: |Re-source util-i-sa-tion across all three at-ten-tion it-er-a-tions on the
  []
 
 [62] [63] [64]
-Underfull \hbox (badness 1565) in paragraph at lines 2439--2439
+Underfull \hbox (badness 1565) in paragraph at lines 2424--2424
 []\OT1/ptm/m/n/12 Table 4.41: |AXI mas-ter bun-dle as-sign-ment in the pro-to-type \OT1/zi4/m/n/12 forward \OT1/ptm/m/n/12 ker-nel
  []
 
 
-Overfull \hbox (3.15749pt too wide) in paragraph at lines 2443--2450
+Overfull \hbox (3.15749pt too wide) in paragraph at lines 2428--2435
 []\OT1/ptm/m/n/12 Sharing \OT1/zi4/m/n/12 key[]cache \OT1/ptm/m/n/12 and \OT1/zi4/m/n/12 value[]cache \OT1/ptm/m/n/12 on the same bun-dle as the trans-former weights
  []
 
-[65]
-Overfull \hbox (13.23587pt too wide) in paragraph at lines 2467--2479
+
+Overfull \hbox (13.23587pt too wide) in paragraph at lines 2452--2464
 []\OT1/ptm/m/n/12 All in-ter-me-di-ate ac-ti-va-tion buffers are de-clared as \OT1/zi4/m/n/12 static \OT1/ptm/m/n/12 lo-cal ar-rays in-side \OT1/zi4/m/n/12 forward\OT1/ptm/m/n/12 ,
  []
 
-
-Overfull \hbox (8.63275pt too wide) in paragraph at lines 2483--2492
+[65]
+Overfull \hbox (8.63275pt too wide) in paragraph at lines 2468--2477
 \OT1/ptm/m/n/12 layer loop be-gins, the to-ken em-bed-ding is loaded from the float \OT1/zi4/m/n/12 token[]embedding[]table
  []
 
 
-Overfull \hbox (33.76463pt too wide) in paragraph at lines 2483--2492
+Overfull \hbox (33.76463pt too wide) in paragraph at lines 2468--2477
 \OT1/ptm/m/n/12 field of the trans-former weights struct via a sin-gle \OT1/zi4/m/n/12 memcpy \OT1/ptm/m/n/12 call, copy-ing \OT1/zi4/m/n/12 dim$\OMS/ztmcm/m/n/12 ^^B$\OT1/zi4/m/n/12 sizeof(float)
  []
 
@@ -1515,7 +1525,7 @@ LaTeX Warning: There were undefined references.
 LaTeX Warning: There were multiply-defined labels.
 
 Package rerunfilecheck Info: File `FYP.out' has not changed.
-(rerunfilecheck)             Checksum: 654E6868C4AC8ACF778C203B03666819;14738.
+(rerunfilecheck)             Checksum: 95A200AD136FA567ED5AA81E57EBDE96;14738.
 
 Package biblatex Warning: Please (re)run Biber on the file:
 (biblatex)                FYP
@@ -1526,18 +1536,18 @@ Package logreq Info: Writing requests to 'FYP.run.xml'.
 
  ) 
 Here is how much of TeX's memory you used:
- 30185 strings out of 467533
- 579735 string characters out of 5423669
- 1665699 words of memory out of 5000000
- 58246 multiletter control sequences out of 15000+600000
- 664297 words of font info for 117 fonts, out of 8000000 for 9000
+ 30209 strings out of 467533
+ 580033 string characters out of 5423669
+ 1683112 words of memory out of 5000000
+ 58261 multiletter control sequences out of 15000+600000
+ 664804 words of font info for 118 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 63i,13n,97p,1266b,2796s stack positions out of 10000i,1000n,20000p,200000b,200000s
-<c:/texlive/2025/texmf-dist/fonts/type1/public/inconsolata/Inconsolata-zi4b.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/inconsolata/Inconsolata-zi4r.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/symbols/msam10.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/rsfs/rsfs10.pfb><c:/texlive/2025/texmf-dist/fonts/type1/urw/symbol/usyr.pfb><c:/texlive/2025/texmf-dist/fonts/type1/urw/symbol/usyr.pfb><c:/texlive/2025/texmf-dist/fonts/type1/urw/times/utmb8a.pfb><c:/texlive/2025/texmf-dist/fonts/type1/urw/times/utmr8a.pfb><c:/texlive/2025/texmf-dist/fonts/type1/urw/times/utmri8a.pfb>
-Output written on FYP.pdf (91 pages, 704011 bytes).
+ 63i,13n,97p,1266b,2808s stack positions out of 10000i,1000n,20000p,200000b,200000s
+<c:/texlive/2025/texmf-dist/fonts/type1/public/inconsolata/Inconsolata-zi4b.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/inconsolata/Inconsolata-zi4r.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb><c:/texlive/2025/texmf-dist/fonts/type1/public/rsfs/rsfs10.pfb><c:/texlive/2025/texmf-dist/fonts/type1/urw/symbol/usyr.pfb><c:/texlive/2025/texmf-dist/fonts/type1/urw/symbol/usyr.pfb><c:/texlive/2025/texmf-dist/fonts/type1/urw/times/utmb8a.pfb><c:/texlive/2025/texmf-dist/fonts/type1/urw/times/utmr8a.pfb><c:/texlive/2025/texmf-dist/fonts/type1/urw/times/utmri8a.pfb>
+Output written on FYP.pdf (91 pages, 696332 bytes).
 PDF statistics:
- 1522 PDF objects out of 1728 (max. 8388607)
- 1378 compressed objects within 14 object streams
- 448 named destinations out of 1000 (max. 500000)
+ 1527 PDF objects out of 1728 (max. 8388607)
+ 1385 compressed objects within 14 object streams
+ 457 named destinations out of 1000 (max. 500000)
  725 words of extra memory for PDF output out of 10000 (max. 10000000)
 
