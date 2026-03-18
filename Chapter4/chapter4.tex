@@ -1545,6 +1545,206 @@ complexity must be validated through synthesis rather than assumed to
 be beneficial.
 
 % =============================================================================
+\subsection{Iteration 4: I-BERT Integer Softmax}
+\label{subsec:softmax_ibert}
+% =============================================================================
+
+The timing violation in iteration~3 motivated a different approach to the
+reduction problem. Rather than tuning the unroll factor on the floating-point
+accumulator, iteration~4 replaces the floating-point softmax entirely with an
+integer-arithmetic variant, \texttt{softmax\_ibert}, which avoids both the
+reduction dependency and the seven-DSP \texttt{fexp} IP core.
+
+\subsubsection{Implementation}
+\label{subsubsec:softmax_ibert_impl}
+
+The function signature of \texttt{softmax\_ibert<MAX\_SIZE>} differs from the
+legacy \texttt{softmax<MAXSIZE>} in two ways. The input is \texttt{int32\_t
+*logits} rather than \texttt{float *x}, since scores are kept as integers
+throughout the attention pipeline in iteration~4. The output is a separate
+\texttt{int8\_t *probs} buffer rather than an in-place float array, with
+probabilities encoded in $[0, 127]$ where $127$ represents $1.0$. A
+\texttt{float scale\_factor} parameter carries the remaining scale factors
+deferred from the \texttt{iterate} loop, specifically the product of the
+per-head Q scale and the attention scaling factor $1/\sqrt{\texttt{head\_size}}$.
+
+The exponential function is evaluated through a 128-entry lookup table
+\texttt{exp\_lut}, defined as a \texttt{static const int8\_t} array in the
+header. Each entry stores $\text{round}(127 \times e^{-\text{index}})$, so
+the table encodes $127, 47, 17, 6, 2, 1, 0, \ldots$ for indices $0$ through
+$127$. The function proceeds in three phases. First, the maximum of the
+\texttt{logits[0..size-1]} values is found using an \texttt{UNROLL}ed loop
+over \texttt{MAX\_SIZE} elements with an active-element guard. Second, each
+shifted score is scaled by \texttt{scale\_factor}, truncated to an integer,
+clamped to $[-127, 0]$, and mapped through the LUT to produce an \texttt{int8}
+exponential result stored in a fully partitioned local array
+\texttt{exp\_results[MAX\_SIZE]}. Third, the results are normalised using the
+formula $p_i = (e_i \times 127) / \text{sum\_exp}$, where the multiplication
+precedes the integer division to preserve precision.
+
+All three loops have \texttt{\#pragma HLS UNROLL} with no factor specified,
+giving complete unrolling over \texttt{MAX\_SIZE = 16} elements. Unlike the
+reduction in the legacy \texttt{sum} loop, the accumulation of \texttt{sum\_exp}
+here operates on \texttt{int8} values rather than \texttt{float} values. An
+\texttt{int8} addition has no multi-cycle pipeline latency in the DSP48E2 path,
+so the loop-carried dependency resolves within a single clock cycle and II\,=\,1
+is achievable. No \texttt{ARRAY\_PARTITION} is applied to \texttt{exp\_lut}
+itself in the current implementation; the commented-out directive in the source
+reflects a future optimisation opportunity.
+
+\subsubsection{C-Simulation Results}
+\label{subsubsec:softmax_ibert_csim}
+
+The testbench supplied eight \texttt{int32} logit values
+$\{10, -5, 18, 25, -3, 21, -2, 9\}$ with \texttt{scale\_factor\,=\,0.2f} and
+\texttt{size\,=\,8}. With \texttt{max\_val\,=\,25}, the shifted and scaled
+values map to LUT indices as follows. Indices 3 and 5 have shifted scores of 0
+and $-0.8$ respectively, both truncating to index 0, giving
+\texttt{exp\_lut[0]\,=\,127}. Index 2 maps to $-1.4$, truncating to index 1,
+giving $47$. Index 0 and index 7 both map to index 3, giving $6$. Indices 4
+and 6 map to index 5, giving $1$. Index 1 maps to index 6, giving $0$.
+The \texttt{sum\_exp} is therefore $127+47+6+127+1+1+0+6 = 315$.
+
+Table~\ref{tab:softmax_ibert_csim} shows the output probabilities from both the
+kernel and the software reference.
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{rrrr}
+    \toprule
+    Index & HW prob & SW prob & Abs error \\
+    \midrule
+    0 &  2 &  2 & 0 \\
+    1 &  0 &  0 & 0 \\
+    2 & 18 & 18 & 0 \\
+    3 & 51 & 51 & 0 \\
+    4 &  0 &  0 & 0 \\
+    5 & 51 & 51 & 0 \\
+    6 &  0 &  0 & 0 \\
+    7 &  2 &  2 & 0 \\
+    \bottomrule
+  \end{tabular}
+  \caption{C-simulation output for \texttt{softmax\_ibert} with
+           \texttt{logits} $= \{10, -5, 18, 25, -3, 21, -2, 9\}$,
+           \texttt{scale\_factor\,=\,0.2f}, and \texttt{size\,=\,8}.
+           All eight output probabilities match the software reference.
+           The sum of active probabilities is $124$, falling short of
+           $127$ due to integer division in the normalisation step.}
+  \label{tab:softmax_ibert_csim}
+\end{table}
+
+All eight probabilities match the software reference with zero absolute error.
+The sum of $124$ rather than $127$ is expected. Integer division in the
+formula $p_i = (e_i \times 127) / \text{sum\_exp}$ truncates the fractional
+part of each quotient, so the total probability mass is not conserved to the
+last integer unit. This is a known property of integer-domain normalisation
+and not an error in the implementation. The csim run completed with zero
+errors.
+
+\subsubsection{HLS Synthesis Results}
+\label{subsubsec:softmax_ibert_csyn}
+
+Tables~\ref{tab:softmax_ibert_timing} and \ref{tab:softmax_ibert_top_latency}
+present the timing and top-level latency summary. Table~\ref{tab:softmax_ibert_resources}
+gives the resource utilisation and Table~\ref{tab:softmax_ibert_latency} the
+per-phase latency breakdown.
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{lrrr}
+    \toprule
+    Clock & Target (ns) & Estimated (ns) & Uncertainty (ns) \\
+    \midrule
+    ap\_clk & 6.667 & 4.867 & 1.800 \\
+    \bottomrule
+  \end{tabular}
+  \caption{Timing summary for \texttt{softmax\_ibert\_top} at the
+           \SI{150}{\mega\hertz} target clock.}
+  \label{tab:softmax_ibert_timing}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{rrrrrrl}
+    \toprule
+    \multicolumn{2}{c}{Latency (cycles)} &
+    \multicolumn{2}{c}{Latency (absolute)} &
+    \multicolumn{2}{c}{Interval (cycles)} & Pipeline \\
+    min & max & min & max & min & max & type \\
+    \midrule
+    83 & 531 & \SI{0.553}{\micro\second} & \SI{3.540}{\micro\second} & 84 & 532 & no \\
+    \bottomrule
+  \end{tabular}
+  \caption{Top-level latency summary for \texttt{softmax\_ibert\_top} at
+           \SI{150}{\mega\hertz}.}
+  \label{tab:softmax_ibert_top_latency}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{lrrrr}
+    \toprule
+    Resource & Used (total) & Used (core only) & Available & Utilisation (\%) \\
+    \midrule
+    LUT  & 12{,}706 & 8{,}588 & 274{,}080 & 4 \\
+    FF   &  8{,}254 & 5{,}171 & 548{,}160 & $<$1 \\
+    BRAM &        4 &       0 &   1{,}824 & $<$1 \\
+    DSP  &        3 &       3 &   2{,}520 & $<$1 \\
+    \bottomrule
+  \end{tabular}
+  \caption{Resource utilisation of \texttt{softmax\_ibert} synthesised at
+           $\texttt{MAX\_SIZE} = 16$ on the ZCU102.}
+  \label{tab:softmax_ibert_resources}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{lrr}
+    \toprule
+    Module & Latency min (cycles) & Latency max (cycles) \\
+    \midrule
+    \texttt{softmax\_ibert\_16\_s} (core) & 37 & 485 \\
+    AXI wrapper overhead                  & 46 &  46 \\
+    \texttt{softmax\_ibert\_top} (total)  & 83 & 531 \\
+    \bottomrule
+  \end{tabular}
+  \caption{Latency breakdown of \texttt{softmax\_ibert} ($\texttt{MAX\_SIZE} = 16$)
+           at \SI{150}{\mega\hertz}. All loops are fully unrolled so HLS reports no
+           per-loop trip count; the breakdown is therefore given at the submodule
+           level. AXI wrapper overhead covers the input and output burst transfers.}
+  \label{tab:softmax_ibert_latency}
+\end{table}
+
+The defining result of this synthesis is the DSP count of 3, all from the
+\texttt{softmax\_ibert} core. Iterations~1 and~3 each used 192 DSPs, entirely
+dominated by the 16 parallel \texttt{fexp\_32ns\_32ns\_32\_9\_full\_dsp\_1} IP
+core instances. Replacing the floating-point exponential with the 128-entry
+\texttt{exp\_lut} ROM eliminates all of those instances. The 3 DSPs that remain
+correspond to the single \texttt{fmul} unit used to compute \texttt{val\_scaled\_f
+= (float)val\_shifted * scale\_factor}, the one floating-point multiplication
+that cannot be avoided since \texttt{scale\_factor} is a runtime float argument.
+All other arithmetic in \texttt{softmax\_ibert} is performed in integer or
+fixed-point, mapping entirely to LUT fabric.
+
+The LUT count of 8{,}588 core LUTs is a 78\% reduction from iteration~1
+(38{,}979 core LUTs). The integer operations — the max-search comparators, the
+LUT indexing arithmetic (which the Expression table shows as shift-left and
+add operations), the integer accumulation of \texttt{sum\_exp}, and the
+integer division in the normalisation step — all map to LUT-based logic rather
+than DSP-backed floating-point units.
+
+The variable latency of 83 to 531 cycles persists because the runtime
+\texttt{size} parameter still governs how many elements are active. Since all
+loops are fully unrolled over \texttt{MAX\_SIZE = 16}, HLS instantiates the
+full 16-element datapath unconditionally but guards inactive elements with the
+\texttt{if (i < size)} check, which adds multiplexer logic around each element.
+The minimum of 83 cycles corresponds to \texttt{size\,=\,1} and the maximum of
+531 cycles to \texttt{size\,=\,16}. The timing meets the
+\SI{6.667}{\nano\second} constraint, with an estimated path of
+\SI{4.867}{\nano\second} plus \SI{1.800}{\nano\second} uncertainty exhausting
+the budget with zero slack, consistent with all preceding primitives.
+
+% =============================================================================
 \section{Grouped-Query Attention}
 \label{sec:attn_impl}
 % =============================================================================
@@ -2342,9 +2542,170 @@ critical path of \SI{5.084}{\nano\second} against the
 \SI{4.867}{\nano\second} budget.
 
 % =============================================================================
-\section{SwiGLU Feed-Forward Network}
-\label{sec:ffn_impl}
+\subsection{Iteration 4: I-BERT Integer Softmax Attention}
+\label{subsec:attn_ibert}
 % =============================================================================
+
+Iteration~4 resolves the timing violation from iteration~3 by replacing the
+floating-point \texttt{softmax<16>} with the integer \texttt{softmax\_ibert<16>}
+described in \cref{subsec:softmax_ibert}. This change also requires two
+structural modifications to the \texttt{iterate} and \texttt{acc} loops to
+keep the attention score pipeline consistent with integer types throughout.
+
+\subsubsection{Implementation}
+\label{subsubsec:attn_ibert_impl}
+
+The \texttt{att} buffer type changes from \texttt{float[]} to
+\texttt{int32\_t[]}. In \texttt{iterate}, the full dequantisation step of
+iteration~3, which multiplied \texttt{score\_int} by all three scale factors
+before storing, is split into two parts. Only the K-scale partial result
+\texttt{(int32\_t)((float)score\_int * k\_scale)} is stored in \texttt{att},
+deferring the Q-scale and attention-scale factors to the softmax call. After
+the position loop, the deferred factors are combined as \texttt{remaining\_scale
+= q\_scale\_val * (1.0f / sqrtf(head\_size))} and passed to
+\texttt{softmax\_ibert<16>}, which returns \texttt{int8\_t att\_probs[16]}
+with probabilities in $[0, 127]$.
+
+In the \texttt{acc} loop, \texttt{prob\_int8 = att\_probs[t]} replaces the
+float probability from iteration~3. The combined scale becomes
+\texttt{(1.0f/127.0f) * v\_scale}, where the factor $1/127$ dequantises the
+integer probability back to the $[0, 1]$ range before the weighted value
+accumulation. The outer position loop retains \texttt{\#pragma HLS PIPELINE}
+and \texttt{\#pragma HLS UNROLL factor=2}, and the inner element loop retains
+\texttt{\#pragma HLS UNROLL factor=16}, unchanged from iteration~3.
+
+\subsubsection{C-Simulation Results}
+\label{subsubsec:attn_ibert_csim}
+
+Table~\ref{tab:attn_csim_all} from iteration~3 is extended in
+Table~\ref{tab:attn_csim_all_iter4} to include the iteration~4 outputs for
+the same input at \texttt{pos\,=\,3}.
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{rrrrr}
+    \toprule
+    Index & Baseline \texttt{xb} & Iter.~2 \texttt{xb} & Iter.~3 \texttt{xb} & Iter.~4 \texttt{xb} \\
+    \midrule
+    0 & 0.343754 & 0.337795 & 0.343771 & 0.341732 \\
+    1 & 0.313754 & 0.307415 & 0.312900 & 0.311557 \\
+    2 & 0.283754 & 0.279273 & 0.284313 & 0.283688 \\
+    3 & 0.253754 & 0.248893 & 0.253442 & 0.253512 \\
+    4 & 0.213827 & 0.209449 & 0.213733 & 0.224567 \\
+    5 & 0.183827 & 0.179730 & 0.183540 & 0.195083 \\
+    6 & 0.153827 & 0.150702 & 0.154046 & 0.166292 \\
+    7 & 0.123827 & 0.120983 & 0.123853 & 0.136808 \\
+    \bottomrule
+  \end{tabular}
+  \caption{C-simulation \texttt{xb} outputs for all four attention iterations
+           at \texttt{pos\,=\,3}, \texttt{loff\,=\,0}. Iteration~4 introduces
+           additional approximation error relative to iteration~3 from the
+           coarse LUT exponential, but all four csim runs passed with zero
+           errors against their respective software references.}
+  \label{tab:attn_csim_all_iter4}
+\end{table}
+
+The csim run completed with zero errors. Comparing the iteration~4 outputs
+to the three preceding iterations, the values lie between iteration~2 and
+the float baseline rather than close to iteration~3. For example, index~0
+gives $0.341732$ in iteration~4 versus $0.343754$ (baseline), $0.337795$
+(iteration~2), and $0.343771$ (iteration~3). The LUT exponential maps score
+differences to coarse integer indices, concentrating the probability mass on
+the leading positions differently from the true softmax, which is why the
+output distribution differs visibly from iteration~3 even though the
+underlying attention scores originate from the same inputs. The absolute
+difference between iteration~4 and the float baseline is larger for the
+lower-ranked elements (indices 4--7 diverge more noticeably), because those
+positions have smaller exponent arguments that the LUT resolution can
+represent less accurately. At full TinyLlama scale (\texttt{head\_size\,=\,64}),
+the per-head scores span a wider integer range, giving the
+\texttt{scale\_factor} more dynamic range to distribute across LUT indices.
+
+\subsubsection{HLS Synthesis Results}
+\label{subsec:attn_ibert_csyn}
+
+Tables~\ref{tab:attn_all_resources_iter4} and \ref{tab:attn_kvint8_iter4_latency}
+extend the resource and latency comparisons to include iteration~4.
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{lrrrr}
+    \toprule
+    & \multicolumn{2}{c}{Iteration 3} & \multicolumn{2}{c}{Iteration 4} \\
+    \cmidrule(lr){2-3} \cmidrule(lr){4-5}
+    Resource & Total & Core & Total & Core \\
+    \midrule
+    LUT  & 72{,}096 & 70{,}514 & 33{,}410 & 31{,}828 \\
+    FF   & 35{,}036 & 33{,}947 & 16{,}017 & 14{,}928 \\
+    BRAM & 22       & 18       & 22       & 18 \\
+    DSP  & 194      & 194      & 16       & 16 \\
+    \bottomrule
+  \end{tabular}
+  \caption{Resource comparison between iteration~3 and iteration~4 attention
+           implementations on the ZCU102. Replacing \texttt{softmax<16>}
+           with \texttt{softmax\_ibert<16>} reduces DSP usage from 194 to 16
+           and LUT usage from 70{,}514 to 31{,}828 core LUTs. BRAM usage
+           is unchanged at 18 core blocks.}
+  \label{tab:attn_all_resources_iter4}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{lrr}
+    \toprule
+    Module & Latency min (cycles) & Latency max (cycles) \\
+    \midrule
+    Q quantisation (VITIS\_LOOP\_73\_2)  & 10  &  10 \\
+    \texttt{iterate}                     & 28  & 103 \\
+    \texttt{softmax\_ibert}              & 37  & 485 \\
+    \texttt{acc}                         & 43  & 127 \\
+    \texttt{xb} write (VITIS\_LOOP\_126\_6) &  6  &   6 \\
+    \texttt{multihead\_attention} (total, 2 heads) & 178 & 1{,}536 \\
+    \texttt{attn\_softmaxint8\_top} (total) & 208 & 1{,}566 \\
+    \bottomrule
+  \end{tabular}
+  \caption{Per-module latency breakdown for the iteration~4 attention
+           kernel at \SI{150}{\mega\hertz}. The minimum corresponds to
+           \texttt{pos\,=\,0} (one attended position) and the maximum
+           to \texttt{pos\,=\,15} (\texttt{MAX\_SIZE\,=\,16}).}
+  \label{tab:attn_kvint8_iter4_latency}
+\end{table}
+
+The headline result of iteration~4 is the DSP reduction from 194 to 16. In
+iteration~3, 192 of the 194 DSPs came from the 16 parallel
+\texttt{fexp\_32ns\_32ns\_32\_9\_full\_dsp\_1} instances inside the unrolled
+\texttt{softmax<16>} function. Replacing those with \texttt{softmax\_ibert}
+eliminates all of them. The 16 DSPs that remain are accounted for by the
+per-head floating-point arithmetic that cannot be avoided in the current design:
+four \texttt{fmul\_32ns\_32ns\_32\_4\_max\_dsp\_1} instances (3 DSPs each) for
+\texttt{remaining\_scale}, \texttt{combined\_scale}, and the
+\texttt{val\_scaled\_f} multiplication inside \texttt{softmax\_ibert}, plus
+2 DSPs each in the \texttt{iterate} and \texttt{acc} pipeline modules for their
+respective multiply operations.
+
+The LUT reduction from 70{,}514 to 31{,}828 core LUTs is similarly large,
+a 55\% reduction. This reflects the removal of the floating-point exponential
+hardware, which in iterations~1 and~3 dominated the LUT count through the
+combinational logic required for each \texttt{fexp} pipeline stage.
+
+Timing meets the \SI{6.667}{\nano\second} constraint, with an estimated path
+of \SI{4.867}{\nano\second} plus \SI{1.800}{\nano\second} uncertainty
+exhausting the budget with zero slack. This resolves the
+\SI{-0.217}{\nano\second} violation present in iteration~3, which was
+caused by the wide adder reduction tree from the \texttt{UNROLL factor=16}
+on the floating-point \texttt{sum} loop. The integer arithmetic inside
+\texttt{softmax\_ibert} avoids this entirely since integer adders have no
+multi-cycle pipeline latency.
+
+The \texttt{iterate} module latency of 28--103 cycles reflects the position-
+dependent trip count, and the \texttt{softmax\_ibert} latency of 37--485 cycles
+propagates the same variability from the runtime \texttt{size} parameter. The
+worst-case total of 1{,}566 cycles (10.441\,µs per two-head attention block at
+\texttt{pos\,=\,15}) is larger than iteration~3's worst case due to the longer
+tail of \texttt{softmax\_ibert} at maximum size. The BRAM count of 18 core
+blocks is unchanged from iteration~3, confirming that the on-chip memory
+layout for the \texttt{att\_buf}, \texttt{xb\_accum}, and working arrays is
+unaffected by the softmax replacement.
 
 % The FFN is commented out in the prototype kernel. This section will be
 % written once the full TinyLlama kernel files (FFN_update2/update3) are
@@ -2355,14 +2716,209 @@ critical path of \SI{5.084}{\nano\second} against the
 % - UNROLL factor=16 on gate loop
 % - hb and hb2 buffer partitioning
 
+% =============================================================================
+\section{SwiGLU Feed-Forward Network}
+\label{sec:ffn_impl}
+% =============================================================================
+
 \subsection{Implementation}
 \label{subsec:ffn_impl_detail}
+
+The SwiGLU FFN block is first enabled in the fifth kernel iteration
+(\texttt{FFN\_baseline.cpp}). In all preceding iterations the FFN was
+disabled and the kernel terminated after the attention residual addition.
+The implementation follows the seven-step sequence: an FFN RMSNorm, quantisation of the normalised
+activation, two parallel matmul projections using weights \texttt{w1} and
+\texttt{w3}, the SwiGLU element-wise gating, quantisation of the gated
+activation, and a final down-projection using weight \texttt{w2}.
+
+After the FFN RMSNorm, the activation
+\texttt{xb} is quantised into \texttt{xq} using \texttt{quantize<dim>}.
+The gate projection \texttt{matmul<dim, hidden\_dim>} and the up projection
+\texttt{matmul<dim, hidden\_dim>} are called sequentially using the same
+quantised input \texttt{xq}, writing their outputs into \texttt{hb} and
+\texttt{hb2} respectively. Because both calls share identical template
+parameters, HLS synthesises a single \texttt{matmul\_8\_32\_s} instance
+that is reused for both calls in sequence rather than duplicated.
+
+The \texttt{swi\_glu} loop applies
+the SiLU activation to the gate projection output and multiplies the
+result element-wise by the up projection output. For each element
+\texttt{hb[i]}, the SiLU function computes \texttt{hb[i] *= 1.0f /
+(1.0f + expf(-hb[i]))}, then the gate product \texttt{hb[i] *= hb2[i]}
+is applied and the result is written to a local buffer \texttt{hb\_out}
+before being copied back to \texttt{hb}. The loop has \texttt{\#pragma HLS
+UNROLL factor=4} and \texttt{\#pragma HLS PIPELINE}, meaning four elements
+are processed in parallel. Because the SiLU function requires
+\texttt{expf()}, each of the four parallel lanes instantiates a separate
+\texttt{fexp} IP core, giving four floating-point exponential units in the
+synthesised datapath.
+
+After the gate, \texttt{hb} is
+quantised into \texttt{hq} using \texttt{quantize<hidden\_dim>} and
+the down projection \texttt{matmul<hidden\_dim, dim>} produces the FFN
+output \texttt{xb}. This matmul has different template parameters from
+the gate and up projections ($N = 32$, $D = 8$ versus $N = 8$, $D = 32$),
+so HLS synthesises it as a separate \texttt{matmul\_32\_8\_s} instance.
 
 \subsection{C-Simulation Results}
 \label{subsec:ffn_csim}
 
+The testbench supplied the same incremental input vector
+$\mathbf{x} = [0.1, 0.2, \ldots, 0.8]$ used in all previous testbenches,
+with FFN RMSNorm weights set to $1.0$ and small fixed weight matrices for
+\texttt{w1}, \texttt{w2}, and \texttt{w3}. The hardware kernel output was
+compared against a software reference running the same seven-step sequence
+in full floating-point. Table~\ref{tab:ffn_csim} shows the results.
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{rrrr}
+    \toprule
+    Index & HW \texttt{xb} & SW reference & Abs error \\
+    \midrule
+    0 &  0.001142 &  0.001125 & $1.70 \times 10^{-5}$ \\
+    1 & -0.000340 & -0.000340 & $4.09 \times 10^{-7}$ \\
+    2 & -0.002035 & -0.002002 & $3.33 \times 10^{-5}$ \\
+    3 &  0.004489 &  0.004458 & $3.10 \times 10^{-5}$ \\
+    4 & -0.000618 & -0.000633 & $1.44 \times 10^{-5}$ \\
+    5 & -0.001165 & -0.001163 & $2.34 \times 10^{-6}$ \\
+    6 &  0.001142 &  0.001125 & $1.70 \times 10^{-5}$ \\
+    7 & -0.000340 & -0.000340 & $4.09 \times 10^{-7}$ \\
+    \bottomrule
+  \end{tabular}
+  \caption{C-simulation output for \texttt{ffn\_baseline} with input
+           $\mathbf{x} = [0.1, 0.2, \ldots, 0.8]$ and unit RMSNorm
+           weights. All eight elements agree with the software reference
+           within the INT8 quantisation tolerance.}
+  \label{tab:ffn_csim}
+\end{table}
+
+All eight elements agree with the software reference with zero failures
+against a tolerance of $0.05$. The absolute errors are all below
+$3.5 \times 10^{-5}$, considerably smaller than the tolerance, and
+arise from the two INT8 quantisation steps in the pipeline. Rounding
+error in \texttt{xq} propagates through both the gate and up projections,
+and rounding error in \texttt{hq} propagates through the down projection.
+The symmetry in the output, where elements at indices 0 and 6 and elements
+at indices 1 and 7 share identical values, reflects the periodic structure
+of the test weight matrices. The csim run completed with zero errors.
+
 \subsection{HLS Synthesis Results}
 \label{subsec:ffn_csyn}
+
+Tables~\ref{tab:ffn_timing} and \ref{tab:ffn_top_latency} present the
+timing and top-level latency summary. Table~\ref{tab:ffn_resources} gives
+the resource utilisation and Table~\ref{tab:ffn_latency} the per-module
+latency breakdown.
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{lrrr}
+    \toprule
+    Clock & Target (ns) & Estimated (ns) & Uncertainty (ns) \\
+    \midrule
+    ap\_clk & 6.667 & 4.867 & 1.800 \\
+    \bottomrule
+  \end{tabular}
+  \caption{Timing summary for \texttt{ffn\_baseline\_top} at the
+           \SI{150}{\mega\hertz} target clock.}
+  \label{tab:ffn_timing}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{rrrrrrl}
+    \toprule
+    \multicolumn{2}{c}{Latency (cycles)} &
+    \multicolumn{2}{c}{Latency (absolute)} &
+    \multicolumn{2}{c}{Interval (cycles)} & Pipeline \\
+    min & max & min & max & min & max & type \\
+    \midrule
+    1{,}487 & 1{,}487 & \SI{9.914}{\micro\second} & \SI{9.914}{\micro\second} & 1{,}488 & 1{,}488 & no \\
+    \bottomrule
+  \end{tabular}
+  \caption{Top-level latency summary for \texttt{ffn\_baseline\_top} at
+           \SI{150}{\mega\hertz}.}
+  \label{tab:ffn_top_latency}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{lrrrr}
+    \toprule
+    Resource & Used (total) & Used (core only) & Available & Utilisation (\%) \\
+    \midrule
+    LUT  & 36{,}686 & 35{,}526 & 274{,}080 & 13 \\
+    FF   & 28{,}557 & 27{,}533 & 548{,}160 &  5 \\
+    BRAM &       24 &       16 &   1{,}824 &  1 \\
+    DSP  &       85 &       85 &   2{,}520 &  3 \\
+    \bottomrule
+  \end{tabular}
+  \caption{Resource utilisation of \texttt{ffn\_baseline} synthesised at
+           prototype dimensions ($\texttt{dim} = 8$, $\texttt{hidden\_dim} = 32$)
+           on the ZCU102. Core-only figures exclude the two AXI master
+           adapters (\texttt{gmem0\_m\_axi} and \texttt{gmem1\_m\_axi}).}
+  \label{tab:ffn_resources}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{lrr}
+    \toprule
+    Stage & Module & Latency (cycles) \\
+    \midrule
+    FFN RMSNorm           & \texttt{rmsnorm\_8\_s}           & 132 \\
+    Quantise \texttt{xb}  & \texttt{Pipeline\_main\_loop}    &  42 \\
+    Load buffers          & \texttt{Pipeline\_2}, \texttt{Pipeline\_3} & 14 \\
+    Gate projection (w1)  & \texttt{matmul\_8\_32\_s}        & 355 \\
+    Up projection (w3)    & \texttt{matmul\_8\_32\_s} (reuse) & 355 \\
+    SwiGLU + copy         & \texttt{Pipeline\_swi\_glu}, \texttt{Pipeline\_5} & 78 \\
+    Quantise \texttt{hb}  & \texttt{Pipeline\_main\_loop1}, \texttt{Pipeline\_7}, \texttt{Pipeline\_8} & 92 \\
+    Down projection (w2)  & \texttt{matmul\_32\_8\_s}        & 386 \\
+    \bottomrule
+  \end{tabular}
+  \caption{Per-stage latency breakdown of \texttt{ffn\_baseline\_top}
+           at \SI{150}{\mega\hertz} (prototype dimensions).
+           Total function latency is 1{,}487 cycles (\SI{9.914}{\micro\second}).
+           The gate and up projections share a single \texttt{matmul\_8\_32\_s}
+           instance called sequentially.}
+  \label{tab:ffn_latency}
+\end{table}
+
+Unlike the attention and softmax kernels, the FFN latency is fixed at
+1{,}487 cycles with no variability, since all loop bounds are compile-time
+constants. The three matrix multiplications together account for $355 +
+355 + 386 = 1{,}096$ of those cycles, making them the dominant cost.
+The gate and up projections both use \texttt{matmul<dim, hidden\_dim>}
+($N = 8$, $D = 32$) and share one synthesised instance. Each call
+achieves II\,=\,10 on the outer row loop — 8 weight reads plus 2 scale
+reads per row — and with $D = 32$ outer iterations this gives
+$10 \times 32 + 35 = 355$ cycles per call. The down projection uses
+\texttt{matmul<hidden\_dim, dim>} ($N = 32$, $D = 8$), which has a
+higher per-row II of 40 ($32 + 8$ reads) but only 8 outer iterations,
+giving $40 \times 8 + 66 = 386$ cycles.
+
+The 85 DSPs are split across four functional areas. The \texttt{swi\_glu}
+pipeline uses 34 DSPs for four parallel SiLU computations at
+\texttt{UNROLL factor=4}: each lane requires one \texttt{fexp} IP core
+(7 DSPs) for the \texttt{expf(-val)} evaluation, giving 28 DSPs, with
+the remaining 6 DSPs from the sigmoid and gate multiplications.
+\texttt{matmul\_32\_8\_s} uses 16 DSPs and \texttt{matmul\_8\_32\_s} uses
+9 DSPs for their respective multiply-accumulate chains. Eight
+\texttt{fmul\_32ns\_32ns\_32\_4\_max\_dsp\_1} instances (3 DSPs each, 24
+total) handle the scale multiplications inside the two \texttt{quantize}
+calls. The remaining 2 DSPs are from the \texttt{fadd} in the FFN
+RMSNorm reduction.
+
+The 16 core BRAMs come from four \texttt{generic\_round\_double\_s}
+rounding IP instances (4 BRAMs each), the same rounding logic seen in the
+attention kernels, inferred by HLS to implement the \texttt{round()} calls
+inside \texttt{quantize}. Each of the two \texttt{quantize} calls generates
+two such instances. The timing meets the \SI{6.667}{\nano\second}
+constraint, with the estimated path of \SI{4.867}{\nano\second} plus
+\SI{1.800}{\nano\second} uncertainty exhausting the budget with zero
+slack.
 
 % =============================================================================
 \section{Top-Level Forward Function}
