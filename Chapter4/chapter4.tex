@@ -345,9 +345,134 @@ third kernel iterations. The synthesis results presented here are
 therefore valid across all three iterations of the prototype.
 
 % =============================================================================
-\section{Quantisation}
-\label{sec:quantize_impl}
+\subsection{Full TinyLlama Scale (\texttt{FFN\_update3})}
+\label{subsec:rmsnorm_update3}
 % =============================================================================
+
+\subsubsection{Implementation Changes}
+\label{subsubsec:rmsnorm_update3_impl}
+
+The sixth kernel iteration scales the prototype dimensions to full
+TinyLlama size ($S = d_{\text{model}} = 2048$, $\text{GS} = 64$).
+The only pragma change is an increase in the \texttt{ARRAY\_PARTITION
+cyclic factor} from 4 to 16 on all three local buffers
+(\texttt{x\_buff}, \texttt{weight\_buff}, \texttt{out\_buff}), matching
+\texttt{PARALLEL\_MACS\,=\,16}. At $S = 8$ the factor-4 partitioning
+created four BRAM banks per buffer, which was sufficient since the
+\texttt{UNROLL factor=16} on the reduction and scale loops had at most
+eight elements to access simultaneously. At $S = 2048$, 16-way
+simultaneous access is required to keep all unrolled lanes active
+without port contention, making factor=16 the correct choice.
+
+\subsubsection{C-Simulation Results}
+\label{subsubsec:rmsnorm_update3_csim}
+
+The testbench supplied a 2048-element input vector with unit RMSNorm
+weights and compared the output against a sequential software reference.
+All 2048 elements agreed with zero absolute error, giving an RMS error
+of $0$ across the full vector. The csim run completed with zero errors.
+
+\subsubsection{HLS Synthesis Results}
+\label{subsubsec:rmsnorm_update3_csyn}
+
+Tables~\ref{tab:rmsnorm_u3_timing} and \ref{tab:rmsnorm_u3_top_latency}
+present the timing and latency summary. Table~\ref{tab:rmsnorm_u3_resources}
+gives the resource utilisation and Table~\ref{tab:rmsnorm_u3_latency} the
+per-stage breakdown.
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{lrrr}
+    \toprule
+    Clock & Target (ns) & Estimated (ns) & Uncertainty (ns) \\
+    \midrule
+    ap\_clk & 6.667 & 7.456 & 1.800 \\
+    \bottomrule
+  \end{tabular}
+  \caption{Timing summary for \texttt{rmsnorm\_update3\_top} at the
+           \SI{150}{\mega\hertz} target clock. The estimated path of
+           \SI{7.456}{\nano\second} plus \SI{1.800}{\nano\second}
+           uncertainty exceeds the \SI{6.667}{\nano\second} budget by
+           \SI{2.589}{\nano\second}, constituting a timing violation.}
+  \label{tab:rmsnorm_u3_timing}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{rrrrrrl}
+    \toprule
+    \multicolumn{2}{c}{Latency (cycles)} &
+    \multicolumn{2}{c}{Latency (absolute)} &
+    \multicolumn{2}{c}{Interval (cycles)} & Pipeline \\
+    min & max & min & max & min & max & type \\
+    \midrule
+    18{,}645 & 18{,}645 & \SI{0.139}{\milli\second} & \SI{0.139}{\milli\second} & 18{,}646 & 18{,}646 & no \\
+    \bottomrule
+  \end{tabular}
+  \caption{Top-level latency summary for \texttt{rmsnorm\_update3\_top}
+           at \SI{150}{\mega\hertz}.}
+  \label{tab:rmsnorm_u3_top_latency}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{lrrrr}
+    \toprule
+    Resource & Used (total) & Used (core only) & Available & Utilisation (\%) \\
+    \midrule
+    LUT  & 11{,}977 &  9{,}954 & 274{,}080 &  4 \\
+    FF   &  9{,}917 &  8{,}458 & 548{,}160 &  1 \\
+    BRAM &      100 &       96 &   1{,}824 &  5 \\
+    DSP  &       98 &       98 &   2{,}520 &  3 \\
+    \bottomrule
+  \end{tabular}
+  \caption{Resource utilisation of \texttt{rmsnorm} at full scale
+           ($S = 2048$) on the ZCU102. Core-only figures exclude the
+           AXI master adapter (\texttt{gmem0\_m\_axi}).}
+  \label{tab:rmsnorm_u3_resources}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{lrr}
+    \toprule
+    Stage & Module & Latency (cycles) \\
+    \midrule
+    Load \texttt{x\_in}, \texttt{weight} & \texttt{VITIS\_LOOP\_29\_1} &  4{,}106 \\
+    \texttt{rmsnorm\_2048\_s} core       & \texttt{rmsnorm\_2048\_s}   & 12{,}478 \\
+    Write output                         & \texttt{VITIS\_LOOP\_37\_2} &  2{,}051 \\
+    \bottomrule
+  \end{tabular}
+  \caption{Per-stage latency breakdown of \texttt{rmsnorm} at full scale
+           ($S = 2048$) at \SI{150}{\mega\hertz}. Total function latency
+           is 18{,}645 cycles (\SI{0.139}{\milli\second}).}
+  \label{tab:rmsnorm_u3_latency}
+\end{table}
+
+The timing violation is the defining result of this synthesis. The
+estimated path of \SI{7.456}{\nano\second} exceeds the
+\SI{6.667}{\nano\second} target by \SI{2.589}{\nano\second}, in contrast
+to the prototype ($S = 8$) which met the constraint at
+\SI{4.867}{\nano\second}. At $S = 2048$ the wider 16-way reduction tree
+in the \texttt{sum\_of\_squares} loop creates a deeper combinational chain
+that the tool cannot close at this clock frequency.
+
+The BRAM count of 96 core blocks is the largest BRAM figure seen in any
+primitive up to this point. The Memory section of the synthesis report
+reveals the cause: the three local buffers \texttt{x\_buff},
+\texttt{weight\_buff}, and \texttt{out\_buff} are each $2048 \times 32$
+bits in the top-level wrapper, and the \texttt{rmsnorm\_2048\_s} core
+infers a second set of the same three buffers internally. Each 2048-element
+float array is partitioned into 16 BRAM banks, giving $6 \times 16 = 96$
+core BRAMs in total. At prototype scale both sets fitted in register files;
+at full scale the double-buffering doubles the on-chip memory cost.
+
+The 98 DSPs come from 32 parallel \texttt{fmul} units: 16 in the
+\texttt{norm\_and\_scale} loop and 16 in the \texttt{sum\_of\_squares} loop,
+each mapping to a 3-DSP \texttt{fmul} instance, totalling 96 DSPs, plus the
+2 DSPs from the \texttt{fadd} accumulator.
+
+
 
 \subsection{Implementation}
 \label{subsec:quantize_impl}
@@ -600,9 +725,133 @@ third kernel iterations. The synthesis results presented here are
 therefore valid across all three iterations of the prototype.
 
 % =============================================================================
-\section{Dequantisation}
-\label{sec:dequantize_impl}
+\subsection{Full TinyLlama Scale (\texttt{FFN\_update3})}
+\label{subsec:quantize_update3}
 % =============================================================================
+
+\subsubsection{Implementation Changes}
+\label{subsubsec:quantize_update3_impl}
+
+Three changes are made to \texttt{quantize} in the sixth iteration.
+First, the \texttt{ARRAY\_PARTITION cyclic factor} on \texttt{quantized\_buffer}
+increases from 4 to 16, matching \texttt{PARALLEL\_MACS\,=\,16}.
+Second, the \texttt{runtime\_gs} parameter is removed; the function now
+uses the compile-time constant \texttt{GS\,=\,64} directly. With
+$\text{GS} = 64 = 2^6$, the group index computation \texttt{i/GS}
+synthesises as a 6-bit right shift at no hardware cost.
+Third, the \texttt{round()} call in the element quantisation step is
+replaced by manual arithmetic: \texttt{(int32\_t)(qf + (qf >= 0.0f ?
+0.5f : -0.5f))}. In the prototype, \texttt{round()} caused HLS to infer
+the \texttt{generic\_round\_double\_s} rounding IP, which cost 4 BRAMs
+per call. The manual rounding eliminates this IP entirely. A reciprocal
+trick is also applied: the group scale inverse \texttt{inv\_scale =
+1.0f/scale} is computed once per group and then multiplied per element,
+replacing the per-element \texttt{fdiv} in the baseline.
+
+\subsubsection{C-Simulation Results}
+\label{subsubsec:quantize_update3_csim}
+
+The testbench supplied a 2048-element input vector across 32 groups of
+$\text{GS} = 64$ elements each. All INT8 values and all 32 group scales
+agreed with the software reference with zero error. The boundary
+saturation to $-127$ at index~0 was confirmed correct. The csim run
+completed with zero errors.
+
+\subsubsection{HLS Synthesis Results}
+\label{subsubsec:quantize_update3_csyn}
+
+Tables~\ref{tab:quantize_u3_timing} and \ref{tab:quantize_u3_top_latency}
+present the timing and latency summary. Table~\ref{tab:quantize_u3_resources}
+gives the resource utilisation and Table~\ref{tab:quantize_u3_latency} the
+per-stage breakdown.
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{lrrr}
+    \toprule
+    Clock & Target (ns) & Estimated (ns) & Uncertainty (ns) \\
+    \midrule
+    ap\_clk & 6.667 & 4.867 & 1.800 \\
+    \bottomrule
+  \end{tabular}
+  \caption{Timing summary for \texttt{quantize\_update3\_top} at the
+           \SI{150}{\mega\hertz} target clock.}
+  \label{tab:quantize_u3_timing}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{rrrrrrl}
+    \toprule
+    \multicolumn{2}{c}{Latency (cycles)} &
+    \multicolumn{2}{c}{Latency (absolute)} &
+    \multicolumn{2}{c}{Interval (cycles)} & Pipeline \\
+    min & max & min & max & min & max & type \\
+    \midrule
+    10{,}362 & 10{,}362 & \SI{69.083}{\micro\second} & \SI{69.083}{\micro\second} & 10{,}363 & 10{,}363 & no \\
+    \bottomrule
+  \end{tabular}
+  \caption{Top-level latency summary for \texttt{quantize\_update3\_top}
+           at \SI{150}{\mega\hertz}.}
+  \label{tab:quantize_u3_top_latency}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{lrrrr}
+    \toprule
+    Resource & Used (total) & Used (core only) & Available & Utilisation (\%) \\
+    \midrule
+    LUT  &  4{,}919 &  3{,}874 & 274{,}080 &  1 \\
+    FF   &  2{,}874 &  2{,}362 & 548{,}160 & $<$1 \\
+    BRAM &       22 &       18 &   1{,}824 &  1 \\
+    DSP  &        5 &        5 &   2{,}520 & $<$1 \\
+    \bottomrule
+  \end{tabular}
+  \caption{Resource utilisation of \texttt{quantize} at full scale
+           ($S = 2048$, $\text{GS} = 64$, 32 groups) on the ZCU102.
+           Core-only figures exclude the AXI master adapter.}
+  \label{tab:quantize_u3_resources}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{lrr}
+    \toprule
+    Stage & Module & Latency (cycles) \\
+    \midrule
+    Load \texttt{x\_in}          & \texttt{VITIS\_LOOP\_28\_1}  & 2{,}056 \\
+    \texttt{quantize\_2048\_s} core & \texttt{quantize\_2048\_s} & 8{,}260 \\
+    Write \texttt{q\_out}, \texttt{s\_out} & \texttt{VITIS\_LOOP\_32\_2} & 35 \\
+    \bottomrule
+  \end{tabular}
+  \caption{Per-stage latency breakdown of \texttt{quantize} at full scale
+           ($S = 2048$) at \SI{150}{\mega\hertz}. Total function latency
+           is 10{,}362 cycles (\SI{69.083}{\micro\second}).}
+  \label{tab:quantize_u3_latency}
+\end{table}
+
+Timing meets the \SI{6.667}{\nano\second} constraint with zero slack, the
+same result as the prototype. The most significant change relative to the
+prototype is the elimination of the \texttt{generic\_round\_double\_s}
+rounding IP. The Memory section of the synthesis report shows only two
+small BRAM entries: \texttt{qt\_0\_U} (the 2048-element \texttt{int8} array,
+1 BRAM) and \texttt{qt\_1\_U} (the 32-element float scale array, 1 BRAM).
+No rounding IP instances appear at all, confirming that the manual rounding
+replacement achieved its goal. The 16 core BRAMs inside the
+\texttt{quantize\_2048\_s} module hold the internal \texttt{quantized\_buffer}
+and \texttt{scale\_buffer} arrays with their cyclic partitioning.
+
+The DSP count increases from 0 in the prototype to 5 in this version. This
+is a direct consequence of the reciprocal trick: the per-element
+\texttt{fdiv} in the baseline used LUT fabric only (no DSP mapping for
+division), whereas the replacement \texttt{fmul} for \texttt{x[i] *
+inv\_scale} maps to a 3-DSP \texttt{fmul} unit. The 5 total DSPs
+represent 3 from this \texttt{fmul} and 2 from an \texttt{fadd}, which is
+an acceptable increase given the ZCU102 has 2{,}520 DSPs available and the
+reciprocal trick removes 32 per-group \texttt{fdiv} pipeline stalls.
+
+
 
 \subsection{Implementation}
 \label{subsec:dequantize_impl}
@@ -821,9 +1070,125 @@ third kernel iterations. The synthesis results presented here are
 therefore valid across all three iterations of the prototype.
 
 % =============================================================================
-\section{Matrix--Vector Multiplication}
-\label{sec:matmul_impl}
+\subsection{Full TinyLlama Scale (\texttt{FFN\_update3})}
+\label{subsec:dequantize_update3}
 % =============================================================================
+
+\subsubsection{Implementation Changes}
+\label{subsubsec:dequantize_update3_impl}
+
+Two changes are made to \texttt{dequantize} in the sixth iteration.
+The \texttt{runtime\_gs} parameter is removed; the function uses the
+compile-time constant \texttt{GS\,=\,64} directly. With $\text{GS} = 64 =
+2^6$, the index computation \texttt{i/GS} synthesises as a 6-bit right shift
+at no hardware cost. A \texttt{\#pragma HLS PIPELINE II\,=\,1} directive is
+added to the \texttt{dequant\_loop}, making the per-element latency
+predictable and consistent with the pipelining discipline applied throughout
+the sixth iteration.
+
+\subsubsection{C-Simulation Results}
+\label{subsubsec:dequantize_update3_csim}
+
+The testbench supplied 2048 INT8 values with a uniform scale of $0.03$,
+so expected outputs are clean multiples of $0.03$. All 2048 elements
+agreed with the software reference with zero absolute error across the full
+vector. The csim run completed with zero errors.
+
+\subsubsection{HLS Synthesis Results}
+\label{subsubsec:dequantize_update3_csyn}
+
+Tables~\ref{tab:dequantize_u3_timing} and \ref{tab:dequantize_u3_top_latency}
+present the timing and latency summary. Table~\ref{tab:dequantize_u3_resources}
+gives the resource utilisation and Table~\ref{tab:dequantize_u3_latency} the
+per-stage breakdown.
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{lrrr}
+    \toprule
+    Clock & Target (ns) & Estimated (ns) & Uncertainty (ns) \\
+    \midrule
+    ap\_clk & 6.667 & 4.867 & 1.800 \\
+    \bottomrule
+  \end{tabular}
+  \caption{Timing summary for \texttt{dequantize\_update3\_top} at the
+           \SI{150}{\mega\hertz} target clock.}
+  \label{tab:dequantize_u3_timing}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{rrrrrrl}
+    \toprule
+    \multicolumn{2}{c}{Latency (cycles)} &
+    \multicolumn{2}{c}{Latency (absolute)} &
+    \multicolumn{2}{c}{Interval (cycles)} & Pipeline \\
+    min & max & min & max & min & max & type \\
+    \midrule
+    6{,}223 & 6{,}223 & \SI{41.489}{\micro\second} & \SI{41.489}{\micro\second} & 6{,}224 & 6{,}224 & no \\
+    \bottomrule
+  \end{tabular}
+  \caption{Top-level latency summary for \texttt{dequantize\_update3\_top}
+           at \SI{150}{\mega\hertz}.}
+  \label{tab:dequantize_u3_top_latency}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{lrrrr}
+    \toprule
+    Resource & Used (total) & Used (core only) & Available & Utilisation (\%) \\
+    \midrule
+    LUT  & 3{,}003 & 2{,}423 & 274{,}080 & 1 \\
+    FF   & 1{,}855 & 1{,}343 & 548{,}160 & $<$1 \\
+    BRAM &      22 &      18 &   1{,}824 & 1 \\
+    DSP  &       3 &       3 &   2{,}520 & $<$1 \\
+    \bottomrule
+  \end{tabular}
+  \caption{Resource utilisation of \texttt{dequantize} at full scale
+           ($S = 2048$, $\text{GS} = 64$) on the ZCU102. Core-only
+           figures exclude the AXI master adapter (\texttt{gmem0\_m\_axi}).}
+  \label{tab:dequantize_u3_resources}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{lrr}
+    \toprule
+    Stage & Module & Latency (cycles) \\
+    \midrule
+    Load \texttt{q\_in}    & \texttt{VITIS\_LOOP\_25\_1}       & 2{,}058 \\
+    Load \texttt{s\_in}    & \texttt{VITIS\_LOOP\_29\_2}       &      35 \\
+    \texttt{dequant\_loop} & \texttt{Pipeline\_dequant\_loop}  & 2{,}060 \\
+    Write \texttt{x\_out}  & \texttt{VITIS\_LOOP\_39\_3}       & 2{,}051 \\
+    \bottomrule
+  \end{tabular}
+  \caption{Per-stage latency breakdown of \texttt{dequantize} at full scale
+           ($S = 2048$) at \SI{150}{\mega\hertz}. Total function latency
+           is 6{,}223 cycles (\SI{41.489}{\micro\second}).}
+  \label{tab:dequantize_u3_latency}
+\end{table}
+
+Timing meets the \SI{6.667}{\nano\second} constraint with zero slack.
+The latency of 6{,}223 cycles is distributed almost evenly across four
+sequential stages of approximately 2{,}050 cycles each. Loading the 2{,}048
+INT8 input values, executing the \texttt{dequant\_loop} over those same 2{,}048
+elements, and writing 2{,}048 float outputs each cost roughly 2{,}050--2{,}060
+cycles. Loading the 32 scale values costs only 35 cycles due to the much smaller
+transfer size. The latency is therefore dominated by AXI transfer overhead for
+moving 2{,}048-element arrays across the memory interface, not by the single
+\texttt{fmul} operation at the heart of each element.
+
+The 18 core BRAMs break into three groups visible in the Memory section of
+the synthesis report. The \texttt{x\_buf[2048]} output buffer in the
+top-level wrapper, partitioned cyclic factor = 16, creates 16 BRAM banks.
+The \texttt{QuantizedTensor} struct fields \texttt{qt.q[2048]} (8-bit,
+2{,}048 words) and \texttt{qt.s[32]} (32-bit, 32 words) each cross the
+register inference threshold at full scale, contributing one BRAM each.
+The 3 DSPs come from the single \texttt{fmul} unit inside the
+\texttt{dequant\_loop} pipeline that computes \texttt{q[i] * s[i/GS]}.
+
+
 
 \subsection{Implementation}
 \label{subsec:matmul_impl}
@@ -1093,9 +1458,157 @@ third kernel iterations. The synthesis results presented here are
 therefore valid across all three iterations of the prototype.
 
 % =============================================================================
-\section{Softmax}
-\label{sec:softmax_impl}
+\subsection{Full TinyLlama Scale: Tiled Implementation (\texttt{FFN\_update3})}
+\label{subsec:matmul_update3}
 % =============================================================================
+
+\subsubsection{Implementation}
+\label{subsubsec:matmul_update3_impl}
+
+The sixth iteration replaces the prototype matmul with a fundamentally
+different tiled architecture. The prototype used \texttt{\#pragma HLS
+PIPELINE} on the outer row loop, which was safe at $N = 8$ because only
+$8 + 2 = 10$ AXI reads were issued per outer iteration, staying within the
+AXI adapter's 16-slot outstanding transaction queue. At full scale
+$N = 2048$, the same approach would issue $2048 + 32 = 2080$ simultaneous
+reads per iteration, deadlocking the queue. The tiled design resolves this
+by separating weight loading from computation into explicit phases.
+
+The template function \texttt{matmul<N, D>} processes \texttt{TILE\_D\,=\,4}
+output rows at a time. Phase 1 uses \texttt{memcpy} to burst-read
+\texttt{TILE\_D} complete weight rows from DDR into a local BRAM tile
+\texttt{w\_tile[TILE\_D][N]}. Using \texttt{memcpy} is deliberate: it
+signals to HLS that each row is a contiguous burst rather than a set of
+scattered element reads, producing a single clean DDR burst transaction per
+row. Phase 2 computes \texttt{TILE\_D} dot products entirely from the
+BRAM tile with no DDR access. The innermost \texttt{dot\_inner} loop has
+\texttt{\#pragma HLS UNROLL factor=PARALLEL\_MACS} (factor = 16), giving
+16 parallel MAC operations per group of \texttt{GS\,=\,64} elements. Phase 3
+writes the \texttt{TILE\_D} float results to the output buffer.
+
+Two constants govern the trade-off between BRAM usage and DDR access
+frequency: \texttt{PARALLEL\_MACS\,=\,16} sets the inner MAC parallelism,
+and \texttt{TILE\_D\,=\,4} sets the number of rows loaded per tile. The
+BRAM footprint of the weight tile is \texttt{TILE\_D\,×\,N} bytes of INT8
+plus \texttt{TILE\_D\,×\,(N/GS)} floats for the scales, totalling
+approximately 8.6\,KB per matmul call. The source also notes that load and
+compute phases execute sequentially within each tile; a double-buffering
+scheme that overlaps tile $k+1$'s load with tile $k$'s compute is identified
+as a future optimisation.
+
+\subsubsection{C-Simulation Results}
+\label{subsubsec:matmul_update3_csim}
+
+The testbench computed \texttt{matmul<2048, 5632>} (the gate projection
+dimensions) using small fixed-pattern weights and compared the first 8 of
+the 5632 output elements against a software reference implementing the
+same quantised dot product. All 8 printed outputs agreed with zero absolute
+error. The testbench confirmed 1{,}408 full tiles and 0 remainder tiles
+($5632 / 4 = 1408$ exactly), verifying that the tile boundary arithmetic
+is correct. The csim run completed with zero errors.
+
+\subsubsection{HLS Synthesis Results}
+\label{subsubsec:matmul_update3_csyn}
+
+Tables~\ref{tab:matmul_u3_timing} and \ref{tab:matmul_u3_top_latency}
+present the timing and latency summary. Table~\ref{tab:matmul_u3_resources}
+gives the resource utilisation and Table~\ref{tab:matmul_u3_latency} the
+per-stage breakdown.
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{lrrr}
+    \toprule
+    Clock & Target (ns) & Estimated (ns) & Uncertainty (ns) \\
+    \midrule
+    ap\_clk & 6.667 & 4.867 & 1.800 \\
+    \bottomrule
+  \end{tabular}
+  \caption{Timing summary for \texttt{matmul\_update3\_top} at the
+           \SI{150}{\mega\hertz} target clock.}
+  \label{tab:matmul_u3_timing}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{rrrrrrl}
+    \toprule
+    \multicolumn{2}{c}{Latency (cycles)} &
+    \multicolumn{2}{c}{Latency (absolute)} &
+    \multicolumn{2}{c}{Interval (cycles)} & Pipeline \\
+    min & max & min & max & min & max & type \\
+    \midrule
+    12{,}752{,}954 & 12{,}752{,}954 & \SI{85.024}{\milli\second} & \SI{85.024}{\milli\second} & 12{,}752{,}955 & 12{,}752{,}955 & no \\
+    \bottomrule
+  \end{tabular}
+  \caption{Top-level latency summary for \texttt{matmul\_update3\_top}
+           at \SI{150}{\mega\hertz}.}
+  \label{tab:matmul_u3_top_latency}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{lrrrr}
+    \toprule
+    Resource & Used (total) & Used (core only) & Available & Utilisation (\%) \\
+    \midrule
+    LUT  & 12{,}438 & 11{,}111 & 274{,}080 &  4 \\
+    FF   &  5{,}631 &  4{,}402 & 548{,}160 &  1 \\
+    BRAM &       84 &       80 &   1{,}824 &  4 \\
+    DSP  &       35 &       35 &   2{,}520 &  1 \\
+    \bottomrule
+  \end{tabular}
+  \caption{Resource utilisation of the tiled \texttt{matmul} at full scale
+           ($N = 2048$, $D = 5632$) on the ZCU102. Core-only figures
+           exclude the AXI master adapter.}
+  \label{tab:matmul_u3_resources}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{lrr}
+    \toprule
+    Stage & Module & Latency (cycles) \\
+    \midrule
+    \texttt{matmul\_2048\_5632\_s} core & \texttt{matmul\_2048\_5632\_s} & 12{,}752{,}952 \\
+    AXI wrapper overhead & & 2 \\
+    \bottomrule
+  \end{tabular}
+  \caption{Latency breakdown of the tiled \texttt{matmul}
+           ($N = 2048$, $D = 5632$, \texttt{TILE\_D} = 4) at
+           \SI{150}{\mega\hertz}. Total function latency is
+           12{,}752{,}954 cycles (\SI{85.024}{\milli\second}).}
+  \label{tab:matmul_u3_latency}
+\end{table}
+
+Timing meets the \SI{6.667}{\nano\second} constraint with zero slack. The
+tiled design introduces no new critical paths relative to the prototype since
+the innermost arithmetic — the INT8 multiply-accumulate and the float scale
+multiplication — is unchanged.
+
+The latency of 12{,}752{,}954 cycles (\SI{85.024}{\milli\second}) for a
+single gate projection call is the most significant performance figure in
+this iteration. The design processes 1{,}408 tiles sequentially, and within
+each tile the load phase dominates: each of the 4 weight rows requires a
+contiguous 2{,}048-byte DDR burst, and the DDR access latency per burst sets
+the tile-loop II. At \SI{150}{\mega\hertz} and single-tile processing, this
+gives approximately $12{,}752{,}952 / 1{,}408 \approx 9{,}058$ cycles per
+tile. A double-buffering scheme overlapping tile $k+1$'s load with tile
+$k$'s compute would reduce this to approximately \SI{44}{\milli\second} per
+call, as noted in the source.
+
+The 80 core BRAMs hold the weight tile buffers. The
+\texttt{w\_tile[TILE\_D][N]} array is partitioned complete on the row
+dimension and cyclic factor = \texttt{PARALLEL\_MACS} on the column
+dimension, giving $4 \times 16 = 64$ independent BRAM banks. The
+\texttt{ws\_tile[TILE\_D][N/GS]} array adds $4 \times 4 = 16$ banks, for
+80 total. The 35 DSPs come from the floating-point operations in the
+accumulation step \texttt{val += (float)ival * ws\_tile[d][g] *
+xs\_buf[g]}: two \texttt{fmul} units (6 DSPs) and one \texttt{fadd} unit
+(2 DSPs), shared across the \texttt{TILE\_D} rows inside the
+\texttt{compute\_tile} loop.
+
+
 
 \subsection{Implementation}
 \label{subsec:softmax_impl}
@@ -1745,9 +2258,83 @@ The minimum of 83 cycles corresponds to \texttt{size\,=\,1} and the maximum of
 the budget with zero slack, consistent with all preceding primitives.
 
 % =============================================================================
-\section{Grouped-Query Attention}
-\label{sec:attn_impl}
+\subsection{Iteration 5: Full TinyLlama Scale (\texttt{FFN\_update3})}
+\label{subsec:softmax_ibert_update3}
 % =============================================================================
+
+\subsubsection{Implementation Changes}
+\label{subsubsec:softmax_ibert_update3_impl}
+
+The sixth iteration ports \texttt{softmax\_ibert} to \texttt{MAX\_SIZE\,=\,seq\_len\,=\,2048}.
+At this scale, full \texttt{UNROLL} on the three loops would create 2048
+parallel comparators, adder trees, and LUT accesses simultaneously, exceeding
+the ZCU102's LUT budget entirely. All three loops (\texttt{find\_max},
+\texttt{compute\_exp}, \texttt{normalize}) are changed to \texttt{\#pragma HLS
+PIPELINE II\,=\,1} with a \texttt{loop\_tripcount} hint, processing one element
+per cycle sequentially. The \texttt{exp\_results} array partition changes from
+\texttt{complete} to \texttt{cyclic factor=16}; at 2048 entries a complete
+partition would require 16\,KB of flip-flops. The normalisation step gains the
+reciprocal trick: \texttt{inv\_sum = 1.0f / (float)sum\_exp} is computed once
+and multiplied per element, replacing the per-element integer division that
+would otherwise require a pipelined divider consuming tens of thousands of FFs.
+
+\subsubsection{C-Simulation Results}
+\label{subsubsec:softmax_ibert_update3_csim}
+
+% Pending csim log upload.
+
+\subsubsection{HLS Synthesis Results}
+\label{subsubsec:softmax_ibert_update3_csyn}
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{lrrr}
+    \toprule
+    Clock & Target (ns) & Estimated (ns) & Uncertainty (ns) \\
+    \midrule
+    ap\_clk & 6.667 & -- & 1.800 \\
+    \bottomrule
+  \end{tabular}
+  \caption{Timing summary for \texttt{softmax\_ibert\_update3\_top} at the
+           \SI{150}{\mega\hertz} target clock.}
+  \label{tab:softmax_ibert_u3_timing}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{rrrrrrl}
+    \toprule
+    \multicolumn{2}{c}{Latency (cycles)} &
+    \multicolumn{2}{c}{Latency (absolute)} &
+    \multicolumn{2}{c}{Interval (cycles)} & Pipeline \\
+    min & max & min & max & min & max & type \\
+    \midrule
+    -- & -- & -- & -- & -- & -- & no \\
+    \bottomrule
+  \end{tabular}
+  \caption{Top-level latency summary for \texttt{softmax\_ibert\_update3\_top}
+           at \SI{150}{\mega\hertz}.}
+  \label{tab:softmax_ibert_u3_top_latency}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{lrrrr}
+    \toprule
+    Resource & Used (total) & Used (core only) & Available & Utilisation (\%) \\
+    \midrule
+    LUT  & -- & -- & 274{,}080 & -- \\
+    FF   & -- & -- & 548{,}160 & -- \\
+    BRAM & -- & -- &   1{,}824 & -- \\
+    DSP  & -- & -- &   2{,}520 & -- \\
+    \bottomrule
+  \end{tabular}
+  \caption{Resource utilisation of \texttt{softmax\_ibert} at full scale
+           ($\texttt{MAX\_SIZE} = 2048$) on the ZCU102.}
+  \label{tab:softmax_ibert_u3_resources}
+\end{table}
+
+
 
 Section~\ref{sec:attn_impl} covers the attention mechanism across three
 kernel iterations. The baseline implementation uses floating-point
