@@ -2265,26 +2265,39 @@ the budget with zero slack, consistent with all preceding primitives.
 \subsubsection{Implementation Changes}
 \label{subsubsec:softmax_ibert_update3_impl}
 
-The sixth iteration ports \texttt{softmax\_ibert} to \texttt{MAX\_SIZE\,=\,seq\_len\,=\,2048}.
-At this scale, full \texttt{UNROLL} on the three loops would create 2048
-parallel comparators, adder trees, and LUT accesses simultaneously, exceeding
-the ZCU102's LUT budget entirely. All three loops (\texttt{find\_max},
-\texttt{compute\_exp}, \texttt{normalize}) are changed to \texttt{\#pragma HLS
-PIPELINE II\,=\,1} with a \texttt{loop\_tripcount} hint, processing one element
-per cycle sequentially. The \texttt{exp\_results} array partition changes from
-\texttt{complete} to \texttt{cyclic factor=16}; at 2048 entries a complete
-partition would require 16\,KB of flip-flops. The normalisation step gains the
-reciprocal trick: \texttt{inv\_sum = 1.0f / (float)sum\_exp} is computed once
-and multiplied per element, replacing the per-element integer division that
-would otherwise require a pipelined divider consuming tens of thousands of FFs.
+The sixth iteration ports \texttt{softmax\_ibert} to
+\texttt{MAX\_SIZE\,=\,seq\_len\,=\,2048}. Full \texttt{UNROLL} on the
+three loops at this scale would instantiate 2{,}048 parallel comparator
+and adder trees simultaneously, exceeding the ZCU102's LUT budget. All
+three loops (\texttt{find\_max}, \texttt{compute\_exp},
+\texttt{normalize}) are changed to \texttt{\#pragma HLS PIPELINE II\,=\,1}
+with a \texttt{loop\_tripcount} hint, processing one element per cycle
+sequentially. The \texttt{exp\_results} buffer partition changes from
+\texttt{complete} to \texttt{cyclic factor=16}; at 2{,}048 entries a
+complete partition would require the tool to infer 16\,KB of
+flip-flop registers. A reciprocal trick is applied in the normalisation
+step: \texttt{inv\_sum = 1.0f\,/\,(float)sum\_exp} is computed once
+before the \texttt{normalize} loop and then multiplied per element,
+removing the per-element integer division.
 
 \subsubsection{C-Simulation Results}
 \label{subsubsec:softmax_ibert_update3_csim}
 
-% Pending csim log upload.
+The testbench used the same inputs as the iteration~4 csim for direct
+comparison: \texttt{logits}\,$=\{10, -5, 18, 25, -3, 21, -2, 9\}$,
+\texttt{scale\_factor\,=\,0.2f}, \texttt{size\,=\,8}, against
+\texttt{MAX\_SIZE\,=\,2048}. All eight output probabilities matched the
+software reference with zero error, and the sum of output probabilities
+was 124, identical to iteration~4. The csim run completed with zero errors.
 
 \subsubsection{HLS Synthesis Results}
 \label{subsubsec:softmax_ibert_update3_csyn}
+
+Tables~\ref{tab:softmax_ibert_u3_timing} and
+\ref{tab:softmax_ibert_u3_top_latency} present the timing and latency
+summary. Table~\ref{tab:softmax_ibert_u3_resources} gives the resource
+utilisation and Table~\ref{tab:softmax_ibert_u3_latency} the per-stage
+breakdown.
 
 \begin{table}[H]
   \centering
@@ -2292,7 +2305,7 @@ would otherwise require a pipelined divider consuming tens of thousands of FFs.
     \toprule
     Clock & Target (ns) & Estimated (ns) & Uncertainty (ns) \\
     \midrule
-    ap\_clk & 6.667 & -- & 1.800 \\
+    ap\_clk & 6.667 & 4.867 & 1.800 \\
     \bottomrule
   \end{tabular}
   \caption{Timing summary for \texttt{softmax\_ibert\_update3\_top} at the
@@ -2309,7 +2322,7 @@ would otherwise require a pipelined divider consuming tens of thousands of FFs.
     \multicolumn{2}{c}{Interval (cycles)} & Pipeline \\
     min & max & min & max & min & max & type \\
     \midrule
-    -- & -- & -- & -- & -- & -- & no \\
+    10{,}320 & 10{,}320 & \SI{68.803}{\micro\second} & \SI{68.803}{\micro\second} & 10{,}321 & 10{,}321 & no \\
     \bottomrule
   \end{tabular}
   \caption{Top-level latency summary for \texttt{softmax\_ibert\_update3\_top}
@@ -2323,16 +2336,77 @@ would otherwise require a pipelined divider consuming tens of thousands of FFs.
     \toprule
     Resource & Used (total) & Used (core only) & Available & Utilisation (\%) \\
     \midrule
-    LUT  & -- & -- & 274{,}080 & -- \\
-    FF   & -- & -- & 548{,}160 & -- \\
-    BRAM & -- & -- &   1{,}824 & -- \\
-    DSP  & -- & -- &   2{,}520 & -- \\
+    LUT  & 7{,}137 & 6{,}557 & 274{,}080 & 2 \\
+    FF   & 2{,}926 & 2{,}414 & 548{,}160 & $<$1 \\
+    BRAM &      20 &      16 &   1{,}824 & 1 \\
+    DSP  &       6 &       6 &   2{,}520 & $<$1 \\
     \bottomrule
   \end{tabular}
   \caption{Resource utilisation of \texttt{softmax\_ibert} at full scale
-           ($\texttt{MAX\_SIZE} = 2048$) on the ZCU102.}
+           ($\texttt{MAX\_SIZE} = 2048$) on the ZCU102. Core-only figures
+           exclude the AXI master adapter (\texttt{gmem0\_m\_axi}).}
   \label{tab:softmax_ibert_u3_resources}
 \end{table}
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{lrr}
+    \toprule
+    Stage & Module & Latency (cycles) \\
+    \midrule
+    Load \texttt{logits\_in}                & \texttt{VITIS\_LOOP\_36\_1}      & 2{,}051 \\
+    \texttt{softmax\_ibert\_2048\_s} core   & \texttt{softmax\_ibert\_2048\_s} & 6{,}200 \\
+    Write \texttt{probs\_out}               & \texttt{VITIS\_LOOP\_43\_2}      & 2{,}056 \\
+    \bottomrule
+  \end{tabular}
+  \caption{Per-stage latency breakdown of \texttt{softmax\_ibert} at full
+           scale (\texttt{MAX\_SIZE} = 2048) at \SI{150}{\mega\hertz}.
+           Total function latency is 10{,}320 cycles
+           (\SI{68.803}{\micro\second}).}
+  \label{tab:softmax_ibert_u3_latency}
+\end{table}
+
+Timing meets the \SI{6.667}{\nano\second} constraint with zero slack.
+The latency of 10{,}320 cycles is fixed, with identical minimum and
+maximum. This is the key behavioural difference from iteration~4,
+where latency was variable across the range 83 to 531 cycles. With
+\texttt{PIPELINE}, all three loops execute for the full
+\texttt{MAX\_SIZE\,=\,2048} iterations regardless of the runtime
+\texttt{size} parameter. The 6{,}200 cycles in the
+\texttt{softmax\_ibert\_2048\_s} core correspond to three sequential
+passes over 2{,}048 elements at II\,=\,1: the \texttt{find\_max} pass,
+the \texttt{compute\_exp} pass, and the \texttt{normalize} pass.
+
+The Memory section of the synthesis report shows 16 BRAM banks for
+\texttt{local\_logits}, each holding 128 entries of 32-bit int32 data.
+The 2{,}048-entry array at 32-bit width totals 8\,KB, which places it
+above the register inference threshold, and the cyclic factor~=~16
+partition creates 16 independent BRAM banks. The \texttt{local\_probs}
+array, by contrast, is inferred as 16 register-file banks of 14\,FF and
+14\,LUT each, with zero BRAM. The array holds int8 values that require
+only 7 effective bits per entry, and at this narrow data width HLS
+infers register fabric rather than BRAM, giving 224\,FF and 224\,LUT
+in total. The \texttt{softmax\_ibert\_2048\_s} module itself uses no
+BRAM.
+
+The 6 DSPs come from two \texttt{fmul} units in the \texttt{normalize}
+loop of the core module. The first multiplies \texttt{exp\_results[i]}
+by \texttt{127.0f} and the second multiplies the result by
+\texttt{inv\_sum}. With \texttt{PIPELINE II\,=\,1}, both operations
+must be available simultaneously in the pipeline, requiring two
+independent \texttt{fmul} instances at 3 DSPs each.
+
+Comparing against iteration~4 at \texttt{MAX\_SIZE\,=\,16}, the LUT
+count falls from 8{,}588 to 6{,}557 and the FF count falls from 5{,}171
+to 2{,}414, despite the 128-fold increase in array size. With
+\texttt{UNROLL} at factor~=~16, HLS instantiates 16 parallel comparator
+chains, adder trees, and LUT-indexed exponential units simultaneously.
+With \texttt{PIPELINE}, a single comparator and a single adder handle
+all 2{,}048 elements sequentially, requiring far less combinational logic.
+The BRAM count rises from 0 to 16, since \texttt{local\_logits} fitted
+in registers at 16 entries but requires BRAM at 2{,}048 entries. The
+DSP count rises from 3 to 6 due to the two simultaneous \texttt{fmul}
+units required in the pipelined normalisation stage.
 
 
 
@@ -3294,19 +3368,190 @@ blocks is unchanged from iteration~3, confirming that the on-chip memory
 layout for the \texttt{att\_buf}, \texttt{xb\_accum}, and working arrays is
 unaffected by the softmax replacement.
 
-% The FFN is commented out in the prototype kernel. This section will be
-% written once the full TinyLlama kernel files (FFN_update2/update3) are
-% incorporated. Content will cover:
-% - Three-matrix SwiGLU structure (w1 gate, w3 up, w2 down)
-% - Swish activation: SiLU approximation via sigmoid LUT (I-BERT strategy)
-% - Element-wise gating and down projection
-% - UNROLL factor=16 on gate loop
-% - hb and hb2 buffer partitioning
+% =============================================================================
+\subsection{Iteration 5: Full TinyLlama Scale (\texttt{FFN\_update3})}
+\label{subsec:attn_update3}
+% =============================================================================
 
-% =============================================================================
-\section{SwiGLU Feed-Forward Network}
-\label{sec:ffn_impl}
-% =============================================================================
+\subsubsection{Implementation Changes}
+\label{subsubsec:attn_update3_impl}
+
+The sixth iteration scales the attention block to full TinyLlama dimensions
+(\texttt{dim\,=\,2048}, \texttt{n\_heads\,=\,32}, \texttt{n\_kv\_heads\,=\,4},
+\texttt{seq\_len\,=\,2048}, \texttt{head\_size\,=\,64}). Two structural
+changes are applied beyond the scale increase. First, \texttt{softmax\_ibert}
+is widened from \texttt{MAX\_SIZE\,=\,16} to \texttt{MAX\_SIZE\,=\,seq\_len\,=\,2048},
+using the \texttt{PIPELINE II\,=\,1} implementation from
+\cref{subsec:softmax_ibert_update3} in place of the \texttt{UNROLL} version.
+Second, the \texttt{PIPELINE} directive is removed from the outer position loops
+(\texttt{score\_loop} and \texttt{value\_loop}) and instead applied only to the
+inner \texttt{k\_load} and \texttt{v\_load} loops. At \texttt{head\_size\,=\,64},
+pipelining the outer loop at II\,=\,1 would force HLS to fully unroll the
+inner load loop, issuing 64 simultaneous AXI read requests per outer iteration.
+The ZCU102's AXI adapter queue holds 16 outstanding transactions; with
+\texttt{key\_cache} and \texttt{key\_scales} sharing the same bundle, the
+interleaved requests create a circular dependency in response ordering that
+deadlocks the bus. Moving \texttt{PIPELINE} to the inner loop produces one
+sequential AXI read per cycle, keeping the queue depth below two. The key and
+value caches are placed on separate AXI bundles (\texttt{gmem1} and
+\texttt{gmem2}) to prevent their transactions from competing for the same port.
+
+\subsubsection{C-Simulation Results}
+\label{subsubsec:attn_update3_csim}
+
+The testbench used the same input pattern as all prior attention iterations:
+\texttt{pos\,=\,3}, with INT8 KV caches pre-populated for positions 0--3 using
+the same \texttt{quantise\_to\_cache} helper as the iteration~3 testbench. The
+first eight \texttt{xb} outputs are shown in
+Table~\ref{tab:attn_csim_all_update3} alongside the preceding iteration's
+values for comparison. All 2048 output elements agreed with the software
+reference with zero absolute error. The csim run completed with zero errors.
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{rrr}
+    \toprule
+    Index & Iter.~4 \texttt{xb} & Iter.~5 \texttt{xb} \\
+    \midrule
+    0 & 0.341732 & 0.207582 \\
+    1 & 0.311557 & 0.181561 \\
+    2 & 0.283688 & 0.154159 \\
+    3 & 0.253512 & 0.116507 \\
+    4 & 0.224567 & 0.089105 \\
+    5 & 0.195083 & 0.063084 \\
+    6 & 0.166292 & 0.037062 \\
+    7 & 0.136808 & -0.001970 \\
+    \bottomrule
+  \end{tabular}
+  \caption{C-simulation \texttt{xb} outputs at \texttt{pos\,=\,3} for
+           iteration~4 (prototype scale, $\texttt{n\_heads\,=\,2}$) and
+           iteration~5 (full scale, $\texttt{n\_heads\,=\,32}$). The
+           output values differ because the full-scale kernel processes
+           32 heads at \texttt{head\_size\,=\,64} rather than 2 heads
+           at \texttt{head\_size\,=\,4}, producing a different output
+           range from the same KV cache input pattern.}
+  \label{tab:attn_csim_all_update3}
+\end{table}
+
+\subsubsection{HLS Synthesis Results}
+\label{subsubsec:attn_update3_csyn}
+
+Tables~\ref{tab:attn_u3_timing} and \ref{tab:attn_u3_top_latency}
+present the timing and latency summary. Table~\ref{tab:attn_u3_resources}
+gives the resource utilisation and Table~\ref{tab:attn_u3_latency} the
+per-module latency breakdown.
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{lrrr}
+    \toprule
+    Clock & Target (ns) & Estimated (ns) & Uncertainty (ns) \\
+    \midrule
+    ap\_clk & 6.667 & 4.867 & 1.800 \\
+    \bottomrule
+  \end{tabular}
+  \caption{Timing summary for \texttt{attn\_update3\_top} at the
+           \SI{150}{\mega\hertz} target clock.}
+  \label{tab:attn_u3_timing}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{rrrrrrl}
+    \toprule
+    \multicolumn{2}{c}{Latency (cycles)} &
+    \multicolumn{2}{c}{Latency (absolute)} &
+    \multicolumn{2}{c}{Interval (cycles)} & Pipeline \\
+    min & max & min & max & min & max & type \\
+    \midrule
+    206{,}200 & 13{,}510{,}040 &
+    \SI{1.375}{\milli\second} & \SI{90.071}{\milli\second} &
+    206{,}201 & 13{,}510{,}041 & no \\
+    \bottomrule
+  \end{tabular}
+  \caption{Top-level latency summary for \texttt{attn\_update3\_top} at
+           \SI{150}{\mega\hertz}. The minimum corresponds to
+           \texttt{pos\,=\,0} (one attended position per head) and the
+           maximum to \texttt{pos\,=\,2047} (full context length).}
+  \label{tab:attn_u3_top_latency}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{lrrrr}
+    \toprule
+    Resource & Used (total) & Used (core only) & Available & Utilisation (\%) \\
+    \midrule
+    LUT  & 95{,}556 & 92{,}942 & 274{,}080 & 34 \\
+    FF   & 50{,}468 & 48{,}431 & 548{,}160 &  9 \\
+    BRAM &       92 &       80 &   1{,}824 &  5 \\
+    DSP  &      358 &      358 &   2{,}520 & 14 \\
+    \bottomrule
+  \end{tabular}
+  \caption{Resource utilisation of \texttt{attn\_update3\_top} at full
+           TinyLlama scale on the ZCU102. Core-only figures exclude the
+           three AXI master adapters (\texttt{gmem1}--\texttt{gmem3},
+           4\,BRAM + 512\,FF + 580\,LUT each) and the S-AXILite control
+           block (501\,FF + 874\,LUT).}
+  \label{tab:attn_u3_resources}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{lrr}
+    \toprule
+    Module & Latency min (cycles) & Latency max (cycles) \\
+    \midrule
+    Load \texttt{q}                          & 2{,}051   & 2{,}051 \\
+    \texttt{q\_find\_max} (per head)         &      67   &      67 \\
+    \texttt{k\_load} inner pipeline          &      74   &      74 \\
+    \texttt{softmax\_ibert\_2048\_s}         &   6{,}200 &  6{,}200 \\
+    \texttt{v\_load} inner pipeline          &      74   &      74 \\
+    \texttt{score\_loop} (per head)          &     102   & 208{,}896 \\
+    \texttt{value\_loop} (per head)          &     101   & 206{,}848 \\
+    \texttt{multihead\_attention} (32 heads) & 202{,}080 & 13{,}505{,}920 \\
+    \texttt{attn\_update3\_top} (total)      & 206{,}200 & 13{,}510{,}040 \\
+    \bottomrule
+  \end{tabular}
+  \caption{Per-module latency breakdown for \texttt{attn\_update3\_top}
+           at \SI{150}{\mega\hertz}. Minimum latency corresponds to
+           \texttt{pos\,=\,0} and maximum to \texttt{pos\,=\,2047}.}
+  \label{tab:attn_u3_latency}
+\end{table}
+
+Timing meets the \SI{6.667}{\nano\second} constraint with zero slack. The
+latency spans from 206{,}200 cycles at \texttt{pos\,=\,0} to 13{,}510{,}040
+cycles (90.071\,ms) at \texttt{pos\,=\,2047}. The score and value loops are
+the dominant contributors at full context length: each of the 32 heads runs
+a \texttt{score\_loop} of up to 2{,}048 iterations at 102 cycles each (64
+k\_load cycles plus the dot product), giving 208{,}896 cycles per head. The
+value loop contributes a similar 206{,}848 cycles. Across 32 heads,
+\texttt{softmax\_ibert} adds $32 \times 6{,}200 = 198{,}400$ cycles.
+
+The 80 core BRAMs are divided between three on-chip arrays and the
+\texttt{softmax\_ibert\_2048\_s} submodule. The \texttt{q\_buf[2048]} and
+\texttt{xb\_buf[2048]} float arrays each require 16 BRAM banks under cyclic
+factor\,=\,16 partitioning, and the \texttt{att[2048]} int32 array adds a
+further 16 banks, totalling 48 BRAM. The \texttt{att\_probs[2048]} int8
+array is inferred as register fabric (224 FF) due to the narrow 8-bit data
+width, adding no BRAM. The \texttt{softmax\_ibert\_2048\_s} module
+contributes 0 BRAM, since it operates on the passed \texttt{att} pointer
+and its \texttt{exp\_results} buffer is also in register fabric. The
+remaining 32 BRAM come from the Memory section entries associated with the
+partitioned working buffers in the multihead loop.
+
+The 358 DSPs are dominated by the floating-point arithmetic throughout the
+32-head loop. 64 \texttt{fmul} instances (3 DSPs each, 192 total) handle the
+per-head scale computations: \texttt{k\_scale}, \texttt{combined\_scale},
+\texttt{q\_scale\_val}, and \texttt{remaining\_scale} multiplications. The
+\texttt{softmax\_ibert\_2048\_s} module uses 6 DSPs for its two
+normalisation \texttt{fmul} units. The Expression block contributes 32 DSPs
+from the \texttt{fadd} units for the 32 parallel \texttt{xb\_accum}
+accumulation chains. The \texttt{mul\_8s\_8s\_16\_1\_1} INT8 multipliers in
+\texttt{dot\_qk} and \texttt{v\_accumulate} map entirely to LUT fabric and
+use no DSPs.
+
+
 
 \subsection{Implementation}
 \label{subsec:ffn_impl_detail}
@@ -3506,6 +3751,196 @@ two such instances. The timing meets the \SI{6.667}{\nano\second}
 constraint, with the estimated path of \SI{4.867}{\nano\second} plus
 \SI{1.800}{\nano\second} uncertainty exhausting the budget with zero
 slack.
+
+% =============================================================================
+\subsection{Full TinyLlama Scale (\texttt{FFN\_update3})}
+\label{subsec:ffn_update3}
+% =============================================================================
+
+\subsubsection{Implementation Changes}
+\label{subsubsec:ffn_update3_impl}
+
+The sixth iteration scales the FFN block to full TinyLlama dimensions
+(\texttt{dim\,=\,2048}, \texttt{hidden\_dim\,=\,5632}). All three
+\texttt{matmul} calls are replaced with the tiled implementation from
+\cref{subsec:matmul_update3}: the gate projection
+\texttt{matmul<dim,\,hidden\_dim>} and up projection
+\texttt{matmul<dim,\,hidden\_dim>} each become a \texttt{matmul\_2048\_5632\_s}
+call, and the down projection \texttt{matmul<hidden\_dim,\,dim>} becomes
+\texttt{matmul\_5632\_2048\_s}. The \texttt{ARRAY\_PARTITION cyclic factor}
+increases from 4 to 16 throughout to match \texttt{PARALLEL\_MACS\,=\,16}.
+The SwiGLU \texttt{UNROLL factor} increases from 4 to 16 for the same
+reason. The \texttt{round()} calls in \texttt{quantize} are replaced by
+manual rounding arithmetic, eliminating the \texttt{generic\_round\_double\_s}
+BRAM-consuming rounding IP that appeared in the prototype.
+Four AXI bundles assign the three weight matrices and the activation
+input/output to independent HP ports, preventing circular
+dependencies in the AXI transaction queues.
+
+\subsubsection{C-Simulation Results}
+\label{subsubsec:ffn_update3_csim}
+
+The testbench supplied a 2048-element input vector with unit RMSNorm weights
+and small fixed-pattern float weight matrices that were quantised offline to
+INT8 before being passed to the kernel. A software reference implemented the
+same seven-step FFN sequence in floating-point arithmetic. The first eight
+output elements are shown in Table~\ref{tab:ffn_u3_csim}.
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{rrrr}
+    \toprule
+    Index & HW \texttt{xb} & SW reference & Abs error \\
+    \midrule
+    0 & $-0.001738$ & $-0.002241$ & $5.03 \times 10^{-4}$ \\
+    1 & $-0.001452$ & $-0.002026$ & $5.74 \times 10^{-4}$ \\
+    2 & $ 0.003680$ & $ 0.003261$ & $4.19 \times 10^{-4}$ \\
+    3 & $-0.001308$ & $-0.002060$ & $7.52 \times 10^{-4}$ \\
+    4 & $ 0.000309$ & $-0.000249$ & $5.58 \times 10^{-4}$ \\
+    5 & $ 0.003015$ & $ 0.002563$ & $4.52 \times 10^{-4}$ \\
+    6 & $-0.001738$ & $-0.002241$ & $5.03 \times 10^{-4}$ \\
+    7 & $-0.001452$ & $-0.002026$ & $5.74 \times 10^{-4}$ \\
+    \bottomrule
+  \end{tabular}
+  \caption{C-simulation output for \texttt{ffn\_update3} (first 8 of 2048
+           elements). All absolute errors are well within the
+           \num{0.05} tolerance. The small output magnitudes reflect
+           three sequential quantised matrix multiplications with weight
+           scale factors of \num{0.03}--\num{0.05}.}
+  \label{tab:ffn_u3_csim}
+\end{table}
+
+All 2048 elements passed the \num{0.05} tolerance check. The absolute errors
+lie in the range $4 \times 10^{-4}$ to $7.5 \times 10^{-4}$, two orders of
+magnitude below the tolerance threshold. These errors arise from INT8
+quantisation rounding across the three matrix multiplications and are of
+similar magnitude to those seen in \texttt{ffn\_baseline}. The csim run
+completed with zero errors.
+
+\subsubsection{HLS Synthesis Results}
+\label{subsubsec:ffn_update3_csyn}
+
+Tables~\ref{tab:ffn_u3_timing} and \ref{tab:ffn_u3_top_latency}
+present the timing and latency summary. Table~\ref{tab:ffn_u3_resources}
+gives the resource utilisation and Table~\ref{tab:ffn_u3_latency} the
+per-stage breakdown.
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{lrrr}
+    \toprule
+    Clock & Target (ns) & Estimated (ns) & Uncertainty (ns) \\
+    \midrule
+    ap\_clk & 6.667 & 7.456 & 1.800 \\
+    \bottomrule
+  \end{tabular}
+  \caption{Timing summary for \texttt{ffn\_update3\_top} at the
+           \SI{150}{\mega\hertz} target clock. The estimated path of
+           \SI{7.456}{\nano\second} plus \SI{1.800}{\nano\second}
+           uncertainty exceeds the \SI{6.667}{\nano\second} budget by
+           \SI{2.589}{\nano\second}.}
+  \label{tab:ffn_u3_timing}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{rrrrrrl}
+    \toprule
+    \multicolumn{2}{c}{Latency (cycles)} &
+    \multicolumn{2}{c}{Latency (absolute)} &
+    \multicolumn{2}{c}{Interval (cycles)} & Pipeline \\
+    min & max & min & max & min & max & type \\
+    \midrule
+    38{,}095{,}467 & 38{,}095{,}467 &
+    \SI{0.284}{\second} & \SI{0.284}{\second} &
+    38{,}095{,}468 & 38{,}095{,}468 & no \\
+    \bottomrule
+  \end{tabular}
+  \caption{Top-level latency summary for \texttt{ffn\_update3\_top}
+           at \SI{150}{\mega\hertz}.}
+  \label{tab:ffn_u3_top_latency}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{lrrrr}
+    \toprule
+    Resource & Used (total) & Used (core only) & Available & Utilisation (\%) \\
+    \midrule
+    LUT  & 67{,}432 & 63{,}918 & 274{,}080 & 23 \\
+    FF   & 35{,}356 & 32{,}635 & 548{,}160 &  6 \\
+    BRAM &      352 &      336 &   1{,}824 & 18 \\
+    DSP  &      307 &      307 &   2{,}520 & 12 \\
+    \bottomrule
+  \end{tabular}
+  \caption{Resource utilisation of \texttt{ffn\_update3\_top} on the
+           ZCU102 (\texttt{xczu9eg-ffvb1156-2-e}) at full TinyLlama
+           scale. Core-only figures exclude the four AXI master adapters
+           (\texttt{gmem0}--\texttt{gmem3}, 4\,BRAM + 512\,FF + 580\,LUT
+           each) and the S-AXILite control block (673\,FF + 1{,}194\,LUT).}
+  \label{tab:ffn_u3_resources}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{lrr}
+    \toprule
+    Stage & Module & Latency (cycles) \\
+    \midrule
+    Load \texttt{x\_in}                       & \texttt{Pipeline\_load\_x}     &          2{,}051 \\
+    \texttt{rmsnorm\_2048\_s}                  & \texttt{rmsnorm\_2048\_s}       &         14{,}529 \\
+    \texttt{quantize\_2048\_s} ($\mathbf{xq}$) & \texttt{quantize\_2048\_s}     &          7{,}780 \\
+    Gate projection $\mathbf{W}_1$ (reused for $\mathbf{W}_3$) & \texttt{matmul\_2048\_5632\_s} & 12{,}744{,}452 \\
+    \texttt{swi\_glu}                          & \texttt{Pipeline\_swi\_glu}    &             390 \\
+    \texttt{memcpy} + write                    & \texttt{Pipeline\_3}           &          5{,}634 \\
+    \texttt{quantize\_5632\_s} ($\mathbf{hq}$) & \texttt{quantize\_5632\_s}     &         21{,}388 \\
+    Down projection $\mathbf{W}_2$             & \texttt{matmul\_5632\_2048\_s} & 12{,}552{,}708 \\
+    Write \texttt{xb\_out}                     & \texttt{Pipeline\_write\_out}  &          2{,}051 \\
+    \bottomrule
+  \end{tabular}
+  \caption{Per-stage latency breakdown of \texttt{ffn\_update3\_top}
+           at \SI{150}{\mega\hertz}. Total latency is 38{,}095{,}467 cycles
+           (\SI{0.284}{\second}). HLS infers one \texttt{matmul\_2048\_5632\_s}
+           instance reused for both the gate ($\mathbf{W}_1$) and up
+           ($\mathbf{W}_3$) projections, so the listed cycles represent
+           two sequential calls through the same module.}
+  \label{tab:ffn_u3_latency}
+\end{table}
+
+The timing violation of \SI{2.589}{\nano\second} arises for the same reason
+as in \texttt{rmsnorm\_update3}: the \texttt{rmsnorm\_2048\_s} submodule
+carries a critical path that cannot close at \SI{150}{\mega\hertz} at
+$S = 2048$.
+
+The latency of 38{,}095{,}467 cycles (\SI{0.284}{\second}) is dominated by
+the three tiled matmul calls. HLS infers one \texttt{matmul\_2048\_5632\_s}
+module and reuses it for both the gate ($\mathbf{W}_1$) and up ($\mathbf{W}_3$)
+projections sequentially, contributing approximately
+$2 \times 12{,}744{,}452 = 25{,}488{,}904$ cycles. The down projection
+\texttt{matmul\_5632\_2048\_s} adds a further 12{,}552{,}708 cycles. Together
+the three matmuls account for over 99.9\% of the total latency. The SwiGLU
+loop at 390 cycles is negligible by comparison.
+
+The 336 core BRAMs break into two groups. The top-level wrapper accounts for
+96 BRAM banks across the six static local arrays: \texttt{hb},
+\texttt{hb2}, and \texttt{hb\_out} each require 16 BRAM banks at
+\texttt{hidden\_dim\,=\,5632} (5{,}632 floats partitioned cyclic
+factor\,=\,16 gives 352 entries per bank), \texttt{hq.q} contributes
+16 BRAM banks for the 5{,}632-entry int8 array, and \texttt{xb} and
+\texttt{xq.q} each contribute 16 BRAM banks at \texttt{dim\,=\,2048}.
+The remaining 240 BRAM come from the submodule instances:
+\texttt{rmsnorm\_2048\_s} (48), \texttt{matmul\_2048\_5632\_s} (80),
+\texttt{matmul\_5632\_2048\_s} (80), \texttt{quantize\_2048\_s} (16),
+and \texttt{quantize\_5632\_s} (16).
+
+The 307 DSPs are distributed across the arithmetic pipeline. The
+\texttt{swi\_glu} module accounts for 142 DSPs from its 16 parallel SiLU
+computation lanes, each requiring an \texttt{fexp} unit plus multiplications
+for the sigmoid and gate operations. The two tiled matmul modules use
+35 and 32 DSPs respectively for their floating-point accumulation steps.
+The remaining 98 DSPs are accounted for by the 32 \texttt{fmul} instances
+used across the quantise and dequantise scale multiplications throughout
+the pipeline.
 
 % =============================================================================
 \section{Top-Level Forward Function}
