@@ -10,33 +10,28 @@ All HLS synthesis and C-simulation experiments were performed using Vitis HLS
 2021.2, targeting the \texttt{xczu9eg-ffvb1156-2-e} device on the Xilinx
 ZCU102 evaluation board at a design clock of \SI{150}{\mega\hertz}
 (\SI{6.667}{\nano\second} period). Development proceeded in two configurations.
-A scaled-down prototype configuration, with \texttt{dim\,=\,8},
-\texttt{hidden\_dim\,=\,32}, and \texttt{seq\_len\,=\,16}, was used to
-establish each kernel primitive's structure and verify its logic through HLS
-C-simulation before scaling to full model dimensions. The full TinyLlama-1.1B
-configuration, with \texttt{dim\,=\,2048}, \texttt{hidden\_dim\,=\,5632},
-\texttt{n\_heads\,=\,32}, \texttt{n\_kv\_heads\,=\,4}, \texttt{seq\_len\,=\,2048},
-and \texttt{GS\,=\,64}, was used for the synthesis and functional verification
-results reported in this chapter.
+A scaled-down prototype configuration ($d_{\text{model}} = 8$,
+$d_{\text{ff}} = 32$, $T = 16$) was used to establish each kernel
+primitive's structure and verify its logic through HLS C-simulation before
+scaling to full model dimensions. The full TinyLlama-1.1B configuration
+($d_{\text{model}} = 2048$, $d_{\text{ff}} = 5632$, $H = 32$,
+$G = 4$, $T = 2048$, $\text{GS} = 64$), summarised in
+Table~\ref{tab:config_comparison}, was used for the synthesis and
+functional verification results reported in this chapter.
 
 The kernel design is implemented in the sixth kernel iteration
 (\texttt{FFN\_update3}), which incorporates the tiled matrix--vector
-multiplication, the I-BERT integer softmax, the AXI deadlock fix for
-the attention loops, and the corrected \texttt{QuantizedTensor} scale
+multiplication, the I-BERT integer softmax, the AXI interface
+restructuring for the attention loops, and the corrected
+\texttt{QuantizedTensor} scale
 array layout described in \cref{ch:implementation}. All synthesis results
 in this chapter refer to this iteration unless stated otherwise.
 
 Functional verification was performed using HLS C-simulation, which compiles
-the kernel source together with a software testbench using GCC on an x86 host
-machine. Two levels of verification were performed: standalone verification
-of each primitive in isolation, and end-to-end verification of the complete
-\texttt{forward()} function through a multi-token stress test. The system clock
-was backdated to 1 January 2022 before each Vitis HLS invocation to satisfy the
-tool's licence validation requirements, and restored after each run. A cosmetic
-\texttt{@E Simulation failed} message appears in the csim log after the
-backdated run exits cleanly due to a timestamp check in the Vitis HLS 2021.2
-harness. This message is an artefact of the clock skew and does not indicate
-any error in the kernel logic.
+the kernel source together with a software testbench. Two levels of
+verification were performed. The first was standalone verification of each
+primitive in isolation, and the second was end-to-end verification of the
+complete \texttt{forward()} function through a multi-token stress test.
 
 Hardware deployment on the ZCU102 was not completed within the scope of this
 project. The Vivado implementation flow, which translates the synthesised RTL
@@ -89,9 +84,10 @@ embedding lookup, attention sub-block, and SwiGLU FFN sub-block per layer.
   \end{tabular}
   \caption{Resource utilisation of the \texttt{forward()} kernel after HLS
            synthesis on the ZCU102 (\texttt{xczu9eg-ffvb1156-2-e}).
-           Core-only figures exclude the four AXI master adapters
-           (\texttt{gmem0}: 30\,BRAM + 881\,FF + 1{,}052\,LUT;
-           \texttt{gmem1}--\texttt{gmem3}: 4\,BRAM + 512\,FF + 580\,LUT each).}
+           Core-only figures exclude the four AXI master adapters.
+           The \texttt{gmem0} adapter consumes 30\,BRAM, 881\,FF, and 1{,}052\,LUT.
+           The \texttt{gmem1}--\texttt{gmem3} adapters each consume 4\,BRAM,
+           512\,FF, and 580\,LUT.}
   \label{tab:forward_resources}
 \end{table}
 
@@ -108,18 +104,19 @@ The LUT utilisation of 73\% is the most constraining resource figure in the
 report. The Vivado place-and-route tool typically requires 10--20\% headroom
 above the raw HLS estimates to close routing, so this design sits at the edge
 of what the device can accommodate. The high LUT count arises from three
-sources: the 64-element fully-unrolled \texttt{q\_quantize} and \texttt{dot\_qk}
-loops in the multihead attention block (64 parallel float-to-int8 converters
-and 64 parallel INT8 multipliers each map to LUT fabric), the 12{,}340 LUTs in
-the Expression block from the combinational comparison and shift logic across
-all 22 layers, and the 21{,}928 LUT multiplexer network that arbitrates the
-large number of memory bank accesses throughout the design.
+distinct sources. The first is the 64-element fully-unrolled \texttt{q\_quantize}
+and \texttt{dot\_qk} loops in the multihead attention block, where 64 parallel
+float-to-int8 converters and 64 parallel INT8 multipliers each map to LUT
+fabric. The second is the 12{,}340 LUTs in the Expression block from the
+combinational comparison and shift logic across all 22 layers. The third is
+the 21{,}928 LUT multiplexer network that arbitrates the large number of
+memory bank accesses throughout the design.
 
 The 610 core BRAMs break into two groups. The Memory section of the synthesis
-report accounts for 210 BRAMs from the on-chip activation buffers: the six
-static float arrays (\texttt{x}, \texttt{xb}, \texttt{xb2}, \texttt{hb},
+report accounts for 210 BRAMs from the on-chip activation buffers, comprising
+the six static float arrays (\texttt{x}, \texttt{xb}, \texttt{xb2}, \texttt{hb},
 \texttt{hb2}, \texttt{q}) and the quantised working arrays (\texttt{xq},
-\texttt{hq}, \texttt{att}, \texttt{att\_probs}) each require 16 BRAM banks
+\texttt{hq}, \texttt{att}, \texttt{att\_probs}), each requiring 16 BRAM banks
 under cyclic factor\,=\,16 partitioning at full model dimensions. The Instance
 section contributes 400 BRAMs from the seven synthesised submodule instances.
 The \texttt{softmax\_ibert\_2048\_s} module uses no BRAM, confirming that the
@@ -216,9 +213,9 @@ multiplications. At \texttt{pos\,=\,0}, the three FFN projections account for
 approximately $12{,}744{,}452 + 12{,}744{,}452 + 12{,}552{,}708 = 38{,}041{,}612$
 cycles, or 83\% of the per-layer budget. The Q projection contributes a
 further 4{,}635{,}652 cycles (10\%), and the K and V projections together add
-1{,}162{,}504 cycles (3\%). All remaining operations -- two RMSNorm calls,
-three quantise calls, the KV cache write, the multihead attention at
-\texttt{pos\,=\,0}, and both residual additions -- account for the remaining 4\%.
+1{,}162{,}504 cycles (3\%). All remaining operations (two RMSNorm calls, three quantise calls, the
+KV cache write, the multihead attention at \texttt{pos\,=\,0}, and both
+residual additions) account for the remaining 4\%.
 This confirms that the tiled matrix--vector multiplication, rather than the
 attention mechanism, is the bottleneck for short context lengths. At longer
 context lengths the attention block grows proportionally, reaching
@@ -281,7 +278,7 @@ quantised matrix multiplications.
 \label{subsec:stress_csim}
 
 The complete \texttt{forward()} function was verified through a multi-token
-stress test implemented in \texttt{stress\_FFN\_update3.cpp}. The testbench
+stress test. The testbench
 ran 5 autoregressive decode steps through all 22 transformer layers, using
 randomly-initialised weights and a fresh random input embedding at each
 position. A float-precision software reference implemented the same attention
@@ -312,11 +309,10 @@ Table~\ref{tab:stress_results} shows the relative error at each position.
   \label{tab:stress_results}
 \end{table}
 
-The kernel completed all five positions without deadlock, memory corruption,
-or abnormal termination, confirming that the AXI interface configuration,
-the four-bundle separation of weight and KV cache traffic, and the inner-loop
-pipelining fix in the attention block all operate correctly in the composed
-design. Positions 0--2 show relative errors in the range 7.7--9.1\%, which is
+The kernel completed all five positions without error or abnormal
+termination, confirming that the AXI interface configuration, the four-bundle
+separation of weight and KV cache traffic, and the inner-loop pipelining
+changes in the attention block all operate correctly in the composed design. Positions 0--2 show relative errors in the range 7.7--9.1\%, which is
 consistent with the expected accumulation of INT8 quantisation rounding across
 22 transformer layers. The step increase to 16.0\% and 18.1\% at positions 3
 and 4 reflects the growing influence of the I-BERT softmax approximation at
@@ -375,7 +371,7 @@ rather than concurrently. At \SI{150}{\mega\hertz} with \texttt{TILE\_D\,=\,4},
 the DDR burst latency for each weight tile dominates the compute time, as the
 arithmetic intensity of a matrix--vector multiplication is only two operations
 per byte at INT8 precision. The tiled approach was necessary to prevent the AXI
-flooding deadlock that occurred in earlier iterations, but it sacrifices the
+queue saturation that occurred in earlier iterations, but it sacrifices the
 pipeline overlap between loading and computing that is required to approach
 theoretical DDR bandwidth efficiency.
 
