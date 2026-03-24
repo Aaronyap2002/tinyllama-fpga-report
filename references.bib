@@ -1,0 +1,372 @@
+% =============================================================================
+% references.bib  --  FYP Dissertation: FPGA Inference Acceleration
+%                     of TinyLlama-1.1B using Vitis HLS
+% IEEE citation style (alphabetical by cite key)
+% Generated from project knowledge PDFs and confirmed web sources.
+% =============================================================================
+
+
+% -----------------------------------------------------------------------------
+% TRANSFORMER ARCHITECTURE AND TINYLLAMA
+% -----------------------------------------------------------------------------
+
+@inproceedings{vaswani2017attention,
+  author    = {Vaswani, Ashish and
+               Shazeer, Noam and
+               Parmar, Niki and
+               Uszkoreit, Jakob and
+               Jones, Llion and
+               Gomez, Aidan N and
+               Kaiser, {\L}ukasz and
+               Polosukhin, Illia},
+  title     = {Attention is All you Need},
+  booktitle = {Advances in Neural Information Processing Systems},
+  volume    = {30},
+  pages     = {5998--6008},
+  publisher = {Curran Associates, Inc.},
+  url       = {https://proceedings.neurips.cc/paper_files/paper/2017/file/3f5ee243547dee91fbd053c1c4a845aa-Paper.pdf},
+  year      = {2017},
+}
+
+@article{zhang2024tinyllama,
+  author  = {Peiyuan Zhang and
+             Guangtao Zeng and
+             Tianduo Wang and
+             Wei Lu},
+  title   = {{TinyLlama}: An Open-Source Small Language Model},
+  journal = {CoRR},
+  volume  = {abs/2401.02385},
+  year    = {2024},
+  url     = {https://arxiv.org/abs/2401.02385},
+  doi     = {10.48550/arXiv.2401.02385},
+}
+
+@article{touvron2023llama2,
+  author    = {Hugo Touvron and
+               Louis Martin and
+               Kevin Stone and
+               Peter Albert and
+               Amjad Almahairi and
+               Yasmine Babaei and
+               Nikolay Bashlykov and
+               Soumya Batra and
+               Prajjwal Bhargava and
+               Shruti Bhosale and
+               Dan Bikel and
+               Lukas Blecher and
+               Cristian Canton Ferrer and
+               Moya Chen and
+               Guillem Cucurull and
+               David Esiobu and
+               Jude Fernandes and
+               Jeremy Fu and
+               Wenyin Fu and
+               Brian Fuller and
+               Cynthia Gao and
+               Vedanuj Goswami and
+               Naman Goyal and
+               Anthony Hartshorn and
+               Saghar Hosseini and
+               Rui Hou and
+               Hakan Inan and
+               Marcin Kardas and
+               Viktor Kerkez and
+               Madian Khabsa and
+               Isabel Kloumann and
+               Artem Korenev and
+               Punit Singh Koura and
+               Marie-Anne Lachaux and
+               Thibaut Lavril and
+               Jenya Lee and
+               Diana Liskovich and
+               Yinghai Lu and
+               Yuning Mao and
+               Xavier Martinet and
+               Todor Mihaylov and
+               Pushkar Mishra and
+               Igor Molybog and
+               Yixin Nie and
+               Andrew Poulton and
+               Jeremy Reizenstein and
+               Rashi Rungta and
+               Kalyan Saladi and
+               Alan Schelten and
+               Ruan Silva and
+               Eric Michael Smith and
+               Ranjan Subramanian and
+               Xiaoqing Ellen Tan and
+               Binh Tang and
+               Ross Taylor and
+               Adina Williams and
+               Jian Xiang Kuan and
+               Puxin Xu and
+               Zheng Yan and
+               Iliyan Zarov and
+               Yuchen Zhang and
+               Angela Fan and
+               Melanie Kambadur and
+               Sharan Narang and
+               Aurelien Rodriguez and
+               Robert Stojnic and
+               Sergey Edunov and
+               Thomas Scialom},
+  title   = {{Llama} 2: Open Foundation and Fine-Tuned Chat Models},
+  journal = {CoRR},
+  volume  = {abs/2307.09288},
+  year    = {2023},
+  url     = {https://arxiv.org/abs/2307.09288},
+  doi     = {10.48550/arXiv.2307.09288},
+}
+
+
+% -----------------------------------------------------------------------------
+% ARCHITECTURAL COMPONENTS
+% -----------------------------------------------------------------------------
+
+@article{su2024roformer,
+  author  = {Jianlin Su and
+             Yu Lu and
+             Shengfeng Pan and
+             Ahmed Murtadha and
+             Bo Wen and
+             Yunfeng Liu},
+  title   = {{RoFormer}: Enhanced Transformer with Rotary Position Embedding},
+  journal = {CoRR},
+  volume  = {abs/2104.09864},
+  year    = {2021},
+  url     = {https://arxiv.org/abs/2104.09864},
+  doi     = {10.48550/arXiv.2104.09864},
+}
+
+@article{zhang2019rmsnorm,
+  author  = {Biao Zhang and
+             Rico Sennrich},
+  title   = {Root Mean Square Layer Normalization},
+  journal = {CoRR},
+  volume  = {abs/1910.07467},
+  year    = {2019},
+  url     = {https://arxiv.org/abs/1910.07467},
+  doi     = {10.48550/arXiv.1910.07467},
+}
+
+@article{shazeer2020glu,
+  author  = {Noam Shazeer},
+  title   = {{GLU} Variants Improve Transformer},
+  journal = {CoRR},
+  volume  = {abs/2002.05202},
+  year    = {2020},
+  url     = {https://arxiv.org/abs/2002.05202},
+  doi     = {10.48550/arXiv.2002.05202},
+}
+
+@inproceedings{ainslie2023gqa,
+  author    = {Joshua Ainslie and
+               James Lee-Thorp and
+               Michiel de Jong and
+               Yury Zemlyanskiy and
+               Federico Lebr{\'o}n and
+               Sumit Sanghai},
+  title     = {{GQA}: Training Generalized Multi-Query Transformer Models from
+               Multi-Head Checkpoints},
+  booktitle = {Proceedings of the 2023 Conference on Empirical Methods in
+               Natural Language Processing ({EMNLP} 2023)},
+  pages     = {4895--4901},
+  publisher = {Association for Computational Linguistics},
+  address   = {Singapore},
+  year      = {2023},
+  doi       = {10.18653/v1/2023.emnlp-main.298},
+}
+
+
+% -----------------------------------------------------------------------------
+% EFFICIENT AND LINEAR ATTENTION
+% -----------------------------------------------------------------------------
+
+@article{tay2022efficient,
+  author  = {Yi Tay and
+             Mostafa Dehghani and
+             Dara Bahri and
+             Donald Metzler},
+  title   = {Efficient Transformers: A Survey},
+  journal = {CoRR},
+  volume  = {abs/2009.06732},
+  year    = {2020},
+  url     = {https://arxiv.org/abs/2009.06732},
+  doi     = {10.48550/arXiv.2009.06732},
+}
+
+@article{child2019sparse,
+  author  = {Rewon Child and
+             Scott Gray and
+             Alec Radford and
+             Ilya Sutskever},
+  title   = {Generating Long Sequences with Sparse Transformers},
+  journal = {CoRR},
+  volume  = {abs/1904.10509},
+  year    = {2019},
+  url     = {https://arxiv.org/abs/1904.10509},
+  doi     = {10.48550/arXiv.1904.10509},
+}
+
+@article{yun2020universality,
+  author  = {Chulhee Yun and
+             Srinadh Bhojanapalli and
+             Ankit Singh Rawat and
+             Sashank J. Reddi and
+             Sanjiv Kumar},
+  title   = {Are Transformers Universal Approximators of Sequence-to-Sequence
+             Functions?},
+  journal = {CoRR},
+  volume  = {abs/1912.10077},
+  year    = {2019},
+  url     = {https://arxiv.org/abs/1912.10077},
+  doi     = {10.48550/arXiv.1912.10077},
+}
+
+@article{qiu2020blockwise,
+  author  = {Jiezhong Qiu and
+             Hao Ma and
+             Omer Levy and
+             Scott Wen-tau Yih and
+             Sinong Wang and
+             Jie Tang},
+  title   = {Blockwise Self-Attention for Long Document Understanding},
+  journal = {CoRR},
+  volume  = {abs/1911.02972},
+  year    = {2019},
+  url     = {https://arxiv.org/abs/1911.02972},
+  doi     = {10.48550/arXiv.1911.02972},
+}
+
+@article{choromanski2021performer,
+  author    = {Krzysztof Choromanski and
+               Valerii Likhosherstov and
+               David Dohan and
+               Xingyou Song and
+               Andreea Gane and
+               Tam{\'{a}}s Sarl{\'{o}}s and
+               Peter Hawkins and
+               Jared Davis and
+               Afroz Mohiuddin and
+               Lukasz Kaiser and
+               David Belanger and
+               Lucy J. Colwell and
+               Adrian Weller},
+  title     = {Rethinking Attention with Performers},
+  journal   = {CoRR},
+  volume    = {abs/2009.14794},
+  year      = {2020},
+  url       = {https://arxiv.org/abs/2009.14794},
+  doi       = {10.48550/arXiv.2009.14794},
+}
+
+@article{katharopoulos2020linear,
+  author  = {Angelos Katharopoulos and
+             Apoorv Vyas and
+             Nikolaos Pappas and
+             Fran{\c{c}}ois Fleuret},
+  title   = {Transformers are {RNNs}: Fast Autoregressive Transformers with
+             Linear Attention},
+  journal = {CoRR},
+  volume  = {abs/2006.16236},
+  year    = {2020},
+  url     = {https://arxiv.org/abs/2006.16236},
+  doi     = {10.48550/arXiv.2006.16236},
+}
+
+
+% -----------------------------------------------------------------------------
+% QUANTISATION
+% -----------------------------------------------------------------------------
+
+@article{kim2021ibert,
+  author  = {Sehoon Kim and
+             Amir Gholami and
+             Zhewei Yao and
+             Michael W. Mahoney and
+             Kurt Keutzer},
+  title   = {{I-BERT}: Integer-Only {BERT} Quantization},
+  journal = {CoRR},
+  volume  = {abs/2101.01321},
+  year    = {2021},
+  url     = {https://arxiv.org/abs/2101.01321},
+  doi     = {10.48550/arXiv.2101.01321},
+}
+
+@article{dettmers2022llmint8,
+  author  = {Tim Dettmers and
+             Mike Lewis and
+             Younes Belkada and
+             Luke Zettlemoyer},
+  title   = {{LLM.int8()}: 8-bit Matrix Multiplication for Transformers at Scale},
+  journal = {CoRR},
+  volume  = {abs/2208.07339},
+  year    = {2022},
+  url     = {https://arxiv.org/abs/2208.07339},
+  doi     = {10.48550/arXiv.2208.07339},
+}
+
+@article{xiao2023smoothquant,
+  author  = {Guangxuan Xiao and
+             Ji Lin and
+             Mickael Seznec and
+             Hao Wu and
+             Julien Demouth and
+             Song Han},
+  title   = {{SmoothQuant}: Accurate and Efficient Post-Training Quantization
+             for Large Language Models},
+  journal = {CoRR},
+  volume  = {abs/2211.10438},
+  year    = {2022},
+  url     = {https://arxiv.org/abs/2211.10438},
+  doi     = {10.48550/arXiv.2211.10438},
+}
+
+
+% -----------------------------------------------------------------------------
+% HIGH-LEVEL SYNTHESIS AND FPGA
+% -----------------------------------------------------------------------------
+
+@manual{xilinx2021vitishls,
+  author       = {{AMD Xilinx}},
+  title        = {Vitis High-Level Synthesis User Guide ({UG1399})},
+  organization = {AMD Inc.},
+  year         = {2021},
+  url          = {https://docs.amd.com/r/2021.2-English/ug1399-vitis-hls},
+  note         = {Version 2021.2. Accessed: Mar.\ 24, 2026},
+}
+
+% -----------------------------------------------------------------------------
+
+@article{de2018hlstransformations,
+  author  = {Johannes de Fine Licht and
+             Maciej Besta and
+             Simon Obbard and
+             Torsten Hoefler},
+  title   = {Transformations of High-Level Synthesis Codes for
+             High-Performance Computing},
+  journal = {CoRR},
+  volume  = {abs/1805.08288},
+  year    = {2018},
+  url     = {https://arxiv.org/abs/1805.08288},
+  doi     = {10.48550/arXiv.1805.08288},
+}
+
+% SOFTWARE REFERENCES (GitHub / Online)
+% -----------------------------------------------------------------------------
+
+@misc{karpathy2023llama2c,
+  author       = {Andrej Karpathy},
+  title        = {llama2.c: Inference {Llama} 2 in One File of Pure {C}},
+  year         = {2023},
+  howpublished = {\url{https://github.com/karpathy/llama2.c}},
+  note         = {Accessed: Mar.\ 24, 2026},
+}
+
+@misc{llamacpp2023,
+  author       = {{ggml-org}},
+  title        = {{llama.cpp}: {LLM} Inference in {C/C++}},
+  year         = {2023},
+  howpublished = {\url{https://github.com/ggml-org/llama.cpp}},
+  note         = {Accessed: Mar.\ 24, 2026},
+}
