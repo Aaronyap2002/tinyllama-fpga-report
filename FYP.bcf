@@ -2415,10 +2415,7 @@
     <bcf:citekey order="43" intorder="1">de2018hlstransformations</bcf:citekey>
     <bcf:citekey order="44" intorder="1">de2018hlstransformations</bcf:citekey>
     <bcf:citekey order="45" intorder="1">karpathy2023llama2c</bcf:citekey>
-    <bcf:citekey order="46" intorder="1">tay2022efficient</bcf:citekey>
-    <bcf:citekey order="47" intorder="1">zhang2024tinyllama</bcf:citekey>
-    <bcf:citekey order="48" intorder="1">xilinx2021vitishls</bcf:citekey>
-    <bcf:citekey order="49" intorder="1">xiao2023smoothquant</bcf:citekey>
+    <bcf:citekey order="46" intorder="1">xiao2023smoothquant</bcf:citekey>
   </bcf:section>
   <!-- SORTING TEMPLATES -->
   <bcf:sortingtemplate name="none">
