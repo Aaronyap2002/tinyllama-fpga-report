@@ -17,12 +17,12 @@
 Large language models (LLMs) have demonstrated excellent capabilities
 across a wide range of natural language understanding and generation tasks,
 but their deployment in resource-constrained environments remains a
-significant challenge \cite{PLACEHOLDER}. State-of-the-art large language models (LLMs) 
+significant challenge \cite{tay2022efficient}. State-of-the-art large language models (LLMs) 
 such as GPT-4 and LLaMA require tens or hundreds of gigabytes of memory and specialised
 GPU clusters to achieve practical inference throughput, making them
 inaccessible for embedded, edge, and real-time applications.
 
-The llama 2-based TinyLlama-1.1B model \cite{PLACEHOLDER} represents a class of 
+The llama 2-based TinyLlama-1.1B model \cite{zhang2024tinyllama} represents a class of 
 small-scale LLMs that seek to balance capability with deployability. With only 1.1 billion
 parameters,
 TinyLlama retains competitive performance on common benchmarks while fitting
@@ -34,7 +34,7 @@ Field-programmable gate arrays (FPGAs) offer a compelling alternative.
 Unlike ASICs, FPGAs are reconfigurable. The hardware can be
 modified precisely to the computational patterns of a specific model, enabling
 high-throughput, low-latency inference at a fraction of the power cost of a GPU
-\cite{PLACEHOLDER}. 
+\cite{xilinx2021vitishls}. 
 
 There are two inefficiencies of GPU-based inference. 
 First, autoregressive decode is memory-bandwidth-bound. Each decode

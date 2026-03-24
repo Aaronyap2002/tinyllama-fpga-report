@@ -6,7 +6,122 @@
 % building blocks have been established.
 %
 % Section structure:
-%   4.1  RMSNorm
+%   4.1  RMSNorm% Chapter1/chapter1.tex -- Introduction
+% -----------------------------------------------------------------------------
+% The introduction serves three purposes:
+%   1. Motivate the problem (why does it matter?)
+%   2. State your objectives (what specifically did YOU do?)
+%   3. Orientate the reader (what does the rest of the report contain?)
+%
+% Keep Section 1.1 broad and accessible -- your examiner may not be an ML expert.
+% Keep Section 1.2 specific and measurable -- these become your evaluation criteria.
+
+\chapter{Introduction}
+\label{ch:introduction}
+
+\section{Motivations}
+\label{sec:motivations}
+
+Large language models (LLMs) have demonstrated excellent capabilities
+across a wide range of natural language understanding and generation tasks,
+but their deployment in resource-constrained environments remains a
+significant challenge \cite{tay2022efficient}. State-of-the-art large language models (LLMs) 
+such as GPT-4 and LLaMA require tens or hundreds of gigabytes of memory and specialised
+GPU clusters to achieve practical inference throughput, making them
+inaccessible for embedded, edge, and real-time applications.
+
+The llama 2-based TinyLlama-1.1B model \cite{zhang2024tinyllama} represents a class of 
+small-scale LLMs that seek to balance capability with deployability. With only 1.1 billion
+parameters,
+TinyLlama retains competitive performance on common benchmarks while fitting
+within a much smaller memory footprint. But even at this scale,
+running inference on a conventional CPU is far too slow for real-time use,
+and GPUs consume too much power for battery-operated or always-on deployments.
+
+Field-programmable gate arrays (FPGAs) offer a compelling alternative.
+Unlike ASICs, FPGAs are reconfigurable. The hardware can be
+modified precisely to the computational patterns of a specific model, enabling
+high-throughput, low-latency inference at a fraction of the power cost of a GPU
+\cite{xilinx2021vitishls}. 
+
+There are two inefficiencies of GPU-based inference. 
+First, autoregressive decode is memory-bandwidth-bound. Each decode
+step must reload the full model weights from DRAM to perform matrix--vector
+multiplications against a single token, yet profiling of TinyLlama-1.1B on an
+RTX~4060 Laptop GPU reveals low memory bandwidth utilisation as the 
+remainder is lost to kernel launch overhead and memory access latency between
+hundreds of fine-grained CUDA kernel invocations per step. Second, the GPU
+runtime cannot fuse operations across transformer sub-layers. RMSNorm,
+matrix--vector multiplication, and activation functions are peformed as
+separate kernels, each incurring CPU-to-GPU scheduling latency and cache
+eviction between them. 
+
+An FPGA accelerator eliminates both inefficiencies
+simultaneously. The weight data flows directly through a statically scheduled
+pipeline without repeated DRAM round-trips, and the entire transformer
+sub-layer (normalisation, projection, and activation) can be implemented
+as a single fused datapath with no inter-kernel overhead. 
+
+% Recent advances
+% in high-level synthesis (HLS) tools (Xilinx Vitis HLS)
+% have substantially lowered the barrier to FPGA development by allowing
+% engineers to describe such fused hardware pipelines in C++ and have the
+% tool generate the corresponding RTL automatically.
+
+\section{Objectives and Scope}
+\label{sec:objectives}
+The general objective of this project is to implement an AI accelerator by
+implementing and optimizing the inference pipeline of
+TinyLlama-1.1B on the Xilinx ZCU102 evaluation board using Vitis HLS. Due to the 
+complexity of the ZCU102 board, we begin our initial kernel design by targeting the 
+KRIA KR260 FPGA board. Since the KRIA KR260 FPGA have insufficient resource to 
+implement the TinyLlama model, we decided to start with a scaled-down version of 
+the model's dimensions.
+
+To understand the bottleneck of AI model inference which will be targeted for acceleration, 
+literature review is performed and profiliers are used to obtain performance metrics from 
+Nvidia's RTX4060 Laptop GPU. Then, a simple matrix multiplication kernel is 
+first implemented with High-Level Synthesis (HLS). By the end of the project, 
+a fused kernel consisting of the self-attention and feed-forward layer of the TinyLlama 
+archietecture is implemented and synthesized on an FPGA. 
+
+% The primary objectives are as follows.
+
+% \begin{enumerate}
+%   \item Implement the core transformer components of TinyLlama -- including
+%         RMSNorm, matrix--vector multiplication, multi-head attention (MHA),
+%         and the SwiGLU feed-forward network -- as optimised HLS kernels.
+
+%   \item Apply INT8 post-training quantisation (PTQ) to reduce memory bandwidth
+%         requirements and exploit the ZCU102's DSP blocks efficiently, while
+%         maintaining acceptable output quality.
+
+%   \item Apply HLS optimisation directives (PIPELINE, UNROLL, ARRAY\_PARTITION)
+%         to minimise the initiation interval and achieve the target throughput
+%         within the ZCU102's resource budget.
+
+%   \item Evaluate the final implementation against a CPU software baseline in
+%         terms of inference throughput (tokens per second), latency per token,
+%         and energy efficiency (tokens per joule).
+% \end{enumerate}
+
+% The scope of this project is limited to autoregressive token generation
+% (i.e., the decode phase of inference). Prefill-phase optimisation and
+% training are out of scope.
+
+\section{Organisation of Report}
+\label{sec:organisation}
+
+The remainder of this report is organised as follows.
+\Cref{ch:litreview} reviews the relevant literature on FPGA-based
+transformer acceleration, INT8 quantisation techniques, and related HLS
+optimisation strategies. \Cref{ch:architecture} presents the overall system
+architecture and the design decisions made at the hardware level.
+\Cref{ch:implementation} describes the detailed implementation of each HLS
+kernel and the software driver layer. \Cref{ch:results} presents the
+experimental results including resource utilisation, performance benchmarks,
+and comparison against baseline systems. \Cref{ch:conclusion} draws
+conclusions and identifies directions for future work.
 %   4.2  Quantisation and Dequantisation
 %   4.3  Matrix--Vector Multiplication
 %   4.4  Softmax

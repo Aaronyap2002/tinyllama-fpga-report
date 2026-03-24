@@ -357,12 +357,6 @@ presents the theoretical tokens per second across the context length range.
   \label{tab:theoretical_throughput}
 \end{table}
 
-The theoretical throughput of 0.110--0.140 tokens per second is below practical
-real-time requirements and below the ARM Cortex-A53 software baseline, which
-achieves approximately 0.5--2 tokens per second running llama.cpp with INT8
-weights on comparable embedded processors \cite{PLACEHOLDER}. The FPGA
-implementation as designed is therefore slower than the software baseline it
-targets.
 
 The root cause is the sequential tiled matrix--vector multiplication
 architecture. Each of the six weight matrices per layer is read tile-by-tile

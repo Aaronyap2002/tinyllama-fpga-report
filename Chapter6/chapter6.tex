@@ -24,8 +24,8 @@ substantially lower power consumption than a GPU-based deployment.
 Against the four objectives stated in \Cref{sec:objectives}:
 
 \textit{Objective 1 -- HLS kernel implementation.} All five core transformer
-operations -- RMSNorm, matrix--vector multiplication, multi-head attention,
-SwiGLU, and the embedding/unembedding lookup -- were successfully implemented
+operations (RMSNorm, matrix--vector multiplication, multi-head attention,
+SwiGLU, and the embedding/unembedding lookup) were successfully implemented
 as Vitis HLS kernels and verified to produce bit-accurate outputs against
 a floating-point software reference on representative inputs.
 
@@ -44,7 +44,6 @@ DSP and BRAM budget.
 \textit{Objective 4 -- Performance evaluation.} The final implementation
 was benchmarked against an ARM Cortex-A53 software baseline. % Add your actual numbers here
 
-\lipsum[1] % Replace with your concluding paragraphs
 
 \section{Recommendations for Future Work}
 \label{sec:future_work}
@@ -60,8 +59,7 @@ this overhead significantly.
 \textbf{FP16 mixed-precision activations.} The current design quantises
 both weights and activations to INT8, which introduces quantisation error
 in layers with wide activation ranges (notably the attention softmax output).
-A mixed-precision scheme using INT8 for weights and FP16 for activations --
-as explored in SmoothQuant \cite{PLACEHOLDER} -- would likely recover
+A mixed-precision scheme using INT8 for weights and FP16 for activations, as explored in SmoothQuant \cite{xiao2023smoothquant}, would likely recover
 accuracy in these layers at modest hardware cost.
 
 \textbf{Multi-layer pipelining.} The current architecture processes one
@@ -71,7 +69,7 @@ $l+1$'s weights using a double-buffering scheme would substantially improve
 utilisation and throughput.
 
 \textbf{Speculative decoding.} Autoregressive generation is inherently
-sequential -- each token depends on all previous tokens -- which limits the
+sequential, since each token depends on all previous tokens, which limits the
 parallelism available per generation step. Speculative decoding with a
 small draft model running in software on the ARM cores could allow the
 FPGA accelerator to verify multiple candidate tokens per step, effectively

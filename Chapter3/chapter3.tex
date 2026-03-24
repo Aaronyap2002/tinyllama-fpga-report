@@ -244,7 +244,7 @@ quantisation, which uses minimal storage for scale factors but suffers
 higher error when the weight distribution has outliers. The design uses a
 group size of $\text{GS} = 64$ for the full TinyLlama model, following the
 convention established in the llama2.c reference implementation
-\cite{PLACEHOLDER}, which was found to provide an acceptable balance between
+\cite{karpathy2023llama2c}, which was found to provide an acceptable balance between
 quantisation error and the memory overhead of scale factor storage. For the
 scaled-down HLS simulation configuration ($d_{\text{model}} = 8$), a group
 size of $\text{GS} = 4$ is used so that the constraint $\text{GS} \leq

@@ -14,7 +14,7 @@
 \section{Transformer Model Architecture}
 \label{sec:transformer_arch}
 
-The transformer, introduced by Vaswani et al.\ \cite{PLACEHOLDER}, departed
+The transformer, introduced by Vaswani et al.\ \cite{vaswani2017attention}, departed
 from the recurrent architectures that had dominated sequence modelling by
 replacing recurrence entirely with a mechanism called self-attention. In the
 original formulation, the model consisted of two stacks. An encoder that
@@ -63,7 +63,7 @@ a small fraction of the arithmetic those weights could theoretically support.
 \section{TinyLlama Model Architecture}
 \label{sec:tinyllama_arch}
 
-TinyLlama-1.1B \cite{PLACEHOLDER} is a compact, open-source, decoder-only
+TinyLlama-1.1B \cite{zhang2024tinyllama} is a compact, open-source, decoder-only
 language model developed by Zhang et al.\ at the Singapore University of
 Technology and Design.
 %  It was pretrained on approximately 3 trillion tokens. 
@@ -71,7 +71,7 @@ Despite its relatively small parameter count of 1.1 billion,
 TinyLlama achieves competitive performance on commonsense reasoning and
 problem-solving benchmarks.
 
-TinyLlama adopts the LLaMA-2 architecture \cite{PLACEHOLDER} with several
+TinyLlama adopts the LLaMA-2 architecture \cite{touvron2023llama2} with several
 modifications over the original transformer. Table~\ref{tab:tinyllama_arch}
 summarises the key architectural hyperparameters. The model uses a hidden
 dimension $d_{\text{model}} = 2048$, an intermediate feed-forward dimension
@@ -100,14 +100,14 @@ that follow.
     \bottomrule
   \end{tabular}
   \caption{TinyLlama-1.1B architectural hyperparameters
-           \cite{PLACEHOLDER}.}
+           \cite{zhang2024tinyllama}.}
   \label{tab:tinyllama_arch}
 
 \end{table}
 
 \noindent\textbf{Rotary Positional Embedding (RoPE).} Unlike the absolute
 sinusoidal positional encodings added to the input embeddings in the
-original transformer, RoPE \cite{PLACEHOLDER} encodes positional information
+original transformer, RoPE \cite{su2024roformer} encodes positional information
 by rotating the query and key vectors in the attention computation. 
 
 \noindent\textbf{Pre-normalisation with RMSNorm.} The original transformer
@@ -115,14 +115,14 @@ applied layer normalisation after each sub-layer (post-norm). TinyLlama,
 following LLaMA-2, applies normalisation before each sub-layer (pre-norm).
 % Pre-norm training is more stable at large scales because the residual stream
 % is never passed through an unnormalised non-linearity. 
-The normalisation function used is RMSNorm \cite{PLACEHOLDER}, 
+The normalisation function used is RMSNorm \cite{zhang2019rmsnorm}, 
 a simplified variant of
 LayerNorm that omits the mean-centring step, reducing the number of passes
 over the input vector and lowering hardware implementation complexity.
 
 \noindent\textbf{SwiGLU Feed-Forward Network.} The feed-forward sub-layer
 in TinyLlama replaces the standard two-layer ReLU MLP with the SwiGLU
-variant \cite{PLACEHOLDER}, which introduces a gating mechanism. The input
+variant \cite{shazeer2020glu}, which introduces a gating mechanism. The input
 is projected into two parallel streams, one of which is passed through the
 Swish activation function and then element-wise multiplied with the other.
 
@@ -131,7 +131,7 @@ attention computes separate key and value projections for each of the 32
 query heads, resulting in a KV cache that grows as $O(L \cdot H \cdot T
 \cdot d_k)$ with sequence length $T$. TinyLlama reduces this overhead by
 sharing key and value representations across groups of query heads, using
-only 4 KV head groups for 32 query heads \cite{PLACEHOLDER}. This reduces
+only 4 KV head groups for 32 query heads \cite{ainslie2023gqa}. This reduces
 the KV cache size by a factor of 8, which is significant for memory-
 constrained FPGA deployment.
 
@@ -184,7 +184,7 @@ given some means of distinguishing position $m$ from position $n$.
 % original transformer achieved this by adding a fixed sinusoidal vector to
 % each token embedding before the first layer. 
 TinyLlama uses Rotary
-Positional Embedding (RoPE) \cite{PLACEHOLDER}, which encodes position by
+Positional Embedding (RoPE) \cite{su2024roformer}, which encodes position by
 rotating the query and key vectors inside each attention head. 
 % This has the advantage of encoding relative
 % rather than absolute positions, which improves the model's ability to
@@ -244,7 +244,7 @@ and dominated in practice by the attention computation that follows.
 
 Normalisation is applied before each sub-layer in TinyLlama (pre-norm). 
 TinyLlama uses Root Mean Square Layer Normalisation (RMSNorm)
-\cite{PLACEHOLDER}, which normalises by the RMS of the input vector. 
+\cite{zhang2019rmsnorm}, which normalises by the RMS of the input vector. 
 
 For an input vector $\mathbf{x} \in \mathbb{R}^{d_{\text{model}}}$,
 RMSNorm computes:
@@ -302,7 +302,7 @@ reduction bottleneck that limits pipeline depth in hardware.
 
 Self-attention is the mechanism that allows each token representation to
 gather information from all other tokens in the sequence. In the standard
-multi-head attention (MHA) formulation \cite{PLACEHOLDER}, the input
+multi-head attention (MHA) formulation \cite{vaswani2017attention}, the input
 $\mathbf{X} \in \mathbb{R}^{T \times d_{\text{model}}}$ is linearly
 projected into $H$ sets of query, key, and value vectors:
 
@@ -343,7 +343,7 @@ $\mathbf{W}_O \in \mathbb{R}^{d_{\text{model}} \times d_{\text{model}}}$:
 \end{equation}
 
 TinyLlama replaces standard MHA with Grouped-Query Attention (GQA)
-\cite{PLACEHOLDER}. Rather than maintaining $H$ independent key and value
+\cite{ainslie2023gqa}. Rather than maintaining $H$ independent key and value
 projections, GQA uses $G = 4$ KV head groups shared across the $H = 32$
 query heads, meaning every 8 query heads share the same key and value
 representations. The KV projection matrices are therefore reduced:
@@ -461,7 +461,7 @@ cycles to produce a result, which directly multiplies the per-token
 softmax latency. For this reason, hardware-efficient inference systems
 commonly replace the true exponential with a piecewise-linear or
 lookup-table approximation. The I-BERT quantisation framework
-\cite{PLACEHOLDER} proposes such an approximation that bounds the
+\cite{kim2021ibert} proposes such an approximation that bounds the
 relative error while operating entirely in integer arithmetic, and this
 strategy is adopted in the kernel implementation described in
 \cref{subsec:ffn_impl}.
@@ -471,7 +471,7 @@ strategy is adopted in the kernel implementation described in
 
 Each transformer layer contains a position-wise feed-forward network (FFN)
 applied independently to each token's representation after the attention
-sub-layer. TinyLlama uses the SwiGLU variant \cite{PLACEHOLDER}, 
+sub-layer. TinyLlama uses the SwiGLU variant \cite{shazeer2020glu}, 
 which replaces the single hidden projection with two parallel streams. One
 passes through the Swish activation function and the other acts as a
 multiplicative gate, with both combined before the output projection. Concretely, for a token vector
@@ -560,7 +560,7 @@ families and inform the design space for hardware-efficient inference.
 \subsection{Sparse Transformer}
 \label{subsec:sparse_transformer}
 
-Child et al.\ \cite{PLACEHOLDER} reduce the number of attention connections
+Child et al.\ \cite{child2019sparse} reduce the number of attention connections
 per layer from $\mathcal{O}(T^2)$ to $\mathcal{O}(T^{3/2})$ by restricting
 each token to attend only to a small, structured subset of other tokens
 rather than the full sequence. Two complementary sparsity patterns are
@@ -569,7 +569,7 @@ each token attends to its $w$ nearest neighbours, and a strided pattern in
 which each token attends to one token every $w$ positions, as illustrated in
 \cref{fig:sparse_transformer_patterns}. By choosing $w = \mathcal{O}(\sqrt{T})$,
 every token can reach every other within two hops, and Yun et al.\
-\cite{PLACEHOLDER} subsequently prove formally that such sparse patterns
+\cite{yun2020universality} subsequently prove formally that such sparse patterns
 preserve the universal approximation property of dense attention. Because
 the non-zero entries remain contiguous blocks, the computation reduces to
 dense sub-matrix multiplications that map well onto pipelined hardware
@@ -585,14 +585,14 @@ Transformer natively compatible with autoregressive generation.
            (c). In (b) and (c), full connectivity between all elements is
            preserved when the two attention heads are computed sequentially,
            while sparsity in each individual head leads to significantly
-           reduced computation \cite{PLACEHOLDER}.}
+           reduced computation \cite{child2019sparse}.}
   \label{fig:sparse_transformer_patterns}
 \end{figure}
 
 \subsection{BlockBERT}
 \label{subsec:blockbert}
 
-Qiu et al.\ \cite{PLACEHOLDER} take a complementary structural approach by
+Qiu et al.\ \cite{qiu2020blockwise} take a complementary structural approach by
 partitioning the $T \times T$ attention matrix into an $n \times n$ grid of
 equal-sized blocks and restricting each attention head to computing attention
 within exactly one block, determined by a cyclic permutation of the block
@@ -607,12 +607,12 @@ and maps directly onto efficient dense matrix operations available in
 standard deep learning frameworks. Empirically, BlockBERT with $n = 2$
 achieves an 18.7\% reduction in activation memory and a 12.0\% reduction in
 training time compared to RoBERTa, while matching or exceeding its accuracy
-on several question-answering benchmarks \cite{PLACEHOLDER}.
+on several question-answering benchmarks \cite{qiu2020blockwise}.
 
 \subsection{Performer}
 \label{subsec:performer}
 
-Choromanski et al.\ \cite{PLACEHOLDER} reformulate attention algebraically
+Choromanski et al.\ \cite{choromanski2021performer} reformulate attention algebraically
 by expressing the softmax kernel as a product of lower-dimensional random
 feature maps, $K(Q_i, K_j) \approx \phi(Q_i)^\top \phi(K_j)$, where $\phi$
 is constructed from a random matrix $\mathbf{W} \in \mathbb{R}^{M \times d}$
@@ -645,12 +645,12 @@ limitation, however, is that efficient causal masking cannot be applied
 within the FAVOR\texttt{+} framework during training: doing so would require
 materialising the $d \times d$ matrix $\mathbf{K}^{\prime\top}\mathbf{V}$
 at every timestep, recovering quadratic cost and making autoregressive
-training with teacher forcing prohibitively slow \cite{PLACEHOLDER}.
+training with teacher forcing prohibitively slow \cite{choromanski2021performer}.
 
 \subsection{Linear Transformer}
 \label{subsec:linear_transformer}
 
-Katharopoulos et al.\ \cite{PLACEHOLDER} achieve linear complexity through
+Katharopoulos et al.\ \cite{katharopoulos2020linear} achieve linear complexity through
 the same kernel decomposition principle as the Performer, but replace the
 softmax similarity with a deterministic feature map
 $\text{sim}(q, k) := \phi(q)^\top\phi(k)$, where $\phi$ is a simple
@@ -669,7 +669,7 @@ instantiated once and reused across all decode steps at constant resource
 cost. The principal accuracy trade-off relative to standard softmax
 attention is that the chosen $\phi$ does not guarantee strictly positive
 attention weights everywhere, which can introduce training instability in
-some configurations \cite{PLACEHOLDER}.
+some configurations \cite{katharopoulos2020linear}.
 
 \section{FPGA Acceleration of Neural Networks}
 \label{sec:fpga_acceleration}
@@ -694,11 +694,11 @@ activations from the standard 32-bit floating point (FP32) to lower-precision
 integer representations, trading a small amount of model accuracy for
 substantial reductions in memory footprint, bandwidth, and arithmetic cost.
 For FPGAs in particular, fixed-point integer arithmetic is significantly more
-resource-efficient than floating-point \cite{PLACEHOLDER}.
+resource-efficient than floating-point \cite{kim2021ibert}.
 
 Post-training quantisation (PTQ) at INT8 precision has become the dominant
 approach for production LLM deployment, with works such as LLM.int8()
-\cite{PLACEHOLDER} and SmoothQuant \cite{PLACEHOLDER} demonstrating that
+\cite{dettmers2022llmint8} and SmoothQuant \cite{xiao2023smoothquant} demonstrating that
 8-bit quantisation of both weights and activations incurs less than 1\%
 accuracy degradation on standard benchmarks when applied with appropriate
 per-channel scaling factors.
@@ -711,7 +711,7 @@ High-level synthesis tools bridge the gap between algorithmic descriptions in
 C/C++ and synthesisable RTL, reducing the design iteration cycle
 compared to manual HDL development. Vitis HLS, the primary tool used in this
 project, translates annotated C++ functions into pipelined hardware modules
-whose behaviour is controlled through pragma directives \cite{PLACEHOLDER}. 
+whose behaviour is controlled through pragma directives \cite{xilinx2021vitishls}. 
 The important directives used to improve performance are 
 \texttt{PIPELINE}, \texttt{UNROLL}, and \texttt{ARRAY\_PARTITION}, 
 which control loop pipelining, spatial
@@ -723,7 +723,7 @@ parallelism, and on-chip memory port availability respectively.
 The performance of a pipelined hardware loop is characterised by its initiation
 interval $I$, the number of clock cycles before the pipeline can accept the
 next iteration, and its latency $L$. For a loop processing $N$ iterations,
-the total cycle count is \cite{PLACEHOLDER}:
+the total cycle count is \cite{de2018hlstransformations}:
 
 \begin{equation}
   C = L + I \cdot (N - 1)
@@ -736,7 +736,7 @@ $I = 1$ are loop-carried dependencies, where a result from iteration $t$ is
 needed by iteration $t+1$ before it has finished computing, and interface
 contention, where a memory resource with limited ports is accessed multiple
 times within the same iteration. These are resolved through accumulation
-interleaving and array partitioning respectively \cite{PLACEHOLDER}, both of
+interleaving and array partitioning respectively \cite{de2018hlstransformations}, both of
 which are applied extensively in this project.
 
 \begin{figure}[h]
@@ -744,7 +744,7 @@ which are applied extensively in this project.
   \includegraphics[width=0.55\textwidth]{Chapter2/media/hls_pipeline.png}
   \caption{Pipeline characteristics showing latency $L$, initiation interval
            $I$, and total cycle count $C = L + I(N-1)$ for $N$ inputs
-           \cite{PLACEHOLDER}.}
+           \cite{de2018hlstransformations}.}
   \label{fig:pipeline}
 \end{figure}
 
@@ -752,7 +752,7 @@ which are applied extensively in this project.
 \label{subsec:scaling}
 
 Once a loop achieves $I = 1$, performance is increased further by reducing
-the number of iterations $N$ through unrolling \cite{PLACEHOLDER}. Horizontal
+the number of iterations $N$ through unrolling \cite{de2018hlstransformations}. Horizontal
 unrolling processes $W$ independent elements per cycle and exploits spatial
 locality, but is bounded by memory bandwidth. Vertical unrolling buffers a
 tile of one operand on-chip and streams the other operand past multiple
@@ -770,7 +770,7 @@ connected by FIFO streams, allowing pipeline stages to execute concurrently.
            unrolling: four independent inputs processed in parallel. (c)~Vertical
            unrolling: one input combined with multiple buffered values.
            (d)~Dataflow: input or partial results streamed through a pipeline
-           rather than broadcast \cite{PLACEHOLDER}.}
+           rather than broadcast \cite{de2018hlstransformations}.}
   \label{fig:unrolling}
 \end{figure}
 
@@ -781,7 +781,7 @@ When compute throughput has been maximised, the remaining bottleneck is
 typically memory bandwidth. Memory access extraction separates load and store
 operations into dedicated pipeline stages that issue long DRAM bursts
 independently of the compute logic, maximising bandwidth utilisation
-\cite{PLACEHOLDER}. Type demotion from FP32 to INT8 reduces both the
+\cite{de2018hlstransformations}. Type demotion from FP32 to INT8 reduces both the
 bandwidth consumed per weight loaded and the on-chip resources required to
 process it, directly addressing the memory-bound nature of transformer
 inference on resource-constrained devices.

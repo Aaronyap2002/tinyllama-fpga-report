@@ -27,108 +27,110 @@
 \contentsline {section}{\numberline {2.6}HLS-Based Hardware Design}{14}{section.47}%
 \contentsline {subsection}{\numberline {2.6.1}Pipelining and the Initiation Interval}{15}{subsection.48}%
 \contentsline {subsection}{\numberline {2.6.2}Scaling Transformations: Unrolling and Dataflow}{15}{subsection.51}%
-\contentsline {subsection}{\numberline {2.6.3}Memory Transformations}{16}{subsection.53}%
+\contentsline {subsection}{\numberline {2.6.3}Memory Transformations}{15}{subsection.53}%
 \contentsline {chapter}{\numberline {3}System Architecture and Design}{17}{chapter.54}%
 \contentsline {section}{\numberline {3.1}Top-Level System Overview}{17}{section.55}%
 \contentsline {section}{\numberline {3.2}Hardware/Software Partitioning}{18}{section.56}%
 \contentsline {section}{\numberline {3.3}Memory Architecture}{19}{section.58}%
 \contentsline {section}{\numberline {3.4}Quantisation Scheme}{21}{section.60}%
-\contentsline {chapter}{\numberline {4}Implementation}{23}{chapter.63}%
-\contentsline {section}{\numberline {4.1}RMSNorm}{24}{section.65}%
-\contentsline {subsection}{\numberline {4.1.1}Implementation}{24}{subsection.66}%
-\contentsline {subsection}{\numberline {4.1.2}C-Simulation Results}{25}{subsection.98}%
-\contentsline {subsection}{\numberline {4.1.3}HLS Synthesis Results}{26}{subsection.100}%
-\contentsline {subsection}{\numberline {4.1.4}Full TinyLlama Scale}{28}{subsection.105}%
-\contentsline {subsubsection}{Implementation}{28}{subsubsection*.106}%
-\contentsline {subsubsection}{C-Simulation Results}{30}{subsubsection*.141}%
-\contentsline {subsubsection}{HLS Synthesis Results}{30}{subsubsection*.142}%
-\contentsline {section}{\numberline {4.2}Quantisation}{32}{section.147}%
-\contentsline {subsection}{\numberline {4.2.1}Implementation}{32}{subsection.148}%
-\contentsline {subsection}{\numberline {4.2.2}C-Simulation Results}{34}{subsection.171}%
-\contentsline {subsection}{\numberline {4.2.3}HLS Synthesis Results}{35}{subsection.173}%
-\contentsline {subsection}{\numberline {4.2.4}Full TinyLlama Scale}{36}{subsection.178}%
-\contentsline {subsubsection}{Implementation}{36}{subsubsection*.179}%
-\contentsline {subsubsection}{C-Simulation Results}{38}{subsubsection*.218}%
-\contentsline {subsubsection}{HLS Synthesis Results}{38}{subsubsection*.219}%
-\contentsline {section}{\numberline {4.3}Dequantisation}{40}{section.224}%
-\contentsline {subsection}{\numberline {4.3.1}Implementation}{40}{subsection.225}%
-\contentsline {subsection}{\numberline {4.3.2}C-Simulation Results}{41}{subsection.235}%
-\contentsline {subsection}{\numberline {4.3.3}HLS Synthesis Results}{42}{subsection.237}%
-\contentsline {subsection}{\numberline {4.3.4}Full TinyLlama Scale}{43}{subsection.242}%
-\contentsline {subsubsection}{Implementation}{43}{subsubsection*.243}%
-\contentsline {subsubsection}{C-Simulation Results}{44}{subsubsection*.253}%
-\contentsline {subsubsection}{HLS Synthesis Results}{44}{subsubsection*.254}%
-\contentsline {section}{\numberline {4.4}Matrix--Vector Multiplication}{46}{section.259}%
-\contentsline {subsection}{\numberline {4.4.1}Implementation}{46}{subsection.260}%
-\contentsline {subsection}{\numberline {4.4.2}C-Simulation Results}{48}{subsection.282}%
-\contentsline {subsection}{\numberline {4.4.3}HLS Synthesis Results}{48}{subsection.284}%
-\contentsline {subsection}{\numberline {4.4.4}Full TinyLlama Scale: Tiled Implementation}{50}{subsection.289}%
-\contentsline {subsubsection}{Implementation}{50}{subsubsection*.290}%
-\contentsline {subsubsection}{C-Simulation Results}{52}{subsubsection*.331}%
-\contentsline {subsubsection}{HLS Synthesis Results}{52}{subsubsection*.332}%
-\contentsline {section}{\numberline {4.5}Softmax}{54}{section.337}%
-\contentsline {subsection}{\numberline {4.5.1}Implementation}{54}{subsection.338}%
-\contentsline {subsection}{\numberline {4.5.2}C-Simulation Results}{57}{subsection.372}%
-\contentsline {subsection}{\numberline {4.5.3}HLS Synthesis Results}{57}{subsection.374}%
-\contentsline {subsection}{\numberline {4.5.4}Iteration 3: Sum Loop Unroll}{60}{subsection.379}%
-\contentsline {subsubsection}{C-Simulation Results}{60}{subsubsection*.380}%
-\contentsline {subsubsection}{HLS Synthesis Results}{60}{subsubsection*.381}%
-\contentsline {subsection}{\numberline {4.5.5}Iteration 4: I-BERT Integer Softmax}{62}{subsection.385}%
-\contentsline {subsubsection}{Implementation}{62}{subsubsection*.386}%
-\contentsline {subsubsection}{C-Simulation Results}{63}{subsubsection*.387}%
-\contentsline {subsubsection}{HLS Synthesis Results}{64}{subsubsection*.389}%
-\contentsline {subsection}{\numberline {4.5.6}Iteration 6: Full TinyLlama Scale}{65}{subsection.394}%
-\contentsline {subsubsection}{Implementation}{65}{subsubsection*.395}%
-\contentsline {subsubsection}{C-Simulation Results}{67}{subsubsection*.446}%
-\contentsline {subsubsection}{HLS Synthesis Results}{67}{subsubsection*.447}%
-\contentsline {section}{\numberline {4.6}Grouped-Query Attention}{69}{section.452}%
-\contentsline {subsection}{\numberline {4.6.1}Baseline: Floating-Point Attention}{69}{subsection.453}%
-\contentsline {subsubsection}{Implementation}{69}{subsubsection*.454}%
-\contentsline {subsubsection}{C-Simulation Results}{71}{subsubsection*.480}%
-\contentsline {subsubsection}{HLS Synthesis Results}{72}{subsubsection*.482}%
-\contentsline {subsection}{\numberline {4.6.2}Refined: Per-Head INT8 Attention}{74}{subsection.487}%
-\contentsline {subsubsection}{HLS Synthesis Results}{77}{subsubsection*.521}%
-\contentsline {subsection}{\numberline {4.6.3}Iteration 3: INT8 KV Cache}{79}{subsection.524}%
-\contentsline {subsubsection}{HLS Synthesis Results}{82}{subsubsection*.555}%
-\contentsline {subsection}{\numberline {4.6.4}Iteration 4: I-BERT Integer Softmax Attention}{83}{subsection.558}%
-\contentsline {subsubsection}{Implementation}{83}{subsubsection*.559}%
-\contentsline {subsubsection}{C-Simulation Results}{84}{subsubsection*.560}%
-\contentsline {subsubsection}{HLS Synthesis Results}{85}{subsubsection*.562}%
-\contentsline {subsection}{\numberline {4.6.5}Iteration 6: Full TinyLlama Scale}{86}{subsection.565}%
-\contentsline {subsubsection}{Implementation}{86}{subsubsection*.566}%
-\contentsline {subsubsection}{C-Simulation Results}{88}{subsubsection*.636}%
-\contentsline {subsubsection}{HLS Synthesis Results}{89}{subsubsection*.638}%
-\contentsline {section}{\numberline {4.7}SwiGLU Feed-Forward Network}{91}{section.643}%
-\contentsline {subsection}{\numberline {4.7.1}Implementation}{91}{subsection.644}%
-\contentsline {subsection}{\numberline {4.7.2}C-Simulation Results}{92}{subsection.645}%
-\contentsline {subsection}{\numberline {4.7.3}HLS Synthesis Results}{93}{subsection.647}%
-\contentsline {subsection}{\numberline {4.7.4}Full TinyLlama Scale}{95}{subsection.652}%
-\contentsline {subsubsection}{Implementation}{95}{subsubsection*.653}%
-\contentsline {subsubsection}{C-Simulation Results}{96}{subsubsection*.684}%
-\contentsline {subsubsection}{HLS Synthesis Results}{97}{subsubsection*.686}%
-\contentsline {section}{\numberline {4.8}Top-Level Forward Function}{99}{section.691}%
-\contentsline {subsection}{\numberline {4.8.1}AXI Interface and Buffer Layout}{100}{subsection.692}%
-\contentsline {subsection}{\numberline {4.8.2}Layer Loop and KV Cache Management}{101}{subsection.694}%
-\contentsline {subsection}{\numberline {4.8.3}Known Limitations and Design Decisions}{102}{subsection.695}%
-\contentsline {chapter}{\numberline {5}Results and Discussion}{104}{chapter.696}%
-\contentsline {section}{\numberline {5.1}Experimental Setup}{104}{section.697}%
-\contentsline {section}{\numberline {5.2}HLS Synthesis Results}{105}{section.698}%
-\contentsline {subsection}{\numberline {5.2.1}Full Forward Kernel}{105}{subsection.699}%
-\contentsline {subsection}{\numberline {5.2.2}Latency Breakdown}{106}{subsection.703}%
-\contentsline {section}{\numberline {5.3}Functional Verification}{108}{section.706}%
-\contentsline {subsection}{\numberline {5.3.1}Primitive-Level C-Simulation}{108}{subsection.707}%
-\contentsline {subsection}{\numberline {5.3.2}End-to-End Stress Test}{109}{subsection.709}%
-\contentsline {section}{\numberline {5.4}Inference Performance}{110}{section.711}%
-\contentsline {section}{\numberline {5.5}Discussion}{111}{section.713}%
-\contentsline {subsection}{\numberline {5.5.1}Bottleneck Analysis}{111}{subsection.714}%
-\contentsline {subsection}{\numberline {5.5.2}Accuracy Characterisation}{111}{subsection.715}%
-\contentsline {subsection}{\numberline {5.5.3}Design Limitations}{112}{subsection.716}%
-\contentsline {chapter}{\numberline {6}Conclusion and Future Work}{113}{chapter.717}%
-\contentsline {section}{\numberline {6.1}Conclusion}{113}{section.718}%
-\contentsline {section}{\numberline {6.2}Recommendations for Future Work}{114}{section.719}%
-\contentsline {chapter}{Reflection on Learning Outcome Attainment}{115}{chapter*.720}%
-\contentsline {chapter}{Acknowledging/Declaring the Use of GAI}{116}{chapter*.721}%
-\contentsline {chapter}{References}{116}{chapter*.721}%
-\contentsline {chapter}{\numberline {A}HLS Kernel Source Code}{117}{appendix.722}%
-\contentsline {chapter}{\numberline {B}Vivado Synthesis and Implementation Reports}{118}{appendix.723}%
-\contentsline {chapter}{\numberline {C}Quantisation Calibration Data}{119}{appendix.724}%
+\contentsline {chapter}{\numberline {4}Introduction}{23}{chapter.63}%
+\contentsline {section}{\numberline {4.1}Motivations}{23}{section.64}%
+\contentsline {section}{\numberline {4.2}Objectives and Scope}{24}{section.65}%
+\contentsline {section}{\numberline {4.3}Organisation of Report}{24}{section.66}%
+\contentsline {chapter}{\numberline {5}Implementation}{25}{chapter.67}%
+\contentsline {section}{\numberline {5.1}RMSNorm}{26}{section.69}%
+\contentsline {subsection}{\numberline {5.1.1}Implementation}{26}{subsection.70}%
+\contentsline {subsection}{\numberline {5.1.2}C-Simulation Results}{27}{subsection.102}%
+\contentsline {subsection}{\numberline {5.1.3}HLS Synthesis Results}{28}{subsection.104}%
+\contentsline {subsection}{\numberline {5.1.4}Full TinyLlama Scale}{30}{subsection.109}%
+\contentsline {subsubsection}{Implementation}{30}{subsubsection*.110}%
+\contentsline {subsubsection}{C-Simulation Results}{32}{subsubsection*.145}%
+\contentsline {subsubsection}{HLS Synthesis Results}{32}{subsubsection*.146}%
+\contentsline {section}{\numberline {5.2}Quantisation}{34}{section.151}%
+\contentsline {subsection}{\numberline {5.2.1}Implementation}{34}{subsection.152}%
+\contentsline {subsection}{\numberline {5.2.2}C-Simulation Results}{36}{subsection.175}%
+\contentsline {subsection}{\numberline {5.2.3}HLS Synthesis Results}{37}{subsection.177}%
+\contentsline {subsection}{\numberline {5.2.4}Full TinyLlama Scale}{38}{subsection.182}%
+\contentsline {subsubsection}{Implementation}{38}{subsubsection*.183}%
+\contentsline {subsubsection}{C-Simulation Results}{40}{subsubsection*.222}%
+\contentsline {subsubsection}{HLS Synthesis Results}{40}{subsubsection*.223}%
+\contentsline {section}{\numberline {5.3}Dequantisation}{42}{section.228}%
+\contentsline {subsection}{\numberline {5.3.1}Implementation}{42}{subsection.229}%
+\contentsline {subsection}{\numberline {5.3.2}C-Simulation Results}{43}{subsection.239}%
+\contentsline {subsection}{\numberline {5.3.3}HLS Synthesis Results}{44}{subsection.241}%
+\contentsline {subsection}{\numberline {5.3.4}Full TinyLlama Scale}{45}{subsection.246}%
+\contentsline {subsubsection}{Implementation}{45}{subsubsection*.247}%
+\contentsline {subsubsection}{C-Simulation Results}{46}{subsubsection*.257}%
+\contentsline {subsubsection}{HLS Synthesis Results}{46}{subsubsection*.258}%
+\contentsline {section}{\numberline {5.4}Matrix--Vector Multiplication}{48}{section.263}%
+\contentsline {subsection}{\numberline {5.4.1}Implementation}{48}{subsection.264}%
+\contentsline {subsection}{\numberline {5.4.2}C-Simulation Results}{50}{subsection.286}%
+\contentsline {subsection}{\numberline {5.4.3}HLS Synthesis Results}{50}{subsection.288}%
+\contentsline {subsection}{\numberline {5.4.4}Full TinyLlama Scale: Tiled Implementation}{52}{subsection.293}%
+\contentsline {subsubsection}{Implementation}{52}{subsubsection*.294}%
+\contentsline {subsubsection}{C-Simulation Results}{54}{subsubsection*.335}%
+\contentsline {subsubsection}{HLS Synthesis Results}{54}{subsubsection*.336}%
+\contentsline {section}{\numberline {5.5}Softmax}{56}{section.341}%
+\contentsline {subsection}{\numberline {5.5.1}Implementation}{56}{subsection.342}%
+\contentsline {subsection}{\numberline {5.5.2}C-Simulation Results}{59}{subsection.376}%
+\contentsline {subsection}{\numberline {5.5.3}HLS Synthesis Results}{59}{subsection.378}%
+\contentsline {subsection}{\numberline {5.5.4}Iteration 3: Sum Loop Unroll}{62}{subsection.383}%
+\contentsline {subsubsection}{C-Simulation Results}{62}{subsubsection*.384}%
+\contentsline {subsubsection}{HLS Synthesis Results}{62}{subsubsection*.385}%
+\contentsline {subsection}{\numberline {5.5.5}Iteration 4: I-BERT Integer Softmax}{64}{subsection.389}%
+\contentsline {subsubsection}{Implementation}{64}{subsubsection*.390}%
+\contentsline {subsubsection}{C-Simulation Results}{65}{subsubsection*.391}%
+\contentsline {subsubsection}{HLS Synthesis Results}{66}{subsubsection*.393}%
+\contentsline {subsection}{\numberline {5.5.6}Iteration 6: Full TinyLlama Scale}{67}{subsection.398}%
+\contentsline {subsubsection}{Implementation}{67}{subsubsection*.399}%
+\contentsline {subsubsection}{C-Simulation Results}{69}{subsubsection*.450}%
+\contentsline {subsubsection}{HLS Synthesis Results}{69}{subsubsection*.451}%
+\contentsline {section}{\numberline {5.6}Grouped-Query Attention}{71}{section.456}%
+\contentsline {subsection}{\numberline {5.6.1}Baseline: Floating-Point Attention}{71}{subsection.457}%
+\contentsline {subsubsection}{Implementation}{71}{subsubsection*.458}%
+\contentsline {subsubsection}{C-Simulation Results}{73}{subsubsection*.484}%
+\contentsline {subsubsection}{HLS Synthesis Results}{74}{subsubsection*.486}%
+\contentsline {subsection}{\numberline {5.6.2}Refined: Per-Head INT8 Attention}{76}{subsection.491}%
+\contentsline {subsubsection}{HLS Synthesis Results}{79}{subsubsection*.525}%
+\contentsline {subsection}{\numberline {5.6.3}Iteration 3: INT8 KV Cache}{81}{subsection.528}%
+\contentsline {subsubsection}{HLS Synthesis Results}{84}{subsubsection*.559}%
+\contentsline {subsection}{\numberline {5.6.4}Iteration 4: I-BERT Integer Softmax Attention}{85}{subsection.562}%
+\contentsline {subsubsection}{Implementation}{85}{subsubsection*.563}%
+\contentsline {subsubsection}{C-Simulation Results}{86}{subsubsection*.564}%
+\contentsline {subsubsection}{HLS Synthesis Results}{87}{subsubsection*.566}%
+\contentsline {subsection}{\numberline {5.6.5}Iteration 6: Full TinyLlama Scale}{88}{subsection.569}%
+\contentsline {subsubsection}{Implementation}{88}{subsubsection*.570}%
+\contentsline {subsubsection}{C-Simulation Results}{90}{subsubsection*.640}%
+\contentsline {subsubsection}{HLS Synthesis Results}{91}{subsubsection*.642}%
+\contentsline {section}{\numberline {5.7}SwiGLU Feed-Forward Network}{93}{section.647}%
+\contentsline {subsection}{\numberline {5.7.1}Implementation}{93}{subsection.648}%
+\contentsline {subsection}{\numberline {5.7.2}C-Simulation Results}{94}{subsection.649}%
+\contentsline {subsection}{\numberline {5.7.3}HLS Synthesis Results}{95}{subsection.651}%
+\contentsline {subsection}{\numberline {5.7.4}Full TinyLlama Scale}{97}{subsection.656}%
+\contentsline {subsubsection}{Implementation}{97}{subsubsection*.657}%
+\contentsline {subsubsection}{C-Simulation Results}{98}{subsubsection*.688}%
+\contentsline {subsubsection}{HLS Synthesis Results}{99}{subsubsection*.690}%
+\contentsline {section}{\numberline {5.8}Top-Level Forward Function}{101}{section.695}%
+\contentsline {subsection}{\numberline {5.8.1}AXI Interface and Buffer Layout}{102}{subsection.696}%
+\contentsline {subsection}{\numberline {5.8.2}Layer Loop and KV Cache Management}{103}{subsection.698}%
+\contentsline {subsection}{\numberline {5.8.3}Known Limitations and Design Decisions}{104}{subsection.699}%
+\contentsline {chapter}{\numberline {6}Results and Discussion}{106}{chapter.700}%
+\contentsline {section}{\numberline {6.1}Experimental Setup}{106}{section.701}%
+\contentsline {section}{\numberline {6.2}HLS Synthesis Results}{107}{section.702}%
+\contentsline {subsection}{\numberline {6.2.1}Full Forward Kernel}{107}{subsection.703}%
+\contentsline {subsection}{\numberline {6.2.2}Latency Breakdown}{108}{subsection.707}%
+\contentsline {section}{\numberline {6.3}Functional Verification}{110}{section.710}%
+\contentsline {subsection}{\numberline {6.3.1}Primitive-Level C-Simulation}{110}{subsection.711}%
+\contentsline {subsection}{\numberline {6.3.2}End-to-End Stress Test}{111}{subsection.713}%
+\contentsline {section}{\numberline {6.4}Inference Performance}{112}{section.715}%
+\contentsline {section}{\numberline {6.5}Discussion}{113}{section.717}%
+\contentsline {subsection}{\numberline {6.5.1}Bottleneck Analysis}{113}{subsection.718}%
+\contentsline {subsection}{\numberline {6.5.2}Accuracy Characterisation}{113}{subsection.719}%
+\contentsline {subsection}{\numberline {6.5.3}Design Limitations}{113}{subsection.720}%
+\contentsline {chapter}{\numberline {7}Conclusion and Future Work}{115}{chapter.721}%
+\contentsline {section}{\numberline {7.1}Conclusion}{115}{section.722}%
+\contentsline {section}{\numberline {7.2}Recommendations for Future Work}{115}{section.723}%
+\contentsline {chapter}{Reflection on Learning Outcome Attainment}{117}{chapter*.724}%
+\contentsline {chapter}{Acknowledging/Declaring the Use of GAI}{118}{chapter*.725}%
+\contentsline {chapter}{References}{121}{chapter*.726}%
+\contentsline {chapter}{\numberline {A}HLS Kernel Source Code}{122}{appendix.727}%
