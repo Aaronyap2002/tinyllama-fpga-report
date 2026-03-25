@@ -462,9 +462,7 @@ softmax latency. For this reason, hardware-efficient inference systems
 commonly replace the true exponential with a piecewise-linear or
 lookup-table approximation. The I-BERT quantisation framework
 \cite{kim2021ibert} proposes such an approximation that bounds the
-relative error while operating entirely in integer arithmetic, and this
-strategy is adopted in the kernel implementation described in
-\cref{subsec:ffn_impl}.
+relative error while operating entirely in integer arithmetic.
 
 \subsection{SwiGLU Feed-Forward Network}
 \label{subsec:swiglu}
@@ -577,7 +575,7 @@ datapaths. Crucially for decoder models, the sparsity patterns can be
 applied directly under a causal mask without modification, making the Sparse
 Transformer natively compatible with autoregressive generation.
 
-\begin{figure}[h]
+\begin{figure}[H]
   \centering
   \includegraphics[width=0.85\textwidth]{Chapter2/media/sparse_transformer_patterns.png}
   \caption{Connectivity matrices for full attention (a), Sparse Transformer
@@ -739,7 +737,7 @@ times within the same iteration. These are resolved through accumulation
 interleaving and array partitioning respectively \cite{de2018hlstransformations}, both of
 which are applied extensively in this project.
 
-\begin{figure}[h]
+\begin{figure}[H]
   \centering
   \includegraphics[width=0.55\textwidth]{Chapter2/media/hls_pipeline.png}
   \caption{Pipeline characteristics showing latency $L$, initiation interval
@@ -761,7 +759,7 @@ proportionally increasing memory bandwidth demands. The \texttt{DATAFLOW}
 pragma decomposes a design into independently scheduled processing elements
 connected by FIFO streams, allowing pipeline stages to execute concurrently.
 
-\begin{figure}[h]
+\begin{figure}[H]
   \centering
   \includegraphics[width=0.85\textwidth]{Chapter2/media/hls_unrolling.png}
   \caption{Horizontal unrolling, vertical unrolling, and dataflow as means to

@@ -56,15 +56,7 @@ Table~\ref{tab:config_comparison} summarises the two sets of parameters.
 
 The prototype dimensions were chosen deliberately to keep array sizes small
 enough that HLS C-simulation completes in seconds and synthesis reports are
-straightforward to inspect. With $d_{\text{model}} = 8$ and $GS = 4$, for
-instance, every quantised vector contains two groups, making
-scale-factor indexing trivial to verify by hand. The constraint that $GS
-\leq d_{\text{model}}$ must always hold, since quantising into groups larger
-than the vector itself is undefined. At full scale the group size grows to
-$GS = 64$, which divides evenly into all relevant dimensions in TinyLlama
-(2048, 5632, 256) and aligns with a typical cache line size of 64 bytes,
-making group-boundary loads efficient.
-
+straightforward to inspect.
 % =============================================================================
 \section{RMSNorm}
 \label{sec:rmsnorm_impl}
@@ -93,43 +85,38 @@ the \texttt{ARRAY\_PARTITION cyclic factor=4} pragma can be applied,
 enabling four simultaneous reads per cycle in both computation loops.
 
 \begin{lstlisting}[
-  caption = {\texttt{rmsnorm<S>} implementation from \texttt{forward.h}.
-             Data is staged into local buffers before computation so that
-             \texttt{ARRAY\_PARTITION} can be applied. The reduction loop
-             uses \texttt{UNROLL factor=4} to accumulate four partial sums
-             simultaneously. The normalisation loop uses \texttt{UNROLL
-             factor=64} since it is fully data-parallel.},
+  caption = {\texttt{rmsnorm<S>} implementation from \texttt{forward.h}.},
   label   = {lst:rmsnorm}
 ]
 template <int S>
 void rmsnorm(float o[S], float x[S], float weight[S])
 {
-    float x_buff[S], weight_buff[S], out_buff[S];
-    #pragma HLS array_partition variable=x_buff      cyclic factor=4
-    #pragma HLS array_partition variable=weight_buff cyclic factor=4
-    #pragma HLS array_partition variable=out_buff    cyclic factor=4
+  float x_buff[S], weight_buff[S], out_buff[S];
+  #pragma HLS array_partition variable=x_buff      cyclic factor=4
+  #pragma HLS array_partition variable=weight_buff cyclic factor=4
+  #pragma HLS array_partition variable=out_buff    cyclic factor=4
 
-    memcpy(x_buff,      x,      S * sizeof(float));
-    memcpy(weight_buff, weight, S * sizeof(float));
+  memcpy(x_buff, x, S * sizeof(float));
+  memcpy(weight_buff, weight, S * sizeof(float));
 
-    float ss = 0.0f;
+  float ss = 0.0f;
 sum_of_squares:
-    for (int j = 0; j < S; j++) {
-        #pragma HLS PIPELINE
-        #pragma HLS UNROLL factor=4 skip_exit_check
-        ss += x_buff[j] * x_buff[j];
-    }
-    ss /= S;
-    ss += 1e-5f;
-    ss = 1.0f / sqrtf(ss);   // reciprocal RMS
+  for (int j = 0; j < S; j++) {
+    #pragma HLS PIPELINE
+    #pragma HLS UNROLL factor=4 skip_exit_check
+    ss += x_buff[j] * x_buff[j];
+  }
+  ss /= S;
+  ss += 1e-5f;
+  ss = 1.0f / sqrtf(ss);  // reciprocal RMS
 
 norm_and_scale:
-    for (int j = 0; j < S; j++) {
-        #pragma HLS PIPELINE
-        #pragma HLS UNROLL factor=64
-        out_buff[j] = weight_buff[j] * (ss * x_buff[j]);
-    }
-    memcpy(o, out_buff, S * sizeof(float));
+  for (int j = 0; j < S; j++) {
+    #pragma HLS PIPELINE
+    #pragma HLS UNROLL factor=64
+    out_buff[j] = weight_buff[j] * (ss * x_buff[j]);
+  }
+  memcpy(o, out_buff, S * sizeof(float));
 }
 \end{lstlisting}
 
@@ -185,9 +172,7 @@ the software reference for each element of the test vector.
     7 & -3.168472 & -3.168472 & 0 \\
     \bottomrule
   \end{tabular}
-  \caption{C-simulation output for \texttt{rmsnorm} with input
-           $\mathbf{x} = [1, -2, 3, -4, 5, -6, 7, -8]$ and weight
-           $\mathbf{g} = [0.5, 1.0, 1.5, 2.0, 0.5, 1.0, 1.5, 2.0]$.
+  \caption{C-simulation output for \texttt{rmsnorm}.
            All eight elements match the software reference.}
   \label{tab:rmsnorm_csim}
 
@@ -195,22 +180,11 @@ the software reference for each element of the test vector.
 
 The absolute error is identically zero for every element, meaning the
 kernel and the reference produce bit-identical results on this test
-vector. This outcome is stricter than expected, since the
-kernel's \texttt{sum\_of\_squares} loop uses \texttt{UNROLL factor=4},
-HLS may group elements into sets of four and accumulate their squared
-values in a different order from the sequential reference. Floating-point
-addition is not associative, so reordering additions can produce
-different rounding outcomes. This is because each floating-point addition
-rounds its result to the nearest representable value, and that rounding
-error accumulates differently depending on the order in which operands
-are grouped. In this particular case the zero-error result
-reflects the small scale of the prototype dimensions ($S = 8$), where
-the accumulated rounding differences are below the representational limit
-of single-precision arithmetic. At the full TinyLlama scale ($S = 2048$),
-small discrepancies between the unrolled and sequential summation orders
-are expected, and a tolerance threshold rather than exact equality would
-be the appropriate acceptance criterion. The csim run completed with zero
-errors as reported by Vitis HLS.
+vector. The zero-error result is attributed to the small prototype dimensions
+($S = 8$), where floating-point rounding differences from the
+\texttt{UNROLL factor=4} accumulation order remain below the
+representational limit of single-precision arithmetic.
+The csim run completed with zero errors as reported by Vitis HLS.
 
 \subsection{HLS Synthesis Results}
 \label{subsec:rmsnorm_csyn}
@@ -289,8 +263,7 @@ and Table~\ref{tab:rmsnorm_latency} for the per-stage latency breakdown.
     \bottomrule
   \end{tabular}
   \caption{Latency breakdown of \texttt{rmsnorm} ($S = 8$) by internal
-           pipeline stage at \SI{150}{\mega\hertz}. Total function latency
-           is 146 cycles (\SI{973}{\nano\second}).}
+           pipeline stage at \SI{150}{\mega\hertz}.}
   \label{tab:rmsnorm_latency}
 
 \end{table}
@@ -333,16 +306,7 @@ are not a property of the \texttt{rmsnorm} logic itself. The
 $S = 8$ are small enough to be inferred as register files. The estimated
 clock period of \SI{4.867}{\nano\second} leaves \SI{1.800}{\nano\second}
 of uncertainty budget, which meets the \SI{6.667}{\nano\second}
-target with zero slack remaining. This is reflected in the \texttt{Timing}
-issue flag visible in the synthesis summary report. While the design meets
-the timing constraint, the zero-slack condition means there is no margin
-for additional logic to be added along the critical path at this clock
-frequency without risking a timing violation.
-
-The \texttt{rmsnorm} implementation was not modified in the second or
-third kernel iterations. The synthesis results presented here are
-therefore valid across all three iterations of the prototype.
-
+target with zero slack remaining. 
 % =============================================================================
 \subsection{Full TinyLlama Scale}
 \label{subsec:rmsnorm_update3}
@@ -358,43 +322,41 @@ modifications, as shown in Listing~\ref{lst:rmsnorm_update3}.
 
 \begin{lstlisting}[
   caption = {\texttt{rmsnorm<S>} implementation from \texttt{FFN\_update3.h}
-             at full TinyLlama scale ($S = 2048$). The \texttt{ARRAY\_PARTITION}
-             factor increases from 4 to 16, and both loop \texttt{UNROLL}
-             factors change to 16 to match \texttt{PARALLEL\_MACS}.},
+             at full TinyLlama scale ($S = 2048$).},
   label   = {lst:rmsnorm_update3}
 ]
 template <int S>
 void rmsnorm(float o[S], float x[S], float weight[S]) {
-    constexpr auto array_size = S * sizeof(float);
+  constexpr auto array_size = S * sizeof(float);
 
-    float ss = 0.0f;
-    float x_buff[S];
-    float weight_buff[S];
-    float out_buff[S];
-    #pragma HLS ARRAY_PARTITION variable=x_buff      type=cyclic factor=16
-    #pragma HLS ARRAY_PARTITION variable=weight_buff type=cyclic factor=16
-    #pragma HLS ARRAY_PARTITION variable=out_buff    type=cyclic factor=16
+  float ss = 0.0f;
+  float x_buff[S];
+  float weight_buff[S];
+  float out_buff[S];
+  #pragma HLS ARRAY_PARTITION variable=x_buff      type=cyclic factor=16
+  #pragma HLS ARRAY_PARTITION variable=weight_buff type=cyclic factor=16
+  #pragma HLS ARRAY_PARTITION variable=out_buff    type=cyclic factor=16
 
-    memcpy(x_buff,      x,      array_size);
-    memcpy(weight_buff, weight, array_size);
+  memcpy(x_buff, x, array_size);
+  memcpy(weight_buff, weight, array_size);
 
 sum_of_squares:
-    for (int j = 0; j < S; j++) {
-        #pragma HLS PIPELINE II=1
-        #pragma HLS UNROLL factor=16
-        ss += x_buff[j] * x_buff[j];
-    }
-    ss /= S;
-    ss += 1e-5f;
-    ss = 1.0f / sqrtf(ss);
+  for (int j = 0; j < S; j++) {
+    #pragma HLS PIPELINE II=1
+    #pragma HLS UNROLL factor=16
+    ss += x_buff[j] * x_buff[j];
+  }
+  ss /= S;
+  ss += 1e-5f;
+  ss = 1.0f / sqrtf(ss);
 
 norm_and_scale:
-    for (int j = 0; j < S; j++) {
-        #pragma HLS PIPELINE II=1
-        #pragma HLS UNROLL factor=16
-        out_buff[j] = weight_buff[j] * (ss * x_buff[j]);
-    }
-    memcpy(o, out_buff, array_size);
+  for (int j = 0; j < S; j++) {
+    #pragma HLS PIPELINE II=1
+    #pragma HLS UNROLL factor=16
+    out_buff[j] = weight_buff[j] * (ss * x_buff[j]);
+  }
+  memcpy(o, out_buff, array_size);
 }
 \end{lstlisting}
 
@@ -407,8 +369,7 @@ and factor\,=\,16 is therefore the minimum that avoids port conflicts. Each
 2048-element float array partitioned with factor\,=\,16 produces
 $2048 / 16 = 128$ words per bank, which falls above the BRAM inference
 threshold and causes HLS to map each bank to a BRAM rather than a register
-file, accounting for the large on-chip memory cost visible in the synthesis
-results.
+file, causing large on-chip memory usage.
 
 The second change affects the \texttt{sum\_of\_squares} loop, where the
 \texttt{UNROLL factor} increases from 4 to 16. In the prototype this loop
@@ -423,14 +384,12 @@ is explicitly constrained to 1 with the added \texttt{II=1} annotation.
 The third change affects the \texttt{norm\_and\_scale} loop, where the
 \texttt{UNROLL factor} decreases from 64 to 16. In the prototype with
 $S = 8$, an unroll factor of 64 effectively fully unrolled the loop into
-8 parallel lanes at negligible resource cost. At $S = 2048$, maintaining
+8 parallel lanes. At $S = 2048$, maintaining
 an unroll factor of 64 would instantiate 64 parallel \texttt{fmul} units,
 each consuming 3 DSPs, for a total of 192 DSPs from this loop alone. Since
 the \texttt{norm\_and\_scale} computation has no loop-carried dependencies,
 a factor of 16 already achieves II\,=\,1 with full utilisation of the 16-bank
-partitioned buffers, making the higher unroll factor unnecessary. The
-reduction from 64 to 16 therefore preserves correctness and throughput
-while significantly reducing the DSP count.
+partitioned buffers.
 
 \subsubsection{C-Simulation Results}
 \label{subsubsec:rmsnorm_update3_csim}
@@ -497,8 +456,7 @@ per-stage breakdown.
   \end{tabular}
   \caption{Resource utilisation of \texttt{rmsnorm} at full scale
            ($S = 2048$) on the ZCU102. Core-only figures exclude the
-           AXI master adapter (\texttt{gmem0\_m\_axi},
-           4\,BRAM + 1{,}459\,FF + 2{,}023\,LUT).}
+           AXI master adapter.}
   \label{tab:rmsnorm_u3_resources}
 \end{table}
 
@@ -514,8 +472,7 @@ per-stage breakdown.
     \bottomrule
   \end{tabular}
   \caption{Per-stage latency breakdown of \texttt{rmsnorm} at full scale
-           ($S = 2048$) at \SI{150}{\mega\hertz}. Total function latency
-           is 18{,}645 cycles (\SI{0.124}{\milli\second}).}
+           ($S = 2048$) at \SI{150}{\mega\hertz}.}
   \label{tab:rmsnorm_u3_latency}
 \end{table}
 
@@ -523,25 +480,16 @@ The synthesis reports a timing violation at \SI{150}{\mega\hertz}. The
 prototype at $S = 8$ estimated \SI{4.867}{\nano\second} and met the
 \SI{6.667}{\nano\second} target. At $S = 2048$ the estimated path is
 \SI{7.456}{\nano\second}, exceeding the budget by \SI{2.589}{\nano\second}.
-The cause is the binary adder tree in the \texttt{sum\_of\_squares} loop.
+The cause is the wide parallel reduction in the \texttt{sum\_of\_squares} loop.
 With \texttt{UNROLL factor=16}, HLS instantiates 16 floating-point
 multipliers whose products are summed through a tree of adders. At $S = 8$
 with \texttt{UNROLL factor=4}, the tree has two levels. At $S = 2048$
 with \texttt{UNROLL factor=16}, it has four levels, and each level
 contributes one floating-point addition delay to the combinational path.
 This depth prevents timing closure at \SI{150}{\mega\hertz}. Reducing the
-unroll factor to 8, or maintaining four independent partial accumulators
-that are merged only after the loop exits, would shorten the tree and
+unroll factor to 8 would shorten the tree and
 resolve the violation.
 
-The total latency of 18{,}645 cycles (\SI{0.124}{\milli\second}) breaks
-into three stages. The load pipeline transfers 4{,}096 floats (both
-\texttt{x} and \texttt{weight}) from DDR in 4{,}106 cycles. The
-\texttt{rmsnorm\_2048\_s} core runs for 12{,}478 cycles, accounting for
-67\% of the total. The write pipeline returns 2{,}048 output floats in
-2{,}051 cycles. The AXI transfer overhead is fixed at $O(S)$ and forms
-a larger fraction of the total at smaller $S$ values, where the core
-compute is shorter.
 
 The BRAM count increases from 0 core BRAMs at $S = 8$ to 96 core BRAMs
 at $S = 2048$. At prototype scale, all six local buffer arrays
@@ -553,15 +501,11 @@ HLS maps each bank to a single-port BRAM, giving $6 \times 16 = 96$ core
 BRAMs in total.
 
 The DSP count increases from 26 at prototype scale to 98 at full scale.
-The 98 DSPs come from three sources: 16 \texttt{fmul} units in
-\texttt{norm\_and\_scale} (48 DSPs), 16 \texttt{fmul} units in
-\texttt{sum\_of\_squares} (48 DSPs), and the \texttt{fadd} accumulator
-(2 DSPs). Had the \texttt{norm\_and\_scale} unroll factor remained at 64
-as in the prototype, HLS would have instantiated 64 \texttt{fmul} units
-in that loop alone, consuming 192 DSPs from a single loop. Reducing the
-factor to 16 brings this contribution down to 48 DSPs while preserving
-II\,=\,1, since the loop has no loop-carried dependencies and 16 banks
-are sufficient to supply 16 parallel lanes without port contention.
+The increase comes from three sources. The first is the 16 \texttt{fmul}
+units in \texttt{norm\_and\_scale}, consuming 48 DSPs. The second is the
+16 \texttt{fmul} units in \texttt{sum\_of\_squares}, consuming another
+48 DSPs. The third is the \texttt{fadd} accumulator, accounting for the
+remaining 2 DSPs.
 
 The LUT count of 9{,}954 core LUTs is higher than the 3{,}575 of the
 prototype. The increase comes from three sources. The first is the wider multiplexer
@@ -603,53 +547,52 @@ scale and rounded to the nearest integer, producing a value in
 $[-127, 127]$ that is stored as \texttt{int8\_t}. The quantised values
 and scales are accumulated into local buffers
 \texttt{quantized\_buffer[S]} and \texttt{scale\_buffer[num\_groups]}
-before being written to the output struct via \texttt{memcpy}, avoiding
-repeated writes to the output pointer during the inner loops.
+before being written to the output struct via \texttt{memcpy}.
 
 \begin{lstlisting}[
   caption = {Group-wise quantisation in \texttt{quantize<S>} from
-             \texttt{forward.h}. The outer loop iterates over groups;
-             the inner scan finds \texttt{wmax} and the second inner loop
-             converts each element. The compile-time constant \texttt{GS}
-             replaces the runtime parameter \texttt{runtime\_gs} so the
-             compiler can evaluate \texttt{S/GS} as a constant expression.},
+             \texttt{forward.h}.},
   label   = {lst:quantize}
 ]
-for (int group = 0; group < num_groups; group++) {
+template <int S>
+void quantize(QuantizedTensor<S> *qx, float x[S], int runtime_gs) {
+  int num_groups = S / GS;
+
+  float  scale_buffer[num_groups];
+  int8_t quantized_buffer[S];
+  #pragma HLS ARRAY_PARTITION variable=quantized_buffer cyclic factor=4
+  #pragma HLS ARRAY_PARTITION variable=scale_buffer     cyclic factor=4
+
+  for (int group = 0; group < num_groups; group++) {
     #pragma HLS UNROLL factor=1
     #pragma HLS PIPELINE
     float wmax = 0.0f;
     int base_idx = group * GS;
 
-    for (int i = 0; i < GS; i++) {          // find max abs value in group
-        #pragma HLS PIPELINE
-        float val = fabs(x[base_idx + i]);
-        if (val > wmax) wmax = val;
+    for (int i = 0; i < GS; i++) {  // find max abs value in group
+      #pragma HLS PIPELINE
+      float val = fabs(x[base_idx + i]);
+      if (val > wmax) wmax = val;
     }
 
-    float scale = wmax / 127.0f;             // symmetric INT8 scale
+    float scale = wmax / 127.0f;  // symmetric INT8 scale
     scale_buffer[group] = scale;
 
-    for (int i = 0; i < GS; i++) {          // quantise each element
-        #pragma HLS PIPELINE
-        quantized_buffer[base_idx + i] =
-            (int8_t)round(x[base_idx + i] / scale);
+    for (int i = 0; i < GS; i++) {  // quantise each element
+      #pragma HLS PIPELINE
+      quantized_buffer[base_idx + i] =
+        (int8_t)round(x[base_idx + i] / scale);
     }
+  }
+  memcpy(qx->q, quantized_buffer, S * sizeof(int8_t));
+  memcpy(qx->s, scale_buffer, num_groups * sizeof(float));
 }
 \end{lstlisting}
 
-A notable implementation detail is the use of \texttt{GS} as a
-compile-time constant from \texttt{config.h} rather than the
-\texttt{runtime\_gs} parameter passed to the function.
-The parameter exists to prevent the C++ compiler
-from issuing a warning about a shadowed variable. An earlier iteration of
-the code attempted to use a local variable also named \texttt{GS}, which
-conflicted with the global constant. The rename to \texttt{runtime\_gs}
-resolves the shadowing, and the function body then uses the global
-\texttt{GS} constant directly. Because \texttt{GS} is a compile-time
-constant, the compiler can statically evaluate \texttt{S/GS} as
-\texttt{num\_groups}, enabling the \texttt{ARRAY\_PARTITION} pragma on
-\texttt{quantized\_buffer} and allowing the inner loops to be analysed
+\texttt{GS} is declared as a compile-time constant in \texttt{config.h},
+which allows the compiler to statically evaluate \texttt{S/GS} as
+\texttt{num\_groups}. This enables the \texttt{ARRAY\_PARTITION} pragma
+on \texttt{quantized\_buffer} and allows the inner loops to be analysed
 at synthesis time without variable-bound ambiguity.
 
 The \texttt{PIPELINE} pragma on the outer group loop combined with
@@ -663,12 +606,10 @@ prevents the outer loop from being unrolled further.
 \subsection{C-Simulation Results}
 \label{subsec:quantize_csim}
 
-C-simulation was performed for \texttt{quantize\_top}. The testbench supplied
-an eight-element float vector containing a mix of positive and negative
-values with varying magnitude and compared the kernel output against a
-software reference implementation of the same group-wise symmetric INT8
-quantisation scheme. Two aspects were verified independently, namely the INT8
-quantised values and the per-group scale factors. Table~\ref{tab:quantize_csim} shows the INT8 output and scale factors
+C-simulation was performed for \texttt{quantize\_top}. The testbench
+supplied an eight-element float vector and verified both the INT8
+quantised values and the per-group scale factors against a software
+reference. Table~\ref{tab:quantize_csim} shows the INT8 output and scale factors
 produced by the kernel and the software reference for each element and
 group respectively.
 
@@ -693,11 +634,9 @@ group respectively.
     1 & 0.035433 & 0.035433 & 0 & \\
     \bottomrule
   \end{tabular}
-  \caption{C-simulation output for \texttt{quantize} with input
-           $\mathbf{x} = [0.5, -1.2, 3.7, -0.3, 2.1, -4.5, 1.0, -2.8]$.
+  \caption{C-simulation output for \texttt{quantize}.
            All INT8 values and both scale factors match the software
-           reference. GS\,=\,4 so group~0 covers indices 0--3
-           and group~1 covers indices 4--7.}
+           reference.}
   \label{tab:quantize_csim}
 
 \end{table}
@@ -785,9 +724,7 @@ Table~\ref{tab:quantize_latency} for the per-stage breakdown.
     \bottomrule
   \end{tabular}
   \caption{Latency breakdown of \texttt{quantize} ($S = 8$, $GS = 4$)
-           by internal pipeline stage at \SI{150}{\mega\hertz}.
-           Total function latency is 84 cycles
-           (\SI{560}{\nano\second}).}
+           by internal pipeline stage at \SI{150}{\mega\hertz}.}
   \label{tab:quantize_latency}
 
 \end{table}
@@ -802,8 +739,7 @@ suffix. This occurs because Xilinx DSP48 blocks natively support only
 multiply-accumulate operations. Floating-point division has no direct DSP
 mapping and must instead be implemented using LUT-based logic. The
 consequence is higher LUT usage (3{,}275 core LUTs versus 3{,}575 for
-RMSNorm) but zero DSP consumption, which is favourable since DSPs are the
-most scarce resource on the ZCU102 relative to LUTs.
+RMSNorm) but zero DSP consumption.
 
 The \texttt{main\_loop} achieves II\,=\,4 across its two group
 iterations, meaning a new group begins every 4 clock cycles. This is
@@ -820,14 +756,10 @@ overlap in the pipeline. The intermediate \texttt{QuantizedTensor} struct
 fields \texttt{qt.q} and \texttt{qt.s} are inferred as small register
 files (\texttt{qt\_q\_U} and \texttt{qt\_s\_U}) rather than BRAMs, since
 their sizes of 8 bytes and 32 bytes respectively fall well below the
-BRAM threshold. The timing closure situation is identical to RMSNorm:
-estimated \SI{4.867}{\nano\second} plus \SI{1.80}{\nano\second}
+BRAM threshold. The estimated \SI{4.867}{\nano\second} plus \SI{1.80}{\nano\second}
 uncertainty exhausts the \SI{6.667}{\nano\second} budget,
 leaving zero slack.
 
-The \texttt{quantize} implementation was not modified in the second or
-third kernel iterations. The synthesis results presented here are
-therefore valid across all three iterations of the prototype.
 
 % =============================================================================
 \subsection{Full TinyLlama Scale}
@@ -847,15 +779,12 @@ compile-time constant \texttt{GS\,=\,64} directly. With
 $\text{GS} = 64 = 2^6$, the group index computation \texttt{i/GS}
 synthesises as a 6-bit right shift at no hardware cost. The
 \texttt{round()} call in the element quantisation step is replaced by
-manual arithmetic, where the sign of the value determines which
-rounding offset is added before truncation. In the prototype,
+manual arithmetic before truncation. In the prototype,
 \texttt{round()} caused HLS to infer a
 \texttt{generic\_round\_double\_s} rounding IP consuming 4 BRAMs per
 call. The manual rounding eliminates this IP. A reciprocal trick is
 applied to the group scale, computing \texttt{inv\_scale =
-1.0f/scale} once per group and multiplying per element, removing the
-per-element \texttt{fdiv} that otherwise appears in each
-\texttt{quantize\_elems} iteration.
+1.0f/scale} once per group and multiplying per element.
 
 \begin{lstlisting}[
   caption = {\texttt{quantize<S>} implementation from \texttt{FFN\_update3.h}
@@ -868,40 +797,40 @@ per-element \texttt{fdiv} that otherwise appears in each
 ]
 template <int S>
 void quantize(QuantizedTensor<S> *qx, float x[S]) {
-    constexpr int   num_groups = S / GS;
-    constexpr float Q_MAX      = 127.0f;
+  constexpr int   num_groups = S / GS;
+  constexpr float Q_MAX      = 127.0f;
 
-    float  scale_buffer[num_groups];
-    int8_t quantized_buffer[S];
-    #pragma HLS ARRAY_PARTITION variable=quantized_buffer cyclic factor=16
-    #pragma HLS ARRAY_PARTITION variable=scale_buffer     cyclic factor=4
+  float  scale_buffer[num_groups];
+  int8_t quantized_buffer[S];
+  #pragma HLS ARRAY_PARTITION variable=quantized_buffer cyclic factor=16
+  #pragma HLS ARRAY_PARTITION variable=scale_buffer     cyclic factor=4
 
 quant_groups:
-    for (int group = 0; group < num_groups; group++) {
-        int base_idx = group * GS;
-        float wmax = 0.0f;
+  for (int group = 0; group < num_groups; group++) {
+    int base_idx = group * GS;
+    float wmax = 0.0f;
 find_max:
-        for (int i = 0; i < GS; i++) {
-            #pragma HLS PIPELINE II=1
-            float val = fabs(x[base_idx + i]);
-            if (val > wmax) wmax = val;
-        }
-        float scale     = wmax / Q_MAX;
-        float inv_scale = (scale != 0.0f) ? (1.0f / scale) : 0.0f;
-        scale_buffer[group] = scale;
-quantize_elems:
-        for (int i = 0; i < GS; i++) {
-            #pragma HLS PIPELINE II=1
-            float quant_value = x[base_idx + i] * inv_scale;
-            int32_t rounded   = (int32_t)(quant_value +
-                                (quant_value >= 0.0f ? 0.5f : -0.5f));
-            if (rounded >  127) rounded =  127;
-            if (rounded < -127) rounded = -127;
-            quantized_buffer[base_idx + i] = (int8_t)rounded;
-        }
+    for (int i = 0; i < GS; i++) {
+      #pragma HLS PIPELINE II=1
+      float val = fabs(x[base_idx + i]);
+      if (val > wmax) wmax = val;
     }
-    memcpy(qx->q, quantized_buffer, S          * sizeof(int8_t));
-    memcpy(qx->s, scale_buffer,     num_groups * sizeof(float));
+    float scale     = wmax / Q_MAX;
+    float inv_scale = (scale != 0.0f) ? (1.0f / scale) : 0.0f;
+    scale_buffer[group] = scale;
+quantize_elems:
+    for (int i = 0; i < GS; i++) {
+      #pragma HLS PIPELINE II=1
+      float quant_value = x[base_idx + i] * inv_scale;
+      int32_t rounded   = (int32_t)(quant_value +
+                (quant_value >= 0.0f ? 0.5f : -0.5f));
+      if (rounded >  127) rounded =  127;
+      if (rounded < -127) rounded = -127;
+      quantized_buffer[base_idx + i] = (int8_t)rounded;
+    }
+  }
+  memcpy(qx->q, quantized_buffer, S * sizeof(int8_t));
+  memcpy(qx->s, scale_buffer, num_groups * sizeof(float));
 }
 \end{lstlisting}
 
@@ -982,8 +911,7 @@ per-stage breakdown.
     \bottomrule
   \end{tabular}
   \caption{Per-stage latency breakdown of \texttt{quantize} at full scale
-           ($S = 2048$) at \SI{150}{\mega\hertz}. Total function latency
-           is 10{,}362 cycles (\SI{69.083}{\micro\second}).}
+           ($S = 2048$) at \SI{150}{\mega\hertz}.}
   \label{tab:quantize_u3_latency}
 \end{table}
 
@@ -1070,22 +998,16 @@ than a single scale shared across the full \texttt{kv\_dim}-dimensional
 vector. Listing~\ref{lst:dequantize} shows the complete function body.
 
 \begin{lstlisting}[
-  caption = {\texttt{dequantize<S>} implementation from \texttt{forward.h}.
-             Each element is recovered by multiplying its INT8 value by
-             the corresponding group scale. No pragma directives are
-             applied because the loop has no carried dependencies and no
-             memory port conflicts. The division \texttt{i/GS} is
-             replaced by a bitwise right shift by the compiler since
-             \texttt{GS} is a compile-time power of two.},
+  caption = {\texttt{dequantize<S>} implementation from \texttt{forward.h}.},
   label   = {lst:dequantize}
 ]
 template <int S>
 void dequantize(QuantizedTensor<S> *qx, float x[S], int runtime_gs)
 {
-    for (int i = 0; i < S; i++)
-    {
-        x[i] = qx->q[i] * qx->s[i / GS]; // GS is a compile-time constant
-    }
+  for (int i = 0; i < S; i++)
+  {
+    x[i] = qx->q[i] * qx->s[i / GS];
+  }
 }
 \end{lstlisting}
 
@@ -1118,10 +1040,9 @@ kernel and reference outputs for each element.
     7 & -4.039362 & -4.039362 & 0 \\
     \bottomrule
   \end{tabular}
-  \caption{C-simulation output for \texttt{dequantize} with group scales
-           $s_0 = 0.029134$ (indices 0--3) and $s_1 = 0.035433$
-           (indices 4--7). All eight dequantised float values match the
-           software reference with zero absolute error.}
+  \caption{C-simulation output for \texttt{dequantize}.
+           All eight dequantised float values match the software reference
+           with zero absolute error.}
   \label{tab:dequantize_csim}
 
 \end{table}
@@ -1211,8 +1132,7 @@ Table~\ref{tab:dequantize_latency} for the per-stage breakdown.
     \bottomrule
   \end{tabular}
   \caption{Latency breakdown of \texttt{dequantize} ($S = 8$, $GS = 4$)
-           at \SI{150}{\mega\hertz}. Total function latency is 45 cycles
-           (\SI{300}{\nano\second}).}
+           at \SI{150}{\mega\hertz}.}
   \label{tab:dequantize_latency}
 
 \end{table}
@@ -1258,9 +1178,6 @@ native width widened to a 32-bit AXI bus width (8\,$\rightarrow$\,32),
 reflecting the fact that INT8 data must be packed into the 32-bit AXI
 data bus in groups of four bytes per transfer.
 
-The \texttt{dequantize} implementation was not modified in the second or
-third kernel iterations. The synthesis results presented here are
-therefore valid across all three iterations of the prototype.
 
 % =============================================================================
 \subsection{Full TinyLlama Scale}
@@ -1287,10 +1204,10 @@ directive is added to the \texttt{dequant\_loop}.
 template <int S>
 void dequantize(QuantizedTensor<S> *qx, float x[S]) {
 dequant_loop:
-    for (int i = 0; i < S; i++) {
-        #pragma HLS PIPELINE II=1
-        x[i] = qx->q[i] * qx->s[i / GS];
-    }
+  for (int i = 0; i < S; i++) {
+    #pragma HLS PIPELINE II=1
+    x[i] = qx->q[i] * qx->s[i / GS];
+  }
 }
 \end{lstlisting}
 
@@ -1379,8 +1296,7 @@ per-stage breakdown.
     \bottomrule
   \end{tabular}
   \caption{Per-stage latency breakdown of \texttt{dequantize} at full scale
-           ($S = 2048$) at \SI{150}{\mega\hertz}. Total function latency
-           is 6{,}223 cycles (\SI{41.489}{\micro\second}).}
+           ($S = 2048$) at \SI{150}{\mega\hertz}.}
   \label{tab:dequantize_u3_latency}
 \end{table}
 
@@ -1436,34 +1352,40 @@ the core loop structure.
 
 \begin{lstlisting}[
   caption = {Core loop structure of \texttt{matmul<N,D>} from
-             \texttt{forward.h}. The outer row loop is pipelined. The
-             inner loading loops (\texttt{matmul1}, \texttt{matmul2})
-             and the grouped dot product loops (\texttt{matmul3},
-             \texttt{matmul4}) execute sequentially within each pipeline
-             iteration. The \texttt{UNROLL} pragmas on \texttt{matmul1}
-             and \texttt{matmul2} are commented out to prevent AXI
-             AXI bus contention at full scale.},
+             \texttt{forward.h}.},
   label = {lst:matmul}
 ]
-for (i = 0; i < D; i++) {
+template <int N, int D>
+void matmul(float *xout, QuantizedTensor<N> *xq, int8_t *wq, float *ws) {
+  static int8_t x_buffer[N];
+  static float  xs_buffer[N/GS];
+  #pragma HLS ARRAY_PARTITION variable=x_buffer  cyclic factor=16
+  #pragma HLS ARRAY_PARTITION variable=xs_buffer cyclic factor=4
+
+x_buff:  for (int j = 0; j < N;    j++) x_buffer[j]  = xq->q[j];
+xs_buff: for (int j = 0; j < N/GS; j++) xs_buffer[j] = xq->s[j];
+
+  for (int i = 0; i < D; i++) {
   #pragma HLS PIPELINE
   float val = 0.0f;
-  int8_t  w_buffer[N];   float ws_buffer[N/GS];
+  int8_t w_buffer[N];
+  float  ws_buffer[N/GS];
   #pragma HLS ARRAY_PARTITION variable=w_buffer  cyclic factor=32
   #pragma HLS ARRAY_PARTITION variable=ws_buffer cyclic factor=32
 
-matmul1: for (int j = 0; j < N; j++)   // no UNROLL: deliberate
-    w_buffer[j]  = wq[j + i*N];
-matmul2: for (int j = 0; j < N/GS; j++) // no UNROLL: deliberate
-    ws_buffer[j] = ws[i*(N/GS) + j];
+matmul1:  for (int j = 0; j < N;    j++) // no UNROLL: deliberate
+        w_buffer[j]  = wq[j + i*N];
+matmul2:  for (int j = 0; j < N/GS; j++) // no UNROLL: deliberate
+        ws_buffer[j] = ws[i*(N/GS) + j];
 
-matmul3: for (int j = 0; j <= N-GS; j += GS) {
-    int32_t ival = 0;
-matmul4:  for (int k = 0; k < GS; k++) // UNROLL commented out
+matmul3:  for (int j = 0; j <= N-GS; j += GS) {
+        int32_t ival = 0;
+matmul4:    for (int k = 0; k < GS; k++) // UNROLL commented out
         ival += (int32_t)x_buffer[j+k] * (int32_t)w_buffer[j+k];
-    val += (float)ival * ws_buffer[j/GS] * xs_buffer[j/GS];
-  }
+        val += (float)ival * ws_buffer[j/GS] * xs_buffer[j/GS];
+      }
   xout[i] = val;
+  }
 }
 \end{lstlisting}
 
@@ -1545,11 +1467,9 @@ software reference for each of the eight output elements.
     7 & -2.799207 & -2.799207 & 0 \\
     \bottomrule
   \end{tabular}
-  \caption{C-simulation output for \texttt{matmul} with quantised input
-           $\hat{\mathbf{x}} = [17, -41, 127, -10, 59, -127, 28, -79]$
-           (group scales $s_0 = 0.029134$, $s_1 = 0.035433$) and an
-           $8 \times 8$ scaled identity weight matrix. All eight output
-           elements match the software reference within tolerance.}
+  \caption{C-simulation output for \texttt{matmul}.
+           All eight output elements match the software reference within
+           tolerance.}
   \label{tab:matmul_csim}
 
 \end{table}
@@ -1637,8 +1557,7 @@ Table~\ref{tab:matmul_latency} for the per-stage latency breakdown.
     \bottomrule
   \end{tabular}
   \caption{Latency breakdown of \texttt{matmul} ($N = D = 8$, $GS = 4$)
-           at \SI{150}{\mega\hertz}. Total function latency is 146 cycles
-           (\SI{973}{\nano\second}).}
+           at \SI{150}{\mega\hertz}.}
   \label{tab:matmul_latency}
 
 \end{table}
@@ -1681,9 +1600,6 @@ identical to all preceding sections, with an estimated \SI{4.867}{\nano\second}
 plus \SI{1.800}{\nano\second} uncertainty that exhausts the
 \SI{6.667}{\nano\second} budget, leaving zero slack.
 
-The \texttt{matmul} implementation was not modified in the second or
-third kernel iterations. The synthesis results presented here are
-therefore valid across all three iterations of the prototype.
 
 % =============================================================================
 \subsection{Full TinyLlama Scale: Tiled Implementation}
@@ -1705,52 +1621,47 @@ into explicit phases.
 
 \begin{lstlisting}[
   caption = {Core tile loop structure of the tiled \texttt{matmul<N,D>}
-             from \texttt{FFN\_update3.h}. Each tile loads
-             \texttt{TILE\_D\,=\,4} weight rows via \texttt{memcpy} bursts
-             (Phase 1), computes \texttt{TILE\_D} dot products from BRAM
-             (Phase 2), and writes results (Phase 3). The
-             \texttt{dot\_inner} unroll factor matches
-             \texttt{PARALLEL\_MACS\,=\,16}.},
+             from \texttt{FFN\_update3.h}.},
   label   = {lst:matmul_update3}
 ]
 tile_loop:
 for (int tile = 0; tile < num_full_tiles + (remainder>0?1:0); tile++) {
-    #pragma HLS loop_tripcount min=1 max=1408
+  #pragma HLS loop_tripcount min=1 max=1408
 
-    const int d_start = tile * TILE_D;
-    const int d_count = (tile < num_full_tiles) ? TILE_D : remainder;
+  const int d_start = tile * TILE_D;
+  const int d_count = (tile < num_full_tiles) ? TILE_D : remainder;
 
-    // Phase 1: burst-load TILE_D weight rows from DDR
+  // Phase 1: burst-load TILE_D weight rows from DDR
 load_tile:
-    for (int d = 0; d < d_count; d++) {
-        memcpy(w_tile[d],  &wq[d_start+d)*N],  N        * sizeof(int8_t));
-        memcpy(ws_tile[d], &ws[(d_start+d)*(N/GS)], (N/GS) * sizeof(float));
-    }
+  for (int d = 0; d < d_count; d++) {
+    memcpy(w_tile[d], &wq[(d_start+d)*N], N * sizeof(int8_t));
+    memcpy(ws_tile[d], &ws[(d_start+d)*(N/GS)], (N/GS) * sizeof(float));
+  }
 
-    // Phase 2: compute TILE_D dot products from BRAM
+  // Phase 2: compute TILE_D dot products from BRAM
 compute_tile:
-    for (int d = 0; d < d_count; d++) {
-        float val = 0.0f;
+  for (int d = 0; d < d_count; d++) {
+    float val = 0.0f;
 dot_groups:
-        for (int g = 0; g < N/GS; g++) {
-            #pragma HLS PIPELINE II=1
-            int32_t ival = 0;
+    for (int g = 0; g < N/GS; g++) {
+      #pragma HLS PIPELINE II=1
+      int32_t ival = 0;
 dot_inner:
-            for (int k = 0; k < GS; k++) {
-                #pragma HLS UNROLL factor=PARALLEL_MACS
-                ival += (int32_t)x_buf[g*GS+k] * (int32_t)w_tile[d][g*GS+k];
-            }
-            val += (float)ival * ws_tile[d][g] * xs_buf[g];
-        }
-        out_tile[d] = val;
+      for (int k = 0; k < GS; k++) {
+        #pragma HLS UNROLL factor=PARALLEL_MACS
+        ival += (int32_t)x_buf[g*GS+k] * (int32_t)w_tile[d][g*GS+k];
+      }
+      val += (float)ival * ws_tile[d][g] * xs_buf[g];
     }
+    out_tile[d] = val;
+  }
 
-    // Phase 3: write tile output
+  // Phase 3: write tile output
 write_tile:
-    for (int d = 0; d < d_count; d++) {
-        #pragma HLS PIPELINE II=1
-        xout[d_start + d] = out_tile[d];
-    }
+  for (int d = 0; d < d_count; d++) {
+    #pragma HLS PIPELINE II=1
+    xout[d_start + d] = out_tile[d];
+  }
 }
 \end{lstlisting}
 
@@ -1858,8 +1769,7 @@ per-stage breakdown.
   \end{tabular}
   \caption{Latency breakdown of the tiled \texttt{matmul}
            ($N = 2048$, $D = 5632$, \texttt{TILE\_D} = 4) at
-           \SI{150}{\mega\hertz}. Total function latency is
-           12{,}752{,}954 cycles (\SI{85.024}{\milli\second}).}
+           \SI{150}{\mega\hertz}.}
   \label{tab:matmul_u3_latency}
 \end{table}
 
@@ -1994,13 +1904,7 @@ assignments.
 
 \begin{lstlisting}[
   caption = {\texttt{softmax<MAXSIZE>} implementation from
-             \texttt{forward.h} (baseline iteration). The \texttt{max}
-             and \texttt{sum} loops carry no \texttt{UNROLL} because of
-             their loop-carried dependencies on \texttt{max\_val} and
-             \texttt{sum} respectively. The \texttt{exp} and \texttt{norm}
-             loops are fully unrolled into 16 parallel datapath lanes.
-             The \texttt{inv\_sum} reciprocal hoists the single division
-             out of the \texttt{norm} loop body.},
+             \texttt{forward.h} (baseline iteration).},
   label = {lst:softmax}
 ]
 template <int MAXSIZE>
@@ -2011,27 +1915,27 @@ max:
   for (int i = 1; i < size; i++) {
     #pragma HLS loop_tripcount min=1 max=16 avg=8
     #pragma HLS PIPELINE
-    if (x[i] > max_val) max_val = x[i];   // carried dep: no UNROLL
+    if (x[i] > max_val) max_val = x[i];  // carried dep: no UNROLL
   }
 exp:
   for (int i = 0; i < size; i++) {
     #pragma HLS loop_tripcount min=1 max=16 avg=8
     #pragma HLS PIPELINE
-    #pragma HLS UNROLL factor=16           // independent: complete unroll
+    #pragma HLS UNROLL factor=16  // independent: complete unroll
     buffer[i] = expf(x[i] - max_val);
   }
   float sum = 0.0f;
 sum:
   for (int i = 0; i < size; i++) {
     #pragma HLS loop_tripcount min=1 max=16 avg=8
-    sum += buffer[i];                      // carried dep: no PIPELINE
+    sum += buffer[i];  // carried dep: no PIPELINE
   }
-  const float inv_sum = 1.0f / sum;        // one division hoisted out
+  const float inv_sum = 1.0f / sum;  // one division hoisted out
 norm:
   for (int i = 0; i < size; i++) {
     #pragma HLS loop_tripcount min=1 max=16 avg=8
     #pragma HLS PIPELINE
-    #pragma HLS UNROLL factor=16           // independent: complete unroll
+    #pragma HLS UNROLL factor=16  // independent: complete unroll
     x[i] = buffer[i] * inv_sum;
   }
 }
@@ -2069,11 +1973,8 @@ shows the output from both the kernel and the software reference.
     7 & 0.022472 & 0.022472 & 0 \\
     \bottomrule
   \end{tabular}
-  \caption{C-simulation output for \texttt{softmax} with input
-           $[-1.2, 0.5, 1.8, 4.5, -0.3, 2.1, -2.7, 0.9]$,
-           $\texttt{size} = 8$, $\texttt{MAXSIZE} = 16$.
-           All eight elements match the software reference,
-           and the sum of outputs is $1.00000000$.}
+  \caption{C-simulation output for \texttt{softmax}.
+           All eight elements match the software reference.}
   \label{tab:softmax_csim}
 \end{table}
 
@@ -2448,12 +2349,8 @@ kernel and the software reference.
     7 &  2 &  2 & 0 \\
     \bottomrule
   \end{tabular}
-  \caption{C-simulation output for \texttt{softmax\_ibert} with
-           \texttt{logits} $= \{10, -5, 18, 25, -3, 21, -2, 9\}$,
-           \texttt{scale\_factor\,=\,0.2f}, and \texttt{size\,=\,8}.
-           All eight output probabilities match the software reference.
-           The sum of active probabilities is $124$, falling short of
-           $127$ due to integer division in the normalisation step.}
+  \caption{C-simulation output for \texttt{softmax\_ibert}.
+           All eight output probabilities match the software reference.}
   \label{tab:softmax_ibert_csim}
 \end{table}
 
@@ -2600,52 +2497,52 @@ removing the per-element integer division.
 ]
 template <int MAX_SIZE>
 void softmax_ibert(int32_t *logits, int8_t *probs,
-                   int size, float scale_factor) {
-    if (size > MAX_SIZE) size = MAX_SIZE;
+           int size, float scale_factor) {
+  if (size > MAX_SIZE) size = MAX_SIZE;
 
-    int32_t max_val = -2147483648;
+  int32_t max_val = -2147483648;
 find_max:
-    for (int i = 0; i < MAX_SIZE; i++) {
-        #pragma HLS PIPELINE II=1
-        #pragma HLS loop_tripcount min=1 max=MAX_SIZE
-        if (i < size) {
-            if (logits[i] > max_val) max_val = logits[i];
-        }
+  for (int i = 0; i < MAX_SIZE; i++) {
+    #pragma HLS PIPELINE II=1
+    #pragma HLS loop_tripcount min=1 max=MAX_SIZE
+    if (i < size) {
+      if (logits[i] > max_val) max_val = logits[i];
     }
+  }
 
-    int32_t sum_exp = 0;
-    int8_t exp_results[MAX_SIZE];
-    #pragma HLS ARRAY_PARTITION variable=exp_results cyclic factor=16
+  int32_t sum_exp = 0;
+  int8_t exp_results[MAX_SIZE];
+  #pragma HLS ARRAY_PARTITION variable=exp_results cyclic factor=16
 
 compute_exp:
-    for (int i = 0; i < MAX_SIZE; i++) {
-        #pragma HLS PIPELINE II=1
-        #pragma HLS loop_tripcount min=1 max=MAX_SIZE
-        if (i < size) {
-            int32_t val_shifted = logits[i] - max_val;
-            float   val_scaled_f = (float)val_shifted * scale_factor;
-            int32_t val_scaled   = (int32_t)val_scaled_f;
-            if (val_scaled < -127) val_scaled = -127;
-            int8_t e = exp_lut[-val_scaled];
-            exp_results[i] = e;
-            sum_exp += e;
-        }
+  for (int i = 0; i < MAX_SIZE; i++) {
+    #pragma HLS PIPELINE II=1
+    #pragma HLS loop_tripcount min=1 max=MAX_SIZE
+    if (i < size) {
+      int32_t val_shifted = logits[i] - max_val;
+      float   val_scaled_f = (float)val_shifted * scale_factor;
+      int32_t val_scaled   = (int32_t)val_scaled_f;
+      if (val_scaled < -127) val_scaled = -127;
+      int8_t e = exp_lut[-val_scaled];
+      exp_results[i] = e;
+      sum_exp += e;
     }
+  }
 
-    if (sum_exp == 0) sum_exp = 1;
-    float inv_sum = 1.0f / (float)sum_exp;
+  if (sum_exp == 0) sum_exp = 1;
+  float inv_sum = 1.0f / (float)sum_exp;
 
 normalize:
-    for (int i = 0; i < MAX_SIZE; i++) {
-        #pragma HLS PIPELINE II=1
-        #pragma HLS loop_tripcount min=1 max=MAX_SIZE
-        if (i < size) {
-            int32_t p = (int32_t)((float)exp_results[i] * 127.0f * inv_sum);
-            if (p > 127) p = 127;
-            if (p < 0)   p = 0;
-            probs[i] = (int8_t)p;
-        }
+  for (int i = 0; i < MAX_SIZE; i++) {
+    #pragma HLS PIPELINE II=1
+    #pragma HLS loop_tripcount min=1 max=MAX_SIZE
+    if (i < size) {
+      int32_t p = (int32_t)((float)exp_results[i] * 127.0f * inv_sum);
+      if (p > 127) p = 127;
+      if (p < 0)   p = 0;
+      probs[i] = (int8_t)p;
     }
+  }
 }
 \end{lstlisting}
 
@@ -2730,8 +2627,7 @@ breakdown.
   \end{tabular}
   \caption{Per-stage latency breakdown of \texttt{softmax\_ibert} at full
            scale (\texttt{MAX\_SIZE} = 2048) at \SI{150}{\mega\hertz}.
-           Total function latency is 10{,}320 cycles
-           (\SI{68.803}{\micro\second}).}
+.}
   \label{tab:softmax_ibert_u3_latency}
 \end{table}
 
@@ -2882,7 +2778,7 @@ iterate:
     #pragma HLS loop_tripcount min=1 max=16 avg=8
     float score = 0.0f;
     for (int i = 0; i < head_size; i++) {
-      #pragma HLS UNROLL         // complete unroll: 4 parallel fmul units
+      #pragma HLS UNROLL  // complete unroll: 4 parallel fmul units
       score += q_buf[i + q_offset] * key_cache[i + key_offset];
     }
     score /= sqrtf(head_size);
@@ -2896,7 +2792,7 @@ acc:
     #pragma HLS PIPELINE
     float a = att_buf[t + att_offset];
     for (int i = 0; i < head_size; i++) {
-      #pragma HLS UNROLL         // complete unroll: 4 parallel fmul+fadd
+      #pragma HLS UNROLL  // complete unroll: 4 parallel fmul+fadd
       xb_buf[i + xb_offset] += a * value_cache[i + v_offset]; // float DDR read
     }
   }
@@ -3178,31 +3074,31 @@ change from the baseline.
 // STEP 1: per-head Q quantisation (before iterate loop)
 float max_val = 0.0f;
 for (int i = 0; i < head_size; i++) {
-    #pragma HLS PIPELINE
-    float v = std::fabs(q_buf[i + q_offset]);
-    if (v > max_val) max_val = v;
+  #pragma HLS PIPELINE
+  float v = std::fabs(q_buf[i + q_offset]);
+  if (v > max_val) max_val = v;
 }
 float q_scale_val = (max_val == 0.0f) ? 1.0f : (max_val / 127.0f);
 float q_inv_scale = 1.0f / q_scale_val;  // one division hoisted out
 int8_t q_int8[head_size];
 for (int i = 0; i < head_size; i++) {
-    #pragma HLS UNROLL
-    q_int8[i] = (int8_t)round(q_buf[i + q_offset] * q_inv_scale);
+  #pragma HLS UNROLL
+  q_int8[i] = (int8_t)round(q_buf[i + q_offset] * q_inv_scale);
 }
 
 // STEP 2: on-the-fly K quantisation + INT32 dot product (inside iterate)
 iterate:
 for (int t = 0; t <= pos; t++) {
-    #pragma HLS PIPELINE
-    // ... loaded float k_buffer[head_size] from key_cache, computed k_scale ...
-    int32_t score_int = 0;
-    for (int i = 0; i < head_size; i++) {
-        #pragma HLS UNROLL
-        score_int += (int32_t)q_int8[i] * (int32_t)k_int8[i]; // integer MAC
-    }
-    float score = ((float)score_int) * q_scale_val * k_scale_val
-                  * (1.0f / sqrtf(head_size));   // single dequantise step
-    att_buf[t + att_offset] = score;
+  #pragma HLS PIPELINE
+  // ... loaded float k_buffer[head_size] from key_cache, computed k_scale ...
+  int32_t score_int = 0;
+  for (int i = 0; i < head_size; i++) {
+    #pragma HLS UNROLL
+    score_int += (int32_t)q_int8[i] * (int32_t)k_int8[i]; // integer MAC
+  }
+  float score = ((float)score_int) * q_scale_val * k_scale_val
+          * (1.0f / sqrtf(head_size));  // single dequantise step
+  att_buf[t + att_offset] = score;
 }
 \end{lstlisting}
 
@@ -3421,31 +3317,31 @@ K quantisation concrete.
 ]
 // ITERATION 2: on-the-fly K quantisation inside iterate
 for (int t = 0; t <= pos; t++) {
-    #pragma HLS PIPELINE
-    float k_buffer[head_size];
-    for (int i = 0; i < head_size; i++)
-        k_buffer[i] = key_cache[i + key_offset]; // float DDR load
-    float k_max = 0.0f;
-    for (int i = 0; i < head_size; i++) {
-        float v = std::fabs(k_buffer[i]);         // max scan
-        if (v > k_max) k_max = v;
-    }
-    float k_scale = k_max / 127.0f;               // scale compute
-    float k_inv   = 1.0f / k_scale;
-    int8_t k_int8[head_size];
-    for (int i = 0; i < head_size; i++)
-        k_int8[i] = (int8_t)round(k_buffer[i] * k_inv); // quantise
-    // ... INT32 dot product using k_int8 ...
+  #pragma HLS PIPELINE
+  float k_buffer[head_size];
+  for (int i = 0; i < head_size; i++)
+    k_buffer[i] = key_cache[i + key_offset]; // float DDR load
+  float k_max = 0.0f;
+  for (int i = 0; i < head_size; i++) {
+    float v = std::fabs(k_buffer[i]);  // max scan
+    if (v > k_max) k_max = v;
+  }
+  float k_scale = k_max / 127.0f;  // scale compute
+  float k_inv   = 1.0f / k_scale;
+  int8_t k_int8[head_size];
+  for (int i = 0; i < head_size; i++)
+    k_int8[i] = (int8_t)round(k_buffer[i] * k_inv); // quantise
+  // ... INT32 dot product using k_int8 ...
 }
 
 // ITERATION 3: direct INT8 load from pre-quantised cache
 for (int t = 0; t <= pos; t++) {
-    #pragma HLS PIPELINE
-    float k_scale = key_scales[scale_offset];    // one float scalar read
-    int8_t k_buffer[head_size];
-    for (int i = 0; i < head_size; i++)
-        k_buffer[i] = key_cache[data_offset + i]; // INT8 load
-    // ... INT32 dot product using k_buffer directly ...
+  #pragma HLS PIPELINE
+  float k_scale = key_scales[scale_offset];  // one float scalar read
+  int8_t k_buffer[head_size];
+  for (int i = 0; i < head_size; i++)
+    k_buffer[i] = key_cache[data_offset + i]; // INT8 load
+  // ... INT32 dot product using k_buffer directly ...
 }
 \end{lstlisting}
 
@@ -3789,71 +3685,71 @@ from competing for the same port.
 ]
 multihead_attention:
 for (int h = 0; h < n_heads; h++) {
-    const int q_offset = h * head_size;
-    const int kv_head  = h / kv_mul;
+  const int q_offset = h * head_size;
+  const int kv_head  = h / kv_mul;
 
-    // Per-head Q quantisation (find max, scale, convert to INT8)
-    float max_abs = 0.0f;
-    q_find_max:
+  // Per-head Q quantisation (find max, scale, convert to INT8)
+  float max_abs = 0.0f;
+  q_find_max:
+  for (int i = 0; i < head_size; i++) { // PIPELINE II=1
+    #pragma HLS PIPELINE II=1
+    float val = fabsf(q_buf[i + q_offset]);
+    if (val > max_abs) max_abs = val;
+  }
+  float q_scale_val = (max_abs == 0.0f) ? 1.0f : max_abs / 127.0f;
+  float q_inv_scale = 1.0f / q_scale_val;
+  int8_t q_int8[head_size];
+  #pragma HLS ARRAY_PARTITION variable=q_int8 complete
+  q_quantize:
+  for (int i = 0; i < head_size; i++) { // UNROLL complete
+    #pragma HLS UNROLL
+    float qf = q_buf[i + q_offset] * q_inv_scale;
+    int32_t r = (int32_t)(qf + (qf >= 0.0f ? 0.5f : -0.5f));
+    if (r >  127) r =  127;
+    if (r < -127) r = -127;
+    q_int8[i] = (int8_t)r;
+  }
+
+  score_loop:  // outer: no PIPELINE
+  for (int t = 0; t <= pos; t++) {
+    int8_t k_buffer[head_size];
+    #pragma HLS ARRAY_PARTITION variable=k_buffer complete
+    k_load:
     for (int i = 0; i < head_size; i++) { // PIPELINE II=1
-        #pragma HLS PIPELINE II=1
-        float val = fabsf(q_buf[i + q_offset]);
-        if (val > max_abs) max_abs = val;
+      #pragma HLS PIPELINE II=1
+      int kv_off = t*kv_dim + kv_head*head_size;
+      k_buffer[i] = key_cache[kv_off + i];
     }
-    float q_scale_val = (max_abs == 0.0f) ? 1.0f : max_abs / 127.0f;
-    float q_inv_scale = 1.0f / q_scale_val;
-    int8_t q_int8[head_size];
-    #pragma HLS ARRAY_PARTITION variable=q_int8 complete
-    q_quantize:
+    int32_t score_int = 0;
+    dot_qk:
     for (int i = 0; i < head_size; i++) { // UNROLL complete
-        #pragma HLS UNROLL
-        float qf = q_buf[i + q_offset] * q_inv_scale;
-        int32_t r = (int32_t)(qf + (qf >= 0.0f ? 0.5f : -0.5f));
-        if (r >  127) r =  127;
-        if (r < -127) r = -127;
-        q_int8[i] = (int8_t)r;
+      #pragma HLS UNROLL
+      score_int += (int32_t)q_int8[i] * (int32_t)k_buffer[i];
     }
+    att[t] = (int32_t)(((float)score_int) * key_scales[...]);
+  }
 
-    score_loop:                          // outer: no PIPELINE
-    for (int t = 0; t <= pos; t++) {
-        int8_t k_buffer[head_size];
-        #pragma HLS ARRAY_PARTITION variable=k_buffer complete
-        k_load:
-        for (int i = 0; i < head_size; i++) { // PIPELINE II=1
-            #pragma HLS PIPELINE II=1
-            int kv_off = t*kv_dim + kv_head*head_size;
-            k_buffer[i] = key_cache[kv_off + i];
-        }
-        int32_t score_int = 0;
-        dot_qk:
-        for (int i = 0; i < head_size; i++) { // UNROLL complete
-            #pragma HLS UNROLL
-            score_int += (int32_t)q_int8[i] * (int32_t)k_buffer[i];
-        }
-        att[t] = (int32_t)(((float)score_int) * key_scales[...]);
+  float remaining_scale = q_scale_val / sqrtf((float)head_size);
+  softmax_ibert<seq_len>(att, att_probs, pos+1, remaining_scale);
+
+  value_loop:  // outer: no PIPELINE
+  for (int t = 0; t <= pos; t++) {
+    int8_t v_buffer[head_size];
+    #pragma HLS ARRAY_PARTITION variable=v_buffer complete
+    v_load:
+    for (int i = 0; i < head_size; i++) { // PIPELINE II=1
+      #pragma HLS PIPELINE II=1
+      int v_off = t*kv_dim + kv_head*head_size;
+      v_buffer[i] = value_cache[v_off + i];
     }
-
-    float remaining_scale = q_scale_val / sqrtf((float)head_size);
-    softmax_ibert<seq_len>(att, att_probs, pos+1, remaining_scale);
-
-    value_loop:                          // outer: no PIPELINE
-    for (int t = 0; t <= pos; t++) {
-        int8_t v_buffer[head_size];
-        #pragma HLS ARRAY_PARTITION variable=v_buffer complete
-        v_load:
-        for (int i = 0; i < head_size; i++) { // PIPELINE II=1
-            #pragma HLS PIPELINE II=1
-            int v_off = t*kv_dim + kv_head*head_size;
-            v_buffer[i] = value_cache[v_off + i];
-        }
-        float prob = ((float)att_probs[t]) / 127.0f;
-        for (int i = 0; i < head_size; i++) { // UNROLL complete
-            #pragma HLS UNROLL
-            xb_accum[i] += prob * (float)v_buffer[i] * value_scales[...];
-        }
+    float prob = ((float)att_probs[t]) / 127.0f;
+    for (int i = 0; i < head_size; i++) { // UNROLL complete
+      #pragma HLS UNROLL
+      xb_accum[i] += prob * (float)v_buffer[i] * value_scales[...];
     }
-    // Write head result into xb_buf
-    for (int i = 0; i < head_size; i++) xb_buf[q_offset+i] = xb_accum[i];
+  }
+  // Write head result into xb_buf
+  for (int i = 0; i < head_size; i++) xb_buf[q_offset+i] = xb_accum[i];
 }
 \end{lstlisting}
 
@@ -3952,8 +3848,8 @@ per-module latency breakdown.
   \caption{Resource utilisation of \texttt{attn\_update3\_top} at full
            TinyLlama scale on the ZCU102. Core-only figures exclude the
            three AXI master adapters (\texttt{gmem1}--\texttt{gmem3},
-           4\,BRAM + 512\,FF + 580\,LUT each) and the S-AXILite control
-           block (501\,FF + 874\,LUT).}
+           4\,BRAM, 512\,FF, 580\,LUT each) and the S-AXILite control
+           block (501\,FF, 874\,LUT).}
   \label{tab:attn_u3_resources}
 \end{table}
 
@@ -4205,7 +4101,6 @@ latency breakdown.
   \end{tabular}
   \caption{Per-stage latency breakdown of \texttt{ffn\_baseline\_top}
            at \SI{150}{\mega\hertz} (prototype dimensions).
-           Total function latency is 1{,}487 cycles (\SI{9.914}{\micro\second}).
            The gate and up projections share a single \texttt{matmul\_8\_32\_s}
            instance called sequentially.}
   \label{tab:ffn_latency}
@@ -4283,9 +4178,9 @@ rmsnorm<dim>(xb, x, w->rms_ffn_weight + l * dim);
 // Gate and Up projections
 quantize(&xq, xb);
 matmul<dim, hidden_dim>(hb,  xq.q, xq.s,
-                        (w->w1+l)->q, (w->w1+l)->s);
+            (w->w1+l)->q, (w->w1+l)->s);
 matmul<dim, hidden_dim>(hb2, xq.q, xq.s,
-                        (w->w3+l)->q, (w->w3+l)->s);
+            (w->w3+l)->q, (w->w3+l)->s);
 
 // SwiGLU: SiLU(gate) * up
 float hb_out[hidden_dim];
@@ -4293,19 +4188,19 @@ float hb_out[hidden_dim];
 
 swi_glu:
 for (int i = 0; i < hidden_dim; i++) {
-    #pragma HLS PIPELINE II=1
-    #pragma HLS UNROLL factor=16
-    float val = hb[i];
-    val *= (1.0f / (1.0f + expf(-val)));  // SiLU = x * sigmoid(x)
-    val *= hb2[i];
-    hb_out[i] = val;
+  #pragma HLS PIPELINE II=1
+  #pragma HLS UNROLL factor=16
+  float val = hb[i];
+  val *= (1.0f / (1.0f + expf(-val)));  // SiLU = x * sigmoid(x)
+  val *= hb2[i];
+  hb_out[i] = val;
 }
 memcpy(hb, hb_out, hidden_dim * sizeof(float));
 
 // Down projection
 quantize(&hq, hb);
 matmul<hidden_dim, dim>(xb, hq.q, hq.s,
-                        (w->w2+l)->q, (w->w2+l)->s);
+            (w->w2+l)->q, (w->w2+l)->s);
 \end{lstlisting}
 
 The SwiGLU loop structure is unchanged from the prototype in that it
@@ -4418,8 +4313,8 @@ per-stage breakdown.
   \caption{Resource utilisation of \texttt{ffn\_update3\_top} on the
            ZCU102 at full TinyLlama
            scale. Core-only figures exclude the four AXI master adapters
-           (\texttt{gmem0}--\texttt{gmem3}, 4\,BRAM + 512\,FF + 580\,LUT
-           each) and the S-AXILite control block (673\,FF + 1{,}194\,LUT).}
+           (\texttt{gmem0}--\texttt{gmem3}, 4\,BRAM, 512\,FF, 580\,LUT
+           each) and the S-AXILite control block (673\,FF, 1{,}194\,LUT).}
   \label{tab:ffn_u3_resources}
 \end{table}
 
@@ -4441,8 +4336,7 @@ per-stage breakdown.
     \bottomrule
   \end{tabular}
   \caption{Per-stage latency breakdown of \texttt{ffn\_update3\_top}
-           at \SI{150}{\mega\hertz}. Total latency is 38{,}095{,}467 cycles
-           (\SI{0.284}{\second}). HLS infers one \texttt{matmul\_2048\_5632\_s}
+           at \SI{150}{\mega\hertz}. HLS infers one \texttt{matmul\_2048\_5632\_s}
            instance reused for both the gate ($\mathbf{W}_1$) and up
            ($\mathbf{W}_3$) projections, so the listed cycles represent
            two sequential calls through the same module.}
