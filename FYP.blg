@@ -1,15 +1,15 @@
 [0] Config.pm:328> INFO - This is Biber 2.21
 [0] Config.pm:331> INFO - Logfile is 'FYP.blg'
-[72] biber-MSWIN64:342> INFO - === 
-[96] Biber.pm:421> INFO - Reading 'FYP.bcf'
-[169] Biber.pm:1002> INFO - Found 19 citekeys in bib section 0
-[178] Biber.pm:4487> INFO - Processing section 0
-[186] Biber.pm:4678> INFO - Looking for bibtex file 'references.bib' for section 0
-[215] bibtex.pm:1713> INFO - LaTeX decoding ...
-[226] bibtex.pm:1519> INFO - Found BibTeX data source 'references.bib'
-[356] UCollate.pm:68> INFO - Overriding locale 'en-US' defaults 'normalization = NFD' with 'normalization = prenormalized'
-[356] UCollate.pm:68> INFO - Overriding locale 'en-US' defaults 'variable = shifted' with 'variable = non-ignorable'
-[356] Biber.pm:4307> INFO - Sorting list 'none/global//global/global/global' of type 'entry' with template 'none' and locale 'en-US'
-[356] Biber.pm:4313> INFO - No sort tailoring available for locale 'en-US'
-[368] bbl.pm:676> INFO - Writing 'FYP.bbl' with encoding 'UTF-8'
-[392] bbl.pm:779> INFO - Output to FYP.bbl
+[74] biber-MSWIN64:342> INFO - === 
+[101] Biber.pm:421> INFO - Reading 'FYP.bcf'
+[175] Biber.pm:1002> INFO - Found 19 citekeys in bib section 0
+[184] Biber.pm:4487> INFO - Processing section 0
+[195] Biber.pm:4678> INFO - Looking for bibtex file 'references.bib' for section 0
+[225] bibtex.pm:1713> INFO - LaTeX decoding ...
+[238] bibtex.pm:1519> INFO - Found BibTeX data source 'references.bib'
+[373] UCollate.pm:68> INFO - Overriding locale 'en-US' defaults 'normalization = NFD' with 'normalization = prenormalized'
+[373] UCollate.pm:68> INFO - Overriding locale 'en-US' defaults 'variable = shifted' with 'variable = non-ignorable'
+[373] Biber.pm:4307> INFO - Sorting list 'none/global//global/global/global' of type 'entry' with template 'none' and locale 'en-US'
+[373] Biber.pm:4313> INFO - No sort tailoring available for locale 'en-US'
+[388] bbl.pm:676> INFO - Writing 'FYP.bbl' with encoding 'UTF-8'
+[419] bbl.pm:779> INFO - Output to FYP.bbl

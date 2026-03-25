@@ -15,10 +15,11 @@
 
   % -- Model dimensions ------------------------------------------------------
   $d_{\text{model}}$ & Hidden dimension of the model (2048 for TinyLlama-1.1B) \\
-  $d_{\text{ff}}$    & Feed-forward network hidden dimension \\
+  $d_{\text{ff}}$    & Feed-forward network intermediate dimension \\
   $d_k$              & Dimension of each attention head \\
-  $L$                & Number of transformer layers \\
-  $H$                & Number of attention heads \\
+  $N_L$              & Number of transformer layers \\
+  $H$                & Number of query attention heads \\
+  $G$                & Number of KV head groups (GQA) \\
   $V$                & Vocabulary size \\
   $T$                & Sequence length (number of tokens) \\[4pt]
 
@@ -30,14 +31,17 @@
 
   % -- Quantisation ---------------------------------------------------------
   $s$                & Quantisation scale factor \\
-  $z$                & Quantisation zero-point offset \\
-  $b$                & Number of quantisation bits \\
+  $s_g$              & Per-group quantisation scale factor for group $g$ \\
+  $\text{GS}$        & Quantisation group size \\
+  $\mathcal{G}_g$    & Index set of quantisation group $g$ \\
   $\hat{x}$          & Quantised representation of variable $x$ \\[4pt]
 
   % -- HLS / hardware -------------------------------------------------------
-  $\text{II}$        & Initiation interval of a pipelined loop (clock cycles) \\
+  $I$                & Initiation interval of a pipelined loop (clock cycles) \\
+  $L$                & Pipeline latency (clock cycles) \\
+  $N$                & Number of loop iterations \\
+  $C$                & Total cycle count: $C = L + I(N-1)$ \\
   $f_{\text{clk}}$   & Clock frequency (\si{\mega\hertz}) \\
   $N_{\text{LUT}}$   & Number of look-up tables consumed \\
   $N_{\text{DSP}}$   & Number of DSP blocks consumed \\
-  $P$                & Power consumption (\si{\milli\watt}) \\
 \end{tabular}

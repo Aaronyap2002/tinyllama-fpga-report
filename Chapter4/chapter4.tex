@@ -40,7 +40,7 @@ Table~\ref{tab:config_comparison} summarises the two sets of parameters.
     \midrule
     Hidden dimension $d_{\text{model}}$ & 8       & 2{,}048  \\
     FFN hidden dimension $d_{\text{ff}}$ & 32     & 5{,}632  \\
-    Number of layers $L$                 & 2       & 22       \\
+    Number of layers $N_L$               & 2       & 22       \\
     Query heads $H$                      & 2       & 32       \\
     KV heads $G$                         & 2       & 4        \\
     Vocabulary size $V$                  & 32      & 32{,}000 \\
@@ -216,8 +216,8 @@ errors as reported by Vitis HLS.
 \label{subsec:rmsnorm_csyn}
 
 The \texttt{rmsnorm} function was synthesised in isolation using the
-prototype configuration ($S = 8$) on the \texttt{xczu9eg-ffvb1156-2-e}
-device at a \SI{150}{\mega\hertz} target clock (\SI{6.667}{\nano\second}
+prototype configuration ($S = 8$) on the ZCU102
+at a \SI{150}{\mega\hertz} target clock (\SI{6.667}{\nano\second}
 period). Tables~\ref{tab:rmsnorm_timing} and \ref{tab:rmsnorm_top_latency}
 reproduce the top-level timing and latency summary as reported by Vitis
 HLS, followed by Table~\ref{tab:rmsnorm_resources} for resource utilisation
@@ -269,8 +269,7 @@ and Table~\ref{tab:rmsnorm_latency} for the per-stage latency breakdown.
     \bottomrule
   \end{tabular}
   \caption{Resource utilisation of the \texttt{rmsnorm} function
-           synthesised at $S = 8$ on the ZCU102
-           (\texttt{xczu9eg-ffvb1156-2-e}). Figures in the core-only
+           synthesised at $S = 8$ on the ZCU102. Figures in the core-only
            column exclude the AXI master adapter overhead, which is
            not present when the function is inlined into the full kernel.}
   \label{tab:rmsnorm_resources}
@@ -716,7 +715,7 @@ with zero errors.
 \label{subsec:quantize_csyn}
 
 The \texttt{quantize} function was synthesised in isolation at
-\SI{150}{\mega\hertz} on the \texttt{xczu9eg-ffvb1156-2-e} device.
+\SI{150}{\mega\hertz} on the ZCU102.
 Tables~\ref{tab:quantize_timing} and \ref{tab:quantize_top_latency}
 present the top-level timing and latency summary, followed by
 Table~\ref{tab:quantize_resources} for resource utilisation and
@@ -1566,9 +1565,8 @@ Vitis HLS.
 \label{subsec:matmul_csyn}
 
 The \texttt{matmul} function was synthesised in isolation using the
-prototype configuration ($N = D = 8$, $GS = 4$) on the
-\texttt{xczu9eg-ffvb1156-2-e} device at a \SI{150}{\mega\hertz} target
-clock (\SI{6.667}{\nano\second} period).
+prototype configuration ($N = D = 8$, $GS = 4$) on the ZCU102
+at a \SI{150}{\mega\hertz} target clock (\SI{6.667}{\nano\second} period).
 Tables~\ref{tab:matmul_timing} and \ref{tab:matmul_top_latency} present
 the top-level timing and latency summary, followed by
 Table~\ref{tab:matmul_resources} for resource utilisation and
@@ -1620,7 +1618,7 @@ Table~\ref{tab:matmul_latency} for the per-stage latency breakdown.
     \bottomrule
   \end{tabular}
   \caption{Resource utilisation of \texttt{matmul} synthesised at $N = D
-           = 8$ on the ZCU102 (\texttt{xczu9eg-ffvb1156-2-e}). The
+           = 8$ on the ZCU102. The
            core-only column excludes the AXI master adapter and S-AXILite
            control interface, which are not present when the function is
            inlined into the full kernel.}
@@ -2095,7 +2093,7 @@ by Vitis HLS.
 
 The \texttt{softmax} function was synthesised in isolation using the
 prototype configuration (\texttt{MAXSIZE} = \texttt{seq\_len} = 16)
-on the \texttt{xczu9eg-ffvb1156-2-e} device at a
+on the ZCU102 at a
 \SI{150}{\mega\hertz} target clock (\SI{6.667}{\nano\second} period).
 Tables~\ref{tab:softmax_timing} and \ref{tab:softmax_top_latency}
 present the top-level timing and latency summary, followed by
@@ -2148,8 +2146,7 @@ Table~\ref{tab:softmax_latency} for the per-loop latency breakdown.
     \bottomrule
   \end{tabular}
   \caption{Resource utilisation of \texttt{softmax} synthesised at
-           $\texttt{MAXSIZE} = 16$ on the ZCU102
-           (\texttt{xczu9eg-ffvb1156-2-e}). The core-only column
+           $\texttt{MAXSIZE} = 16$ on the ZCU102. The core-only column
            excludes the AXI master adapter and S-AXILite control
            interface.}
   \label{tab:softmax_resources}
@@ -2333,7 +2330,7 @@ compares the resource utilisation against iteration~1 for direct comparison.
   \end{tabular}
   \caption{Resource utilisation comparison between the iteration~1 baseline
            and the iteration~3 \texttt{softmax} designs, both at
-           $\texttt{MAXSIZE} = 16$ on the \texttt{xczu9eg-ffvb1156-2-e}.
+           $\texttt{MAXSIZE} = 16$ on the ZCU102.
            Core figures exclude the AXI adapter and S-AXILite control
            interface.}
   \label{tab:softmax_iter3_resources}
@@ -2957,9 +2954,8 @@ with zero errors as reported by Vitis HLS.
 \subsubsection{HLS Synthesis Results}
 \label{subsubsec:attn_fp32_csyn}
 
-The baseline attention block was synthesised in isolation on the
-\texttt{xczu9eg-ffvb1156-2-e} device at a \SI{150}{\mega\hertz} target
-clock. Tables~\ref{tab:attn_fp32_timing} and
+The baseline attention block was synthesised in isolation on the ZCU102
+at a \SI{150}{\mega\hertz} target clock. Tables~\ref{tab:attn_fp32_timing} and
 \ref{tab:attn_fp32_top_latency} present the top-level timing and
 latency summary, followed by Table~\ref{tab:attn_fp32_resources} for
 resource utilisation and Table~\ref{tab:attn_fp32_latency} for the
@@ -3011,8 +3007,7 @@ per-pipeline-module breakdown.
     \bottomrule
   \end{tabular}
   \caption{Resource utilisation of the baseline float attention block
-           synthesised at prototype scale on the ZCU102
-           (\texttt{xczu9eg-ffvb1156-2-e}). The core-only column
+           synthesised at prototype scale on the ZCU102. The core-only column
            excludes the AXI master adapter and S-AXILite control
            interface.}
   \label{tab:attn_fp32_resources}
@@ -3282,7 +3277,7 @@ breakdown was presented in Table~\ref{tab:attn_fp32_latency}.
   \end{tabular}
   \caption{Resource utilisation comparison between the baseline float
            attention and the refined per-head INT8 attention, both synthesised
-           at prototype scale on the \texttt{xczu9eg-ffvb1156-2-e} at
+           at prototype scale on the ZCU102 at
            \SI{150}{\mega\hertz}. Core-only figures exclude the AXI master
            adapter and S-AXILite control interface.}
   \label{tab:attn_compare_resources}
@@ -3517,7 +3512,7 @@ the per-pipeline-module latency for iteration~3.
     \bottomrule
   \end{tabular}
   \caption{Resource utilisation across all three attention iterations
-           on the \texttt{xczu9eg-ffvb1156-2-e} at \SI{150}{\mega\hertz}.
+           on the ZCU102 at \SI{150}{\mega\hertz}.
            Core figures for iterations~1 and~2 exclude the AXI master
            adapter and S-AXILite control interface. The same exclusions
            apply to the iteration~3 core column.}
@@ -4421,7 +4416,7 @@ per-stage breakdown.
     \bottomrule
   \end{tabular}
   \caption{Resource utilisation of \texttt{ffn\_update3\_top} on the
-           ZCU102 (\texttt{xczu9eg-ffvb1156-2-e}) at full TinyLlama
+           ZCU102 at full TinyLlama
            scale. Core-only figures exclude the four AXI master adapters
            (\texttt{gmem0}--\texttt{gmem3}, 4\,BRAM + 512\,FF + 580\,LUT
            each) and the S-AXILite control block (673\,FF + 1{,}194\,LUT).}

@@ -36,13 +36,13 @@ $\mathbf{X} \in \mathbb{R}^{T \times d_{\text{model}}}$ where $T$ is the
 sequence length and $d_{\text{model}}$ is the hidden dimension. Positional
 information is then injected, either through a fixed sinusoidal encoding as
 in the original transformer or through a learned rotary scheme as used in
-TinyLlama. This embedding matrix is then passed through $L$ identical
+TinyLlama. This embedding matrix is then passed through $N_L$ identical
 transformer layers stacked in sequence. Within each layer, the
 representation first passes through a normalisation step, then through
 a multi-head self-attention (MHA) sub-layer, with a residual connection
 adding the layer's input back to its output. The result is normalised again
 and passed through a feed-forward network (FFN) sub-layer, again with a
-residual connection. After all $L$ layers, the final hidden states are
+residual connection. After all $N_L$ layers, the final hidden states are
 projected to the vocabulary dimension by a linear layer called the language
 model (LM) head, and a softmax function converts the resulting logits to a
 probability distribution over the vocabulary. The token with the highest
@@ -92,7 +92,7 @@ that follow.
     Parameters              & 1.1B   \\
     Hidden dimension $d_{\text{model}}$ & 2{,}048 \\
     FFN intermediate dim    & 5{,}632 \\
-    Number of layers $L$    & 22     \\
+    Number of layers $N_L$  & 22     \\
     Query heads             & 32     \\
     KV head groups (GQA)    & 4      \\
     Context length          & 2{,}048 tokens \\
@@ -360,8 +360,8 @@ positions must be stored in a KV cache so they are not recomputed on every
 decode step. In standard MHA the cache grows as
 $2 \times L \times T \times H \times d_k$ per sequence. GQA reduces this
 by the ratio $H/G = 8$, giving a KV cache of size
-$2 \times L \times T \times G \times d_k$ elements. For TinyLlama at the
-maximum context length ($L = 22$, $T = 2{,}048$, $G = 4$, $d_k = 64$) in
+$2 \times N_L \times T \times G \times d_k$ elements. For TinyLlama at the
+maximum context length ($N_L = 22$, $T = 2{,}048$, $G = 4$, $d_k = 64$) in
 FP32, this amounts to:
 
 \begin{equation}

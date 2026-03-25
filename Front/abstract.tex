@@ -13,55 +13,43 @@
 \chapter*{Abstract}
 \addcontentsline{toc}{chapter}{Abstract}
 
-Small-scale large language models (LLMs) such as TinyLlama-1.1B have 
-emerged as a compelling class of compact transformer models that deliver 
-meaningful natural language understanding capabilities within a fraction 
-of the memory footprint of frontier models such as GPT-4. Yet even at 
-the billion-parameter scale, these models impose substantial computational 
+Small-scale large language models (LLMs) such as TinyLlama-1.1B have
+emerged as a compelling class of compact transformer models that deliver
+meaningful natural language understanding capabilities within a fraction
+of the memory footprint of frontier models such as GPT-4. Yet even at
+the billion-parameter scale, these models impose substantial computational
 demands that limit their deployment in embedded and edge environments.
 
-%, mostly from Nvidia and AMD, as they offer superior software support 
-%for Machine Learning (ML) and Artificial Intelligence (AI) researchers and engineers with their respective 
-%Compute Unified Device Architecture (CUDA) and Radeon Open Compute (ROCM) offerings. 
-Currently, these language models are mostly deployed on Graphics Procesing Units (GPU).
-However, GPU inference is energy-intensive and memory-bandwidth-bound, particularly 
-during the autoregressive decode phase since the time and memory complexity
-of self-attention are quadratic in sequence length.
-% May I should introduce the process of inference and its definition and its application
-% rather than talking about cuda to give more depth.
+Currently, these language models are mostly deployed on Graphics Processing
+Units (GPUs). However, GPU inference is energy-intensive and
+memory-bandwidth-bound, particularly during the autoregressive decode phase,
+since the time and memory complexity of self-attention are quadratic in
+sequence length.
 
-Field-programmable gate arrays (FPGAs) offer a 
-compelling alternative to GPU-based inference by providing reconfigurable
-hardware with low power consumption and predictable latency. But mapping a billion-parameter 
-transformer to resource-constrained FPGA fabric presents significant challenges 
-in quantization, memory tiling, and hardware-software partitioning.
+Field-programmable gate arrays (FPGAs) offer a compelling alternative to
+GPU-based inference by providing reconfigurable hardware with low power
+consumption and predictable latency. However, mapping a billion-parameter
+transformer to resource-constrained FPGA fabric presents significant
+challenges in quantisation, memory tiling, and hardware-software
+partitioning.
 
-This project starts off with a comprehensive profiling of a RTX4060 Laptop GPU 
-running a pytorch inference of the Llama 2-based TinyLlama 1.1B model
-from HuggingFace with default GPU kernel settings to observe for bottlenecks and 
-to measure propotion of wall-clock time required by the self-attention and 
-feed-forward layer during the forward pass. Based on the results, an 
-FPGA-based accelerator is proposed to accelerate the architecture of the Tinyllama model. 
-For this project, emphasis is placed on the hardware implementation and optimization of 
-the self attention layer and the feed-forward layer.
+This project begins with a comprehensive profiling of an RTX~4060 Laptop GPU
+running PyTorch inference of the LLaMA~2-based TinyLlama-1.1B model to
+identify bottlenecks and measure the proportion of wall-clock time consumed
+by the self-attention and feed-forward layers during the forward pass. Based
+on these results, an FPGA-based accelerator is proposed to target the
+identified bottlenecks.
 
 This project implements and optimises the inference pipeline of TinyLlama-1.1B
-on the Xilinx ZCU102 FPGA platform using Vitis High-Level Synthesis (HLS).
-The core transformer components -- including RMSNorm, matrix--vector
-multiplication, multi-head attention, and the SwiGLU feed-forward network --
-were implemented as quantised INT8 HLS kernels. 
- 
+on the Xilinx ZCU102 (\texttt{xczu9eg-ffvb1156-2-e}) FPGA platform using
+Vitis High-Level Synthesis (HLS). The core transformer components, including
+RMSNorm, matrix--vector multiplication, multi-head attention, and the SwiGLU
+feed-forward network, were implemented as quantised INT8 HLS kernels.
 
-% --- Replace this block with your actual results once available ---------------
-% Example of the kind of quantitative results you should report here:
-%   "The final implementation achieves a throughput of X tokens/second at
-%    Y MHz clock frequency, utilising 43.9\% of available LUTs and 34.2\%
-%    of BRAM on the ZCU102. This represents a Z$\times$ improvement in
-%    energy efficiency compared to a software baseline running on an
-%    ARM Cortex-A53 processor."
-% -----------------------------------------------------------------------------
-
-(The results demonstrate that FPGA acceleration with INT8 quantisation
-achieves competitive inference performance while operating within the
-ZCU102's resource budget, validating the viability of transformer-based
-language model deployment on reconfigurable hardware.)
+HLS synthesis of the complete forward kernel on the ZCU102 at a
+\SI{150}{\mega\hertz} target clock produces a per-step latency of
+1.07--1.37 billion cycles (7.15--9.10 seconds), with resource utilisation of
+73\% LUT, 18\% FF, 35\% BRAM, and 28\% DSP, all within the ZCU102 device
+budget. C-simulation verified all sixteen kernel primitives against
+floating-point software references with zero errors, confirming functional
+correctness of the INT8 quantised datapath.

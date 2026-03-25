@@ -1,9 +1,9 @@
 \contentsline {chapter}{Abstract}{v}{chapter*.2}%
 \contentsline {chapter}{Acknowledgement}{vi}{chapter*.3}%
 \contentsline {chapter}{Acronyms}{vii}{chapter*.4}%
-\contentsline {chapter}{Symbols}{viii}{chapter*.5}%
-\contentsline {chapter}{List of Figures}{viii}{chapter*.5}%
-\contentsline {chapter}{List of Tables}{ix}{chapter*.6}%
+\contentsline {chapter}{Symbols}{ix}{chapter*.5}%
+\contentsline {chapter}{List of Figures}{ix}{chapter*.5}%
+\contentsline {chapter}{List of Tables}{x}{chapter*.6}%
 \contentsline {chapter}{\numberline {1}Introduction}{1}{chapter.8}%
 \contentsline {section}{\numberline {1.1}Motivations}{1}{section.9}%
 \contentsline {section}{\numberline {1.2}Objectives and Scope}{2}{section.10}%
@@ -68,7 +68,7 @@
 \contentsline {subsubsection}{HLS Synthesis Results}{52}{subsubsection*.332}%
 \contentsline {section}{\numberline {4.5}Softmax}{54}{section.337}%
 \contentsline {subsection}{\numberline {4.5.1}Implementation}{54}{subsection.338}%
-\contentsline {subsection}{\numberline {4.5.2}C-Simulation Results}{57}{subsection.372}%
+\contentsline {subsection}{\numberline {4.5.2}C-Simulation Results}{56}{subsection.372}%
 \contentsline {subsection}{\numberline {4.5.3}HLS Synthesis Results}{57}{subsection.374}%
 \contentsline {subsection}{\numberline {4.5.4}Iteration 3: Sum Loop Unroll}{60}{subsection.379}%
 \contentsline {subsubsection}{C-Simulation Results}{60}{subsubsection*.380}%
