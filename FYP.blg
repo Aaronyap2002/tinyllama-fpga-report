@@ -1,17 +1,17 @@
 [0] Config.pm:328> INFO - This is Biber 2.21
 [0] Config.pm:331> INFO - Logfile is 'FYP.blg'
-[95] biber-MSWIN64:342> INFO - === 
-[123] Biber.pm:421> INFO - Reading 'FYP.bcf'
-[195] Biber.pm:1002> INFO - Found 19 citekeys in bib section 0
-[204] Biber.pm:4487> INFO - Processing section 0
-[212] Biber.pm:4678> INFO - Looking for bibtex file 'references.bib' for section 0
-[242] bibtex.pm:1713> INFO - LaTeX decoding ...
-[255] bibtex.pm:1519> INFO - Found BibTeX data source 'references.bib'
-[382] UCollate.pm:68> INFO - Overriding locale 'en-US' defaults 'variable = shifted' with 'variable = non-ignorable'
-[382] UCollate.pm:68> INFO - Overriding locale 'en-US' defaults 'normalization = NFD' with 'normalization = prenormalized'
-[382] Biber.pm:4307> INFO - Sorting list 'none/global//global/global/global' of type 'entry' with template 'none' and locale 'en-US'
-[382] Biber.pm:4313> INFO - No sort tailoring available for locale 'en-US'
-[398] bbl.pm:676> INFO - Writing 'FYP.bbl' with encoding 'UTF-8'
-[422] bbl.pm:779> INFO - Output to FYP.bbl
-[422] Biber.pm:132> WARN - I didn't find a database entry for 'PLACEHOLDER' (section 0)
-[422] Biber.pm:134> INFO - WARNINGS: 1
+[78] biber-MSWIN64:342> INFO - === 
+[104] Biber.pm:421> INFO - Reading 'FYP.bcf'
+[176] Biber.pm:1002> INFO - Found 19 citekeys in bib section 0
+[187] Biber.pm:4487> INFO - Processing section 0
+[195] Biber.pm:4678> INFO - Looking for bibtex file 'references.bib' for section 0
+[226] bibtex.pm:1713> INFO - LaTeX decoding ...
+[237] bibtex.pm:1519> INFO - Found BibTeX data source 'references.bib'
+[368] UCollate.pm:68> INFO - Overriding locale 'en-US' defaults 'normalization = NFD' with 'normalization = prenormalized'
+[368] UCollate.pm:68> INFO - Overriding locale 'en-US' defaults 'variable = shifted' with 'variable = non-ignorable'
+[368] Biber.pm:4307> INFO - Sorting list 'none/global//global/global/global' of type 'entry' with template 'none' and locale 'en-US'
+[368] Biber.pm:4313> INFO - No sort tailoring available for locale 'en-US'
+[383] bbl.pm:676> INFO - Writing 'FYP.bbl' with encoding 'UTF-8'
+[407] bbl.pm:779> INFO - Output to FYP.bbl
+[408] Biber.pm:132> WARN - I didn't find a database entry for 'PLACEHOLDER' (section 0)
+[408] Biber.pm:134> INFO - WARNINGS: 1

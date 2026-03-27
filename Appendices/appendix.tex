@@ -1,5 +1,16 @@
 % Appendices/appendix.tex
 
+% Redefine the chapter heading format here so the prefix reads
+% "Appendix A" instead of "Chapter A". This overrides the global
+% \titleformat{\chapter} in FYP.tex for all chapters that follow.
+% Because the appendices are the last content in the document, the
+% original "Chapter N" format does not need to be restored afterward.
+\titleformat{\chapter}[hang]
+  {\normalfont\fontsize{16pt}{20pt}\selectfont\bfseries}
+  {Appendix \thechapter\quad}
+  {0pt}
+  {}
+
 \begin{appendices}
 
 \chapter{HLS Kernel Source Code}
