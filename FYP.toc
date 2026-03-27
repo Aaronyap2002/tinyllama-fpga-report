@@ -128,6 +128,6 @@
 \contentsline {chapter}{Reflection on Learning Outcome Attainment}{108}{chapter*.740}%
 \contentsline {chapter}{Acknowledging/Declaring the Use of GAI}{109}{chapter*.741}%
 \contentsline {chapter}{References}{112}{chapter*.742}%
-\contentsline {chapter}{\numberline {A}HLS Kernel Source Code}{113}{appendix.743}%
+\contentsline {chapter}{Appendix \numberline {A}HLS Kernel Source Code}{113}{appendix.743}%
 \contentsline {section}{\numberline {A.1}\texttt {forward.cpp} --- Baseline Prototype}{113}{section.744}%
 \contentsline {section}{\numberline {A.2}\texttt {FFN\_update3.cpp} --- Full-Scale Kernel}{116}{section.862}%
