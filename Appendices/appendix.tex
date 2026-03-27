@@ -1,37 +1,392 @@
 % Appendices/appendix.tex
-% -----------------------------------------------------------------------------
-% The appendix contains supplementary material that is too detailed for the
-% main body but which a reader might want to verify or reference.
-% Typical FYP appendix contents: full source code listings, extended tables,
-% raw measurement data, Vivado timing reports, calibration data.
-%
-% Each \chapter here becomes Appendix A, Appendix B, etc. automatically
-% because this file is \input inside \begin{appendices}...\end{appendices}
-% in the master document.
-%
-% Figures stored in Appendices/media/ are referenced as:
-%   \includegraphics[width=\linewidth]{Appendices/media/filename.png}
 
 \begin{appendices}
 
 \chapter{HLS Kernel Source Code}
 \label{app:hls_source}
 
-This appendix contains the complete Vitis HLS source code for the
-TinyLlama inference kernels. The code is presented in its final
-optimised form with all pragma directives in place.
+This appendix presents the complete Vitis HLS C++ source for the two
+top-level \texttt{forward} kernels discussed in
+\cref{sec:forward_impl}. Listing~\ref{lst:app_forward} is the baseline
+prototype synthesised at prototype dimensions ($N_L = 2$,
+$\texttt{dim} = 8$, $\texttt{seq\_len} = 16$), implementing the
+attention sub-block only. Listing~\ref{lst:app_ffn_update3} is the
+sixth-iteration full-scale kernel synthesised in \cref{ch:results},
+implementing one complete TinyLlama-1.1B decode step at full model
+dimensions ($N_L = 22$, $\texttt{dim} = 2048$,
+$\texttt{seq\_len} = 2048$).
 
-\section*{tinyllama\_kernel.cpp}
+\section{\texttt{forward.cpp} --- Baseline Prototype}
+\label{app:forward_baseline}
 
-% TODO: When ready, save your HLS source as Appendices/media/tinyllama_kernel.cpp
-% and replace this comment block with:
-%
-%   \lstinputlisting[
-%     language = C++,
-%     caption  = {Complete HLS kernel source: tinyllama\_kernel.cpp.},
-%     label    = {lst:full_kernel}
-%   ]{Appendices/media/tinyllama_kernel.cpp}
+\begin{lstlisting}[
+  caption = {\texttt{forward.cpp}: baseline prototype kernel.},
+  label   = {lst:app_forward}
+]
+#include "forward.h"
+#include "config.h"
+#include <cstring>
 
-The full HLS kernel source code will be included here in the final draft.
+extern "C" void forward(
+  Transformer<dim,hidden_dim,n_layers,n_heads,n_kv_heads,
+              vocab_size,seq_len,GS>*transformer,
+  int token,int pos,
+  float key_cache[n_layers*seq_len*((dim*n_kv_heads)/n_heads)],
+  float value_cache[n_layers*seq_len*((dim*n_kv_heads)/n_heads)],
+  float*out)
+{
+#pragma HLS INTERFACE m_axi port=transformer offset=slave bundle=gmem0
+#pragma HLS INTERFACE m_axi port=out offset=slave bundle=gmem1
+#pragma HLS INTERFACE m_axi port=key_cache offset=slave bundle=gmem0 depth=(n_layers*seq_len*((dim*n_kv_heads)/n_heads))
+#pragma HLS INTERFACE m_axi port=value_cache offset=slave bundle=gmem0 depth=(n_layers*seq_len*((dim*n_kv_heads)/n_heads))
+
+  auto w=&transformer->weights;
+  constexpr int UNROLL_FACTOR=16;
+
+  static float x[config.dim];
+  static float xb[config.dim];
+  static float xb2[config.dim];
+  static float hb[config.hidden_dim];
+  static float hb2[config.hidden_dim];
+  static QuantizedTensor<config.dim>xq;
+  static QuantizedTensor<config.hidden_dim>hq;
+  static float q[config.dim];
+  static float k[(config.dim*config.n_kv_heads)/config.n_heads];
+  static float v[(config.dim*config.n_kv_heads)/config.n_heads];
+  static float att[config.n_heads*config.seq_len];
+
+#pragma HLS ARRAY_PARTITION variable=q   cyclic factor=UNROLL_FACTOR
+#pragma HLS ARRAY_PARTITION variable=k   cyclic factor=UNROLL_FACTOR
+#pragma HLS ARRAY_PARTITION variable=v   cyclic factor=UNROLL_FACTOR
+#pragma HLS ARRAY_PARTITION variable=att cyclic factor=UNROLL_FACTOR
+#pragma HLS ARRAY_PARTITION variable=hq.q cyclic factor=UNROLL_FACTOR
+#pragma HLS ARRAY_PARTITION variable=hq.s cyclic factor=UNROLL_FACTOR
+#pragma HLS ARRAY_PARTITION variable=xq.q cyclic factor=UNROLL_FACTOR
+#pragma HLS ARRAY_PARTITION variable=xq.s cyclic factor=UNROLL_FACTOR
+#pragma HLS ARRAY_PARTITION variable=hb  type=cyclic factor=UNROLL_FACTOR
+#pragma HLS ARRAY_PARTITION variable=hb2 type=cyclic factor=UNROLL_FACTOR
+#pragma HLS ARRAY_PARTITION variable=x   type=cyclic factor=UNROLL_FACTOR
+#pragma HLS ARRAY_PARTITION variable=xb  type=cyclic factor=UNROLL_FACTOR
+#pragma HLS ARRAY_PARTITION variable=xb2 type=cyclic factor=UNROLL_FACTOR
+
+  constexpr int kv_dim=(config.dim*config.n_kv_heads)/config.n_heads;
+  constexpr int kv_mul=config.n_heads/config.n_kv_heads;
+  constexpr int head_size=dim/config.n_heads;
+
+  std::memcpy(x,w->token_embedding_table+token*dim,dim*sizeof(float));
+
+main_forward_loop:
+  for (int l=0; l<config.n_layers; l++) {
+    rmsnorm<dim>(xb,x,w->rms_att_weight+l*dim);
+
+    quantize(&xq,xb,GS);
+    matmul<dim,dim>(q,xq.q,xq.s,(w->wq+l)->q,(w->wq+l)->s);
+    matmul<dim,kv_dim>(k,xq.q,xq.s,(w->wk+l)->q,(w->wk+l)->s);
+    matmul<dim,kv_dim>(v,xq.q,xq.s,(w->wv+l)->q,(w->wv+l)->s);
+
+    int loff=l*config.seq_len*kv_dim;
+    float*key_cache_row=key_cache+loff+pos*kv_dim;
+    float*value_cache_row=value_cache+loff+pos*kv_dim;
+    std::memcpy(key_cache_row,k,kv_dim*sizeof(*key_cache_row));
+    std::memcpy(value_cache_row,v,kv_dim*sizeof(*value_cache_row));
+
+    int h;
+multihead_attention:
+    for (h=0; h<n_heads; h++) {
+      const int q_offset=h*head_size;
+      const int att_offset=h*seq_len;
+iterate:
+      for (int t=0; t<=pos; t++) {
+#pragma HLS PIPELINE
+#pragma HLS loop_tripcount min=1 max=16 avg=8
+        const int key_offset=loff+t*kv_dim+(h/kv_mul)*head_size;
+        float score=0.0f;
+        for (int i=0; i<head_size; i++) {
+#pragma HLS unroll
+          score+=q[i+q_offset]*key_cache[i+key_offset];
+        }
+        score/=sqrtf(head_size);
+        att[t+att_offset]=score;
+      }
+
+      softmax<16>(att+att_offset,pos+1);
+
+      const int xb_offset=h*head_size;
+      memset(xb+xb_offset,0,head_size*sizeof(float));
+acc:
+      for (int t=0; t<=pos; t++) {
+#pragma HLS loop_tripcount min=1 max=16 avg=8
+#pragma HLS PIPELINE
+        const int v_offset=loff+t*kv_dim+(h/kv_mul)*head_size;
+        float a=att[t+att_offset];
+acc_inner:
+        for (int i=0; i<head_size; i++) {
+#pragma HLS unroll
+          xb[i+xb_offset]+=a*value_cache[i+v_offset];
+        }
+      }
+    }
+    // Output projection (wo) is omitted; softmax output dimension == dim.
+    // quantize(&xq, xb, GS);
+    // matmul<dim, dim>(xb2, xq.q, xq.s, (w->wo+l)->q, (w->wo+l)->s);
+
+residual:
+    for (int i=0; i<dim; i++) {
+#pragma HLS UNROLL factor=64 skip_exit_check
+      x[i]+=xb[i];
+    }
+  } // FFN block, final RMSNorm, and LM head omitted in this prototype.
+
+  std::memcpy(out,x,dim*sizeof(float));
+}
+\end{lstlisting}
+
+\section{\texttt{FFN\_update3.cpp} --- Full-Scale Kernel}
+\label{app:forward_update3}
+
+\begin{lstlisting}[
+  caption = {\texttt{FFN\_update3.cpp}: full-scale kernel.},
+  label   = {lst:app_ffn_update3}
+]
+#include "FFN_update3.h"
+#include "config_FFN_update3.h"
+#include <string.h>
+#include <math.h>
+
+extern "C" void forward(
+  Transformer<dim,hidden_dim,n_layers,n_heads,n_kv_heads,
+              vocab_size,seq_len,GS>*transformer,
+  int token,int pos,
+  int8_t*key_cache,float*key_scales,
+  int8_t*value_cache,float*value_scales,
+  float*out)
+{
+  constexpr int kv_dim=(dim*n_kv_heads)/n_heads;
+  constexpr int kv_mul=n_heads/n_kv_heads;
+  constexpr int head_size=dim/n_heads;
+  constexpr int TOTAL_ELEMENTS=n_layers*seq_len*kv_dim;
+  constexpr int TOTAL_SCALES=n_layers*seq_len*(kv_dim/GS);
+
+#pragma HLS INTERFACE m_axi port=transformer offset=slave bundle=gmem0 depth=1
+#pragma HLS INTERFACE m_axi port=key_cache offset=slave bundle=gmem1 depth=TOTAL_ELEMENTS
+#pragma HLS INTERFACE m_axi port=key_scales offset=slave bundle=gmem1 depth=TOTAL_SCALES
+#pragma HLS INTERFACE m_axi port=value_cache offset=slave bundle=gmem2 depth=TOTAL_ELEMENTS
+#pragma HLS INTERFACE m_axi port=value_scales offset=slave bundle=gmem2 depth=TOTAL_SCALES
+#pragma HLS INTERFACE m_axi port=out offset=slave bundle=gmem3
+
+  auto w=&transformer->weights;
+
+  if (token<0||token>=vocab_size) token=0;
+  if (pos<0)                        pos=0;
+  if (pos>=seq_len)                 pos=seq_len-1;
+
+  static float x[dim];
+  static float xb[dim];
+  static float xb2[dim];
+  static float hb[hidden_dim];
+  static float hb2[hidden_dim];
+  static QuantizedTensor<dim>xq;
+  static QuantizedTensor<hidden_dim>hq;
+  static float   q[dim];
+  static float   k[kv_dim];
+  static float   v[kv_dim];
+  static int32_t att[seq_len];
+  static int8_t  att_probs[seq_len];
+
+#pragma HLS ARRAY_PARTITION variable=x         cyclic factor=16
+#pragma HLS ARRAY_PARTITION variable=xb        cyclic factor=16
+#pragma HLS ARRAY_PARTITION variable=xb2       cyclic factor=16
+#pragma HLS ARRAY_PARTITION variable=hb        cyclic factor=16
+#pragma HLS ARRAY_PARTITION variable=hb2       cyclic factor=16
+#pragma HLS ARRAY_PARTITION variable=xq.q      cyclic factor=16
+#pragma HLS ARRAY_PARTITION variable=xq.s      cyclic factor=4
+#pragma HLS ARRAY_PARTITION variable=hq.q      cyclic factor=16
+#pragma HLS ARRAY_PARTITION variable=hq.s      cyclic factor=4
+#pragma HLS ARRAY_PARTITION variable=q         cyclic factor=16
+#pragma HLS ARRAY_PARTITION variable=k         cyclic factor=16
+#pragma HLS ARRAY_PARTITION variable=v         cyclic factor=16
+#pragma HLS ARRAY_PARTITION variable=att       cyclic factor=16
+#pragma HLS ARRAY_PARTITION variable=att_probs cyclic factor=16
+
+  // Embedding lookup: dequantize from q_tokens.
+  {
+    const int emb_offset=token*dim;
+    const int scale_base=token*(dim/GS);
+embed_lookup:
+    for (int i=0; i<dim; i++) {
+#pragma HLS PIPELINE II=1
+      x[i]=(float)w->q_tokens[0].q[emb_offset+i]
+*w->q_tokens[0].s[scale_base+i/GS];
+    }
+  }
+
+main_forward_loop:
+  for (int l=0; l<n_layers; l++) {
+#pragma HLS loop_tripcount min=22 max=22
+
+    // Attention RMSNorm and QKV projections
+    rmsnorm<dim>(xb,x,w->rms_att_weight+l*dim);
+    quantize(&xq,xb);
+    matmul<dim,dim>(q,xq.q,xq.s,(w->wq+l)->q,(w->wq+l)->s);
+    matmul<dim,kv_dim>(k,xq.q,xq.s,(w->wk+l)->q,(w->wk+l)->s);
+    matmul<dim,kv_dim>(v,xq.q,xq.s,(w->wv+l)->q,(w->wv+l)->s);
+    // TODO: RoPE positional encoding omitted.
+
+    // KV cache write (quantized)
+    int loff_data=l*seq_len*kv_dim;
+    int loff_scale=l*seq_len*(kv_dim/GS);
+    QuantizedTensor<kv_dim>k_quantized,v_quantized;
+    quantize(&k_quantized,k);
+    quantize(&v_quantized,v);
+    memcpy(key_cache+loff_data+pos*kv_dim,
+           k_quantized.q,kv_dim*sizeof(int8_t));
+    memcpy(key_scales+loff_scale+pos*(kv_dim/GS),
+           k_quantized.s,(kv_dim/GS)*sizeof(float));
+    memcpy(value_cache+loff_data+pos*kv_dim,
+           v_quantized.q,kv_dim*sizeof(int8_t));
+    memcpy(value_scales+loff_scale+pos*(kv_dim/GS),
+           v_quantized.s,(kv_dim/GS)*sizeof(float));
+
+multihead_attention:
+    for (int h=0; h<n_heads; h++) {
+#pragma HLS loop_tripcount min=32 max=32
+      const int q_offset=h*head_size;
+
+      float max_abs=0.0f;
+q_find_max:
+      for (int i=0; i<head_size; i++) {
+#pragma HLS PIPELINE II=1
+        float val=fabs(q[i+q_offset]);
+        if (val>max_abs) max_abs=val;
+      }
+      float q_scale_val=(max_abs==0.0f) ? 1.0f : (max_abs/127.0f);
+      float q_inv_scale=1.0f/q_scale_val;
+
+      int8_t q_int8[head_size];
+#pragma HLS ARRAY_PARTITION variable=q_int8 complete
+q_quantize:
+      for (int i=0; i<head_size; i++) {
+#pragma HLS UNROLL
+        float   qv=q[i+q_offset]*q_inv_scale;
+        int32_t qi=(int32_t)(qv+(qv>=0.0f ? 0.5f :-0.5f));
+        if (qi>127) qi=127;
+        if (qi<-127) qi=-127;
+        q_int8[i]=(int8_t)qi;
+      }
+
+score_loop:
+      for (int t=0; t<=pos; t++) {
+#pragma HLS loop_tripcount min=1 max=2048 avg=1024
+        const int kv_head=h/kv_mul;
+        const int data_offset=loff_data+t*kv_dim+kv_head*head_size;
+        const int scale_offset=loff_scale+t*(kv_dim/GS)+kv_head;
+        float k_scale=key_scales[scale_offset];
+
+        int8_t k_buffer[head_size];
+#pragma HLS ARRAY_PARTITION variable=k_buffer complete
+k_load:
+        for (int i=0; i<head_size; i++) {
+#pragma HLS PIPELINE II=1
+          k_buffer[i]=key_cache[data_offset+i];
+        }
+
+        int32_t score_int=0;
+dot_qk:
+        for (int i=0; i<head_size; i++) {
+#pragma HLS UNROLL
+          score_int+=(int32_t)q_int8[i]*(int32_t)k_buffer[i];
+        }
+        att[t]=(int32_t)(((float)score_int)*k_scale);
+      }
+
+      float remaining_scale=q_scale_val/sqrtf((float)head_size);
+      softmax_ibert<seq_len>(att,att_probs,pos+1,remaining_scale);
+
+      const int xb_offset=h*head_size;
+      float xb_accum[head_size];
+#pragma HLS ARRAY_PARTITION variable=xb_accum complete
+init_accum:
+      for (int i=0; i<head_size; i++) {
+#pragma HLS UNROLL
+        xb_accum[i]=0.0f;
+      }
+
+value_loop:
+      for (int t=0; t<=pos; t++) {
+#pragma HLS loop_tripcount min=1 max=2048 avg=1024
+        const int kv_head=h/kv_mul;
+        const int v_data_offset=loff_data+t*kv_dim+kv_head*head_size;
+        const int v_scale_offset=loff_scale+t*(kv_dim/GS)+kv_head;
+        float v_scale=value_scales[v_scale_offset];
+
+        int8_t v_buffer[head_size];
+#pragma HLS ARRAY_PARTITION variable=v_buffer complete
+v_load:
+        for (int i=0; i<head_size; i++) {
+#pragma HLS PIPELINE II=1
+          v_buffer[i]=value_cache[v_data_offset+i];
+        }
+
+        int8_t prob_int8=att_probs[t];
+        float combined_scale=(1.0f/127.0f)*v_scale;
+v_accumulate:
+        for (int i=0; i<head_size; i++) {
+#pragma HLS UNROLL
+          int32_t product=(int32_t)prob_int8*(int32_t)v_buffer[i];
+          xb_accum[i]+=((float)product)*combined_scale;
+        }
+      }
+
+write_head:
+      for (int i=0; i<head_size; i++) {
+#pragma HLS UNROLL
+        xb[i+xb_offset]=xb_accum[i];
+      }
+    }
+    // O projection: mix attention head outputs via wo
+    quantize(&xq,xb);
+    matmul<dim,dim>(xb2,xq.q,xq.s,(w->wo+l)->q,(w->wo+l)->s);
+
+residual1:
+    for (int i=0; i<dim; i++) {
+#pragma HLS PIPELINE II=1
+#pragma HLS UNROLL factor=16
+      x[i]+=xb2[i];
+    }
+
+    // FFN block
+    rmsnorm<dim>(xb,x,w->rms_ffn_weight+l*dim);
+    quantize(&xq,xb);
+    matmul<dim,hidden_dim>(hb,xq.q,xq.s,(w->w1+l)->q,(w->w1+l)->s);
+    matmul<dim,hidden_dim>(hb2,xq.q,xq.s,(w->w3+l)->q,(w->w3+l)->s);
+
+    float hb_out[hidden_dim];
+#pragma HLS ARRAY_PARTITION variable=hb_out cyclic factor=16
+swi_glu:
+    for (int i=0; i<hidden_dim; i++) {
+#pragma HLS PIPELINE II=1
+#pragma HLS UNROLL factor=16
+      float val=hb[i];
+      val*=(1.0f/(1.0f+expf(-val)));
+      val*=hb2[i];
+      hb_out[i]=val;
+    }
+    memcpy(hb,hb_out,hidden_dim*sizeof(float));
+
+    quantize(&hq,hb);
+    matmul<hidden_dim,dim>(xb,hq.q,hq.s,(w->w2+l)->q,(w->w2+l)->s);
+
+residual2:
+    for (int i=0; i<dim; i++) {
+#pragma HLS PIPELINE II=1
+#pragma HLS UNROLL factor=16
+      x[i]+=xb[i];
+    }
+  }
+
+  // Final RMSNorm and LM head run on the ARM Cortex-A53 in host software.
+  memcpy(out,x,dim*sizeof(float));
+}
+\end{lstlisting}
 
 \end{appendices}

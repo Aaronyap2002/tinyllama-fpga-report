@@ -243,9 +243,8 @@ and Table~\ref{tab:rmsnorm_latency} for the per-stage latency breakdown.
     \bottomrule
   \end{tabular}
   \caption{Resource utilisation of the \texttt{rmsnorm} function
-           synthesised at $S = 8$ on the ZCU102. Figures in the core-only
-           column exclude the AXI master adapter overhead, which is
-           not present when the function is inlined into the full kernel.}
+           synthesised at $S = 8$ on the ZCU102. Core-only figures
+           exclude the AXI master adapter.}
   \label{tab:rmsnorm_resources}
 
 \end{table}
@@ -418,10 +417,7 @@ per-stage breakdown.
     \bottomrule
   \end{tabular}
   \caption{Timing summary for \texttt{rmsnorm\_update3\_top} at the
-           \SI{150}{\mega\hertz} target clock. The estimated path of
-           \SI{7.456}{\nano\second} plus \SI{1.800}{\nano\second}
-           uncertainty exceeds the \SI{6.667}{\nano\second} budget by
-           \SI{2.589}{\nano\second}, constituting a timing violation.}
+           \SI{150}{\mega\hertz} target clock.}
   \label{tab:rmsnorm_u3_timing}
 \end{table}
 
@@ -788,11 +784,7 @@ applied to the group scale, computing \texttt{inv\_scale =
 
 \begin{lstlisting}[
   caption = {\texttt{quantize<S>} implementation from \texttt{FFN\_update3.h}
-             at full TinyLlama scale ($S = 2048$, $\text{GS} = 64$).
-             The reciprocal trick and manual rounding replace the
-             prototype's per-element \texttt{fdiv} and \texttt{round()}
-             calls. The \texttt{quantized\_buffer} partition factor
-             increases from 4 to 16.},
+             at full TinyLlama scale ($S = 2048$, $\text{GS} = 64$).},
   label   = {lst:quantize_update3}
 ]
 template <int S>
@@ -925,7 +917,7 @@ dominated by the \texttt{quantize\_2048\_s} core at 8{,}260 cycles,
 which accounts for 80\% of the total. Loading the 2{,}048-element input
 float vector takes 2{,}056 cycles, and writing the quantised output
 (\texttt{q\_out} and \texttt{s\_out}) takes only 35 cycles due to the
-small output size: 2{,}048 bytes of INT8 values and 32 floats of scale
+small output size of 2{,}048 bytes of INT8 values and 32 floats of scale
 factors. The asymmetry between the 2{,}056-cycle load and the 35-cycle
 write reflects the difference in transfer volume, with the input being
 $2048 \times 4 = 8{,}192$ bytes versus the output's 2{,}176 bytes.
@@ -1195,10 +1187,7 @@ directive is added to the \texttt{dequant\_loop}.
 
 \begin{lstlisting}[
   caption = {\texttt{dequantize<S>} from \texttt{FFN\_update3.h} at full
-             TinyLlama scale ($S = 2048$, $\text{GS} = 64$). The only
-             structural change from the prototype is the explicit
-             \texttt{PIPELINE II=1} annotation and removal of the
-             \texttt{runtime\_gs} parameter.},
+             TinyLlama scale ($S = 2048$, $\text{GS} = 64$).},
   label   = {lst:dequantize_update3}
 ]
 template <int S>
@@ -1537,11 +1526,8 @@ Table~\ref{tab:matmul_latency} for the per-stage latency breakdown.
     DSP  & 9       & 9       & 2{,}520   & $<$1 \\
     \bottomrule
   \end{tabular}
-  \caption{Resource utilisation of \texttt{matmul} synthesised at $N = D
-           = 8$ on the ZCU102. The
-           core-only column excludes the AXI master adapter and S-AXILite
-           control interface, which are not present when the function is
-           inlined into the full kernel.}
+  \caption{Resource utilisation of \texttt{matmul} synthesised at $N = D = 8$
+           on the ZCU102. Core-only figures exclude the AXI master adapter.}
   \label{tab:matmul_resources}
 
 \end{table}
@@ -1680,7 +1666,7 @@ operations to be completed in $64/16 = 4$ pipeline cycles. Phase 3 writes
 the \texttt{TILE\_D} float results to the output buffer, pipelined at
 II\,=\,1.
 
-Two compile-time constants govern the area-performance trade-off:
+Two compile-time constants govern the area-performance trade-off.
 \texttt{PARALLEL\_MACS\,=\,16} sets the inner MAC parallelism, and
 \texttt{TILE\_D\,=\,4} sets the number of rows buffered per tile. The
 weight tile occupies $4 \times 2048 = 8{,}192$ bytes of INT8 plus
@@ -2066,11 +2052,7 @@ Table~\ref{tab:softmax_latency} for the per-loop latency breakdown.
     \bottomrule
   \end{tabular}
   \caption{Per-loop latency breakdown of \texttt{softmax}
-           ($\texttt{MAXSIZE} = 16$) at \SI{150}{\mega\hertz}.
-           The \texttt{exp} and \texttt{norm} loops report trip
-           count~1 because \texttt{UNROLL factor=16} on a
-           16-element loop collapses all iterations into a single
-           parallel pipeline stage.}
+           ($\texttt{MAXSIZE} = 16$) at \SI{150}{\mega\hertz}.}
   \label{tab:softmax_latency}
 \end{table}
 
@@ -2187,10 +2169,7 @@ compares the resource utilisation against iteration~1 for direct comparison.
     \bottomrule
   \end{tabular}
   \caption{Timing summary for \texttt{softmax\_kvint8\_top} at the
-           \SI{150}{\mega\hertz} target clock. The estimated path of
-           \SI{5.084}{\nano\second} plus the \SI{1.800}{\nano\second}
-           uncertainty exceeds the \SI{6.667}{\nano\second} budget by
-           \SI{0.217}{\nano\second}, constituting a timing violation.}
+           \SI{150}{\mega\hertz} target clock.}
   \label{tab:softmax_iter3_timing}
 \end{table}
 
@@ -2207,11 +2186,7 @@ compares the resource utilisation against iteration~1 for direct comparison.
     \bottomrule
   \end{tabular}
   \caption{Per-loop latency breakdown of the iteration~3 \texttt{softmax}
-           ($\texttt{MAXSIZE} = 16$) at \SI{150}{\mega\hertz}. The
-           \texttt{sum} loop collapses to a single effective iteration
-           (trip count~1) due to the \texttt{UNROLL factor=16}, but its
-           total latency increases from 97 to 185 cycles compared to
-           iteration~1.}
+           ($\texttt{MAXSIZE} = 16$) at \SI{150}{\mega\hertz}.}
   \label{tab:softmax_iter3_latency}
 \end{table}
 
@@ -2231,9 +2206,7 @@ compares the resource utilisation against iteration~1 for direct comparison.
   \end{tabular}
   \caption{Resource utilisation comparison between the iteration~1 baseline
            and the iteration~3 \texttt{softmax} designs, both at
-           $\texttt{MAXSIZE} = 16$ on the ZCU102.
-           Core figures exclude the AXI adapter and S-AXILite control
-           interface.}
+           $\texttt{MAXSIZE} = 16$ on the ZCU102.}
   \label{tab:softmax_iter3_resources}
 \end{table}
 
@@ -2429,10 +2402,8 @@ per-phase latency breakdown.
     \texttt{softmax\_ibert\_top} (total)  & 83 & 531 \\
     \bottomrule
   \end{tabular}
-  \caption{Latency breakdown of \texttt{softmax\_ibert} ($\texttt{MAX\_SIZE} = 16$)
-           at \SI{150}{\mega\hertz}. All loops are fully unrolled so HLS reports no
-           per-loop trip count, and the breakdown is therefore given at the submodule
-           level. AXI wrapper overhead covers the input and output burst transfers.}
+  \caption{Latency breakdown of \texttt{softmax\_ibert}
+           ($\texttt{MAX\_SIZE} = 16$) at \SI{150}{\mega\hertz}.}
   \label{tab:softmax_ibert_latency}
 \end{table}
 
@@ -2489,10 +2460,7 @@ removing the per-element integer division.
 
 \begin{lstlisting}[
   caption = {\texttt{softmax\_ibert<MAX\_SIZE>} from \texttt{FFN\_update3.h}
-             at full scale (\texttt{MAX\_SIZE\,=\,2048}). All three loops
-             use \texttt{PIPELINE II=1} with \texttt{loop\_tripcount}
-             hints. The reciprocal trick replaces per-element integer
-             division in the normalisation step.},
+             at full scale (\texttt{MAX\_SIZE\,=\,2048}).},
   label   = {lst:softmax_ibert_update3}
 ]
 template <int MAX_SIZE>
@@ -2550,7 +2518,7 @@ normalize:
 \label{subsubsec:softmax_ibert_update3_csim}
 
 The testbench used the same inputs as the iteration~4 csim for direct
-comparison: \texttt{logits}\,$=\{10, -5, 18, 25, -3, 21, -2, 9\}$,
+comparison, using \texttt{logits}\,$=\{10, -5, 18, 25, -3, 21, -2, 9\}$,
 \texttt{scale\_factor\,=\,0.2f}, \texttt{size\,=\,8}, against
 \texttt{MAX\_SIZE\,=\,2048}. All eight output probabilities matched the
 software reference with zero error, and the sum of output probabilities
@@ -2765,11 +2733,7 @@ Listing~\ref{lst:attn_baseline} shows the \texttt{iterate} and
 
 \begin{lstlisting}[
   caption = {Baseline float attention \texttt{iterate} and \texttt{acc}
-             loops from \texttt{forward.cpp}. Both outer loops carry
-             \texttt{PIPELINE}. Both inner loops carry \texttt{UNROLL}
-             (complete) over \texttt{head\_size\,=\,4} elements.
-             The key and value cache values are read as float directly
-             from DDR with no intermediate buffering.},
+             loops from \texttt{forward.cpp}.},
   label = {lst:attn_baseline}
 ]
 iterate:
@@ -2903,9 +2867,8 @@ per-pipeline-module breakdown.
     \bottomrule
   \end{tabular}
   \caption{Resource utilisation of the baseline float attention block
-           synthesised at prototype scale on the ZCU102. The core-only column
-           excludes the AXI master adapter and S-AXILite control
-           interface.}
+           synthesised at prototype scale on the ZCU102. Core-only figures
+           exclude the AXI master adapter.}
   \label{tab:attn_fp32_resources}
 \end{table}
 
@@ -3015,7 +2978,7 @@ dot product between \texttt{q\_int8} and \texttt{k\_int8} is then
 accumulated into a 32-bit integer \texttt{score\_int}, with
 \texttt{\#pragma HLS UNROLL} applied to the inner \texttt{head\_size}
 element loop. The final dequantisation combines both per-head scales and
-the attention scaling factor in a single expression:
+the attention scaling factor in a single expression, shown below.
 
 \begin{equation}
   \text{score} = \left(\sum_{i=0}^{d_k-1} \hat{q}_i \cdot \hat{k}_i\right)
@@ -3041,7 +3004,7 @@ INT8 value by the mapping $\texttt{prob\_int8} = \lfloor
 probability $1.0$ to the value $127$ and uses a fixed implicit scale of
 $1/127$. The value vector is then loaded from the float KV cache,
 quantised on the fly with its own per-position scale $s_V$, and the
-weighted contribution is accumulated as:
+weighted contribution is accumulated according to the expression below.
 
 \begin{equation}
   \Delta \texttt{xb}(i) =
@@ -3172,10 +3135,8 @@ breakdown was presented in Table~\ref{tab:attn_fp32_latency}.
     \bottomrule
   \end{tabular}
   \caption{Resource utilisation comparison between the baseline float
-           attention and the refined per-head INT8 attention, both synthesised
-           at prototype scale on the ZCU102 at
-           \SI{150}{\mega\hertz}. Core-only figures exclude the AXI master
-           adapter and S-AXILite control interface.}
+           attention and the refined per-head INT8 attention at prototype
+           scale on the ZCU102.}
   \label{tab:attn_compare_resources}
 \end{table}
 
@@ -3408,10 +3369,7 @@ the per-pipeline-module latency for iteration~3.
     \bottomrule
   \end{tabular}
   \caption{Resource utilisation across all three attention iterations
-           on the ZCU102 at \SI{150}{\mega\hertz}.
-           Core figures for iterations~1 and~2 exclude the AXI master
-           adapter and S-AXILite control interface. The same exclusions
-           apply to the iteration~3 core column.}
+           on the ZCU102 at \SI{150}{\mega\hertz}.}
   \label{tab:attn_all_resources}
 \end{table}
 
@@ -3581,10 +3539,7 @@ extend the resource and latency comparisons to include iteration~4.
     \bottomrule
   \end{tabular}
   \caption{Resource comparison between iteration~3 and iteration~4 attention
-           implementations on the ZCU102. Replacing \texttt{softmax<16>}
-           with \texttt{softmax\_ibert<16>} reduces DSP usage from 194 to 16
-           and LUT usage from 70{,}514 to 31{,}828 core LUTs. BRAM usage
-           is unchanged at 18 core blocks.}
+           implementations on the ZCU102.}
   \label{tab:attn_all_resources_iter4}
 \end{table}
 
@@ -3614,8 +3569,8 @@ The headline result of iteration~4 is the DSP reduction from 194 to 16. In
 iteration~3, 192 of the 194 DSPs came from the 16 parallel 	exttt{fexp} IP core instances inside the unrolled
 \texttt{softmax<16>} function. Replacing those with \texttt{softmax\_ibert}
 eliminates all of them. The 16 DSPs that remain are accounted for by the
-per-head floating-point arithmetic that cannot be avoided in the current design:
-four \texttt{fmul\_32ns\_32ns\_32\_4\_max\_dsp\_1} instances (3 DSPs each) for
+per-head floating-point arithmetic that cannot be avoided in the current design,
+namely four \texttt{fmul\_32ns\_32ns\_32\_4\_max\_dsp\_1} instances (3 DSPs each) for
 \texttt{remaining\_scale}, \texttt{combined\_scale}, and the
 \texttt{val\_scaled\_f} multiplication inside \texttt{softmax\_ibert}, plus
 2 DSPs each in the \texttt{iterate} and \texttt{acc} pipeline modules for their
@@ -3677,10 +3632,7 @@ from competing for the same port.
 
 \begin{lstlisting}[
   caption = {Per-head score and value loops from \texttt{attn\_update3\_top.cpp}
-             at full TinyLlama scale. \texttt{PIPELINE} is applied to the
-             inner \texttt{k\_load} and \texttt{v\_load} loops only.
-             The outer \texttt{score\_loop} and \texttt{value\_loop} are
-             unpipelined to avoid issuing 64 simultaneous AXI reads.},
+             at full TinyLlama scale.},
   label   = {lst:attn_update3}
 ]
 multihead_attention:
@@ -3847,9 +3799,7 @@ per-module latency breakdown.
   \end{tabular}
   \caption{Resource utilisation of \texttt{attn\_update3\_top} at full
            TinyLlama scale on the ZCU102. Core-only figures exclude the
-           three AXI master adapters (\texttt{gmem1}--\texttt{gmem3},
-           4\,BRAM, 512\,FF, 580\,LUT each) and the S-AXILite control
-           block (501\,FF, 874\,LUT).}
+           AXI master adapters.}
   \label{tab:attn_u3_resources}
 \end{table}
 
@@ -3871,8 +3821,7 @@ per-module latency breakdown.
     \bottomrule
   \end{tabular}
   \caption{Per-module latency breakdown for \texttt{attn\_update3\_top}
-           at \SI{150}{\mega\hertz}. Minimum latency corresponds to
-           \texttt{pos\,=\,0} and maximum to \texttt{pos\,=\,2047}.}
+           at \SI{150}{\mega\hertz}.}
   \label{tab:attn_u3_latency}
 \end{table}
 
@@ -4008,10 +3957,9 @@ in full floating-point. Table~\ref{tab:ffn_csim} shows the results.
     7 & -0.000340 & -0.000340 & $4.09 \times 10^{-7}$ \\
     \bottomrule
   \end{tabular}
-  \caption{C-simulation output for \texttt{ffn\_baseline} with input
-           $\mathbf{x} = [0.1, 0.2, \ldots, 0.8]$ and unit RMSNorm
-           weights. All eight elements agree with the software reference
-           within the INT8 quantisation tolerance.}
+  \caption{C-simulation output for \texttt{ffn\_baseline}.
+           All eight elements agree with the software reference within
+           the INT8 quantisation tolerance.}
   \label{tab:ffn_csim}
 \end{table}
 
@@ -4100,9 +4048,7 @@ latency breakdown.
     \bottomrule
   \end{tabular}
   \caption{Per-stage latency breakdown of \texttt{ffn\_baseline\_top}
-           at \SI{150}{\mega\hertz} (prototype dimensions).
-           The gate and up projections share a single \texttt{matmul\_8\_32\_s}
-           instance called sequentially.}
+           at \SI{150}{\mega\hertz}.}
   \label{tab:ffn_latency}
 \end{table}
 
@@ -4166,10 +4112,7 @@ weight arrays share a single AXI bundle.
 
 \begin{lstlisting}[
   caption = {FFN block from \texttt{FFN\_update3.cpp} at full TinyLlama
-             scale (\texttt{dim\,=\,2048}, \texttt{hidden\_dim\,=\,5632}).
-             The tiled \texttt{matmul} replaces the prototype's row-pipelined
-             version. The \texttt{swi\_glu} loop uses \texttt{UNROLL factor=16}
-             to match \texttt{PARALLEL\_MACS} and the 16-bank buffer partition.},
+             scale (\texttt{dim\,=\,2048}, \texttt{hidden\_dim\,=\,5632}).},
   label   = {lst:ffn_update3}
 ]
 // FFN RMSNorm
@@ -4272,10 +4215,7 @@ per-stage breakdown.
     \bottomrule
   \end{tabular}
   \caption{Timing summary for \texttt{ffn\_update3\_top} at the
-           \SI{150}{\mega\hertz} target clock. The estimated path of
-           \SI{7.456}{\nano\second} plus \SI{1.800}{\nano\second}
-           uncertainty exceeds the \SI{6.667}{\nano\second} budget by
-           \SI{2.589}{\nano\second}.}
+           \SI{150}{\mega\hertz} target clock.}
   \label{tab:ffn_u3_timing}
 \end{table}
 
@@ -4336,10 +4276,7 @@ per-stage breakdown.
     \bottomrule
   \end{tabular}
   \caption{Per-stage latency breakdown of \texttt{ffn\_update3\_top}
-           at \SI{150}{\mega\hertz}. HLS infers one \texttt{matmul\_2048\_5632\_s}
-           instance reused for both the gate ($\mathbf{W}_1$) and up
-           ($\mathbf{W}_3$) projections, so the listed cycles represent
-           two sequential calls through the same module.}
+           at \SI{150}{\mega\hertz}.}
   \label{tab:ffn_u3_latency}
 \end{table}
 
@@ -4373,13 +4310,13 @@ only 390 cycles at II\,=\,1 because the 16-lane unroll reduces the trip
 count to $5632/16 = 352$ iterations.
 
 The 336 core BRAMs come from two sources. The top-level wrapper holds
-six static local arrays totalling 96 BRAM banks: \texttt{hb},
+six static local arrays totalling 96 BRAM banks, comprising \texttt{hb},
 \texttt{hb2}, and \texttt{hb\_out} each hold 5{,}632 floats and with
 cyclic factor\,=\,16 produce 16 banks of 352 entries each. \texttt{hq.q}
 holds 5{,}632 int8 values in 16 BRAM banks. \texttt{xb} and \texttt{xq.q}
 hold 2{,}048 floats and 2{,}048 int8 values respectively, each requiring
 16 BRAM banks at that size. The submodule instances contribute the
-remaining 240 BRAMs: \texttt{rmsnorm\_2048\_s} uses 48, both
+remaining 240 BRAMs, with \texttt{rmsnorm\_2048\_s} using 48, both
 \texttt{matmul\_2048\_5632\_s} and \texttt{matmul\_5632\_2048\_s} each
 use 80, and both \texttt{quantize} variants use 16 each.
 
@@ -4421,185 +4358,73 @@ AXI interfaces and shared on-chip buffers. The top-level function is
 therefore the composition point where all prior design decisions
 interact, and the choices made here about the AXI interface
 configuration, buffer organisation, and loop structure determine the
-overall hardware behaviour of the prototype kernel.
+overall hardware behaviour of the prototype kernel. The complete source
+of the baseline prototype is reproduced in
+\cref{app:forward_baseline}; the full-scale sixth-iteration kernel is
+reproduced in \cref{app:forward_update3}.
 
-\subsection{AXI Interface and Buffer Layout}
-\label{subsec:forward_axi}
+\subsection{Baseline Prototype (\texttt{forward.cpp})}
+\label{subsec:forward_proto_impl}
 
-The \texttt{forward} function declares six arguments. Two are scalar
-integers passed through the S-AXILite control register interface:
-\texttt{token} (the current input token index) and \texttt{pos} (the
-current sequence position). The remaining four are memory-mapped
-pointers to DDR-resident arrays, each assigned to one of two AXI
-master bundles via \texttt{\#pragma HLS INTERFACE m\_axi} directives.
+The prototype kernel uses two AXI master bundles. \texttt{gmem0}
+carries the transformer weight struct, \texttt{key\_cache}, and
+\texttt{value\_cache} on a single shared port, and \texttt{gmem1}
+carries only the output vector. Sharing the KV caches with the weight
+traffic on \texttt{gmem0} is acceptable at prototype dimensions
+($\texttt{dim} = 8$, $\texttt{seq\_len} = 16$, $N_L = 2$) because the
+total AXI transaction volume remains within the adapter's 16-slot
+outstanding-transaction queue. All intermediate activation buffers,
+\texttt{x}, \texttt{xb}, \texttt{xb2}, \texttt{q}, \texttt{k},
+\texttt{v}, \texttt{att}, \texttt{xq}, and \texttt{hq}, are declared
+\texttt{static} so that HLS allocates them as persistent on-chip BRAM
+rather than stack memory. Each buffer receives an
+\texttt{ARRAY\_PARTITION cyclic factor=16} directive to supply the
+16 parallel memory ports required by the unrolled inner loops.
 
-The prototype uses two AXI master bundles. The first bundle,
-\texttt{gmem0}, has three ports simultaneously, namely the
-\texttt{transformer} struct pointer (which contains all model weights
-and the embedding table), \texttt{key\_cache}, and
-\texttt{value\_cache}. The second bundle, \texttt{gmem1}, carries only
-\texttt{out}, the output activation vector. This two-bundle arrangement
-is depicted in Table~\ref{tab:axi_bundles}.
+Each decode step begins by loading one row of the float
+\texttt{token\_embedding\_table} into the activation buffer \texttt{x}
+via \texttt{memcpy}. The \texttt{main\_forward\_loop} then iterates
+over $N_L$ transformer layers sequentially. Within each layer,
+\texttt{rmsnorm} normalises \texttt{x} into \texttt{xb}, which is
+quantised and passed to three \texttt{matmul} calls that compute the
+Q, K, and V projections. The current K and V vectors are written into
+the float KV cache, the multihead attention block executes as described
+in \cref{sec:attn_impl}, and the weighted value accumulation
+\texttt{xb} is added back to \texttt{x} via the residual loop. The
+FFN sub-block, output projection, final RMSNorm, and language model
+head are commented out. The loop closes immediately after the first
+residual addition and \texttt{x} is written to the output buffer.
 
-\begin{table}[H]
-  \centering
-  \begin{tabular}{lll}
-    \toprule
-    Bundle  & Port(s)                                          & Contents \\
-    \midrule
-    gmem0   & \texttt{transformer}, \texttt{key\_cache},
-               \texttt{value\_cache}                          & Weights, KV cache \\
-    gmem1   & \texttt{out}                                    & Output activation \\
-    \bottomrule
-  \end{tabular}
-  \caption{AXI master bundle assignment in the prototype
-           \texttt{forward} kernel (\texttt{forward.cpp}).
-           All weight and KV cache traffic shares a single AXI master
-           port on \texttt{gmem0}.}
-  \label{tab:axi_bundles}
-\end{table}
+\subsection{Full-Scale Kernel (\texttt{FFN\_update3.cpp})}
+\label{subsec:forward_update3_impl}
 
-Sharing \texttt{key\_cache} and \texttt{value\_cache} on the same
-bundle as the transformer weights is acceptable at prototype scale
-because the small dimensions keep the total AXI transaction volume low.
-At prototype configuration ($\texttt{dim} = 8$,
-$\texttt{seq\_len} = 16$, $\texttt{n\_layers} = 2$), the number of
-outstanding AXI read transactions generated within any single pipeline
-stage remains within the adapter's 16-slot queue limit.
+The sixth-iteration kernel resolves the limitations of the prototype at
+full TinyLlama dimensions ($\texttt{dim} = 2048$,
+$\texttt{seq\_len} = 2048$, $N_L = 22$). At this scale, sharing the
+KV caches with the weight port on \texttt{gmem0} causes the pipelined
+\texttt{iterate} loop to generate \texttt{head\_size} = 64 simultaneous
+AXI read requests per outer iteration. This fills the 16-slot queue and
+creates a circular dependency in the transaction ordering. The
+full-scale kernel therefore assigns each traffic class to a dedicated
+bundle, with \texttt{gmem0} for weights, \texttt{gmem1} for the key
+cache, \texttt{gmem2} for the value cache, and \texttt{gmem3} for the
+output. The floating-point KV cache is replaced with INT8 storage using
+per-group scales, which halves the DDR read bandwidth per attended
+position and reduces the cache footprint by a factor of four. The
+SwiGLU FFN block is fully implemented using the primitives described in
+\cref{sec:ffn_impl}. The embedding lookup is corrected to dequantise
+from \texttt{q\_tokens} rather than reading the float
+\texttt{token\_embedding\_table}, which the host checkpoint loader
+never populates.
 
-At full TinyLlama scale, however, this shared-bundle arrangement
-becomes untenable. The \texttt{matmul} weight reads and the KV cache
-reads in the \texttt{iterate} loop both issue through \texttt{gmem0}
-concurrently. With \texttt{dim} = 2048 and a completely unrolled inner
-\texttt{head\_size} = 64 element loop inside a pipelined outer position
-loop, the \texttt{iterate} loop generates 64 simultaneous read requests
-targeting the key cache while the weight loading logic is issuing its
-own burst reads. The adapter's transaction queue fills and the pipeline stalls.
-The fix is to separate the KV caches onto dedicated bundles:
-\texttt{gmem0} for weights, \texttt{gmem1} for the key cache,
-\texttt{gmem2} for the value cache, and \texttt{gmem3} for the output.
-This four-bundle configuration is used in the full-scale kernel but is
-not needed at prototype scale.
-
-All intermediate activation buffers are declared as \texttt{static}
-local arrays inside \texttt{forward}, which causes HLS to allocate
-them as persistent on-chip storage rather than stack-allocated memory.
-The buffers \texttt{x}, \texttt{xb}, \texttt{xb2}, \texttt{q},
-\texttt{k}, \texttt{v}, \texttt{att}, \texttt{xq}, and \texttt{hq} are
-all declared this way, and each receives a \texttt{\#pragma HLS
-ARRAY\_PARTITION cyclic factor=16} directive so that the 16-wide
-unrolled loop bodies in the attention block have sufficient memory ports
-to sustain their read and write bandwidth requirements. The
-\texttt{cyclic factor=16} partitioning splits each array into 16
-independently addressable banks, allowing 16 simultaneous accesses per
-clock cycle.
-
-\subsection{Layer Loop and KV Cache Management}
-\label{subsec:forward_layers}
-
-The body of \texttt{forward} follows a fixed sequence for each decode
-step. Before the layer loop begins, the token embedding is loaded from
-the float \texttt{token\_embedding\_table} field of the transformer
-weights struct via a single \texttt{memcpy} call, copying
-\texttt{dim\,$\times$\,sizeof(float)} bytes into the activation buffer
-\texttt{x}. This lookup is $\mathcal{O}(1)$ in the sense that it reads
-one row of a table regardless of sequence length, but it is
-memory-bandwidth-bound because the embedding matrix is stored in DDR
-and must be transferred over \texttt{gmem0}.
-
-The \texttt{main\_forward\_loop} then iterates over all \texttt{L =
-n\_layers} transformer layers sequentially. The structure within each
-layer iteration proceeds as follows. First, \texttt{rmsnorm<dim>} is
-applied to \texttt{x}, writing the normalised result into \texttt{xb}.
-The activation \texttt{xb} is then quantised into the
-\texttt{QuantizedTensor} struct \texttt{xq} via \texttt{quantize(\&xq,
-xb, GS)}. Three \texttt{matmul} calls consume \texttt{xq} to compute
-the Q, K, and V projections, using \texttt{matmul<dim,dim>} for Q,
-\texttt{matmul<dim,kv\_dim>} for K, and \texttt{matmul<dim,kv\_dim>}
-for V, where \texttt{kv\_dim = (dim\,$\times$\,n\_kv\_heads) /
-n\_heads}. At prototype scale where \texttt{n\_kv\_heads = n\_heads =
-2}, \texttt{kv\_dim = dim = 8}, so all three projections operate on
-identically sized vectors.
-
-After the QKV projections, the current key and value vectors are
-written into the KV cache at the position corresponding to the current
-layer and timestep. The layer offset \texttt{loff = l\,$\times$\,seq\_len\,$\times$\,kv\_dim}
-indexes the start of the current layer's portion of the cache, and the
-position within that layer is \texttt{pos\,$\times$\,kv\_dim}. Both
-the key and value vectors are written as float32 via \texttt{memcpy},
-reflecting the prototype's use of a floating-point KV cache.
-
-The multihead attention block then executes as described in
-\cref{sec:attn_impl}, reading from the accumulated KV cache entries at
-positions 0 through \texttt{pos} and producing the weighted value
-accumulation in \texttt{xb}. The output projection matrix
-$\mathbf{W}_O$ is not applied in the prototype. The commented-out
-\texttt{matmul<dim,dim>} call for \texttt{wo} means that \texttt{xb}
-is used directly in the residual addition rather than \texttt{xb2}.
-The residual loop then adds \texttt{xb} element-wise into \texttt{x}
-with \texttt{\#pragma HLS UNROLL factor=64}, completing one transformer
-layer.
-
-After all \texttt{n\_layers} iterations, the final activation \texttt{x}
-is written to the output buffer via \texttt{memcpy(out, x,
-dim\,$\times$\,sizeof(float))}. The FFN sub-block, the final RMSNorm,
-and the language model head projection are all commented out and do
-not execute in the prototype kernel.
-
-\subsection{Known Limitations and Design Decisions}
+\subsection{Persistent Omissions}
 \label{subsec:forward_limitations}
 
-Three deliberate simplifications were made in the prototype kernel to
-focus the implementation effort on the attention sub-block and to
-remain within the resource and complexity budget of the initial
-development phase. These are documented here as engineering scope
-decisions rather than defects, and each is accompanied by the
-corresponding fix that would be required in a production implementation.
-
-The first simplification is the omission of the output projection
-$\mathbf{W}_O$. In the full transformer, after the weighted value
-accumulation \texttt{xb} is computed, it is passed through a final
-linear projection \texttt{matmul<dim,dim>} using the weight matrix
-\texttt{wo} to mix information across heads before the residual
-addition. The prototype comments out this call and uses \texttt{xb}
-directly in the residual, meaning the output dimension of the softmax
-attention already matches \texttt{dim} without the projection. This
-reduces the compute cost of each layer iteration by one \texttt{dim
-$\times$ dim} matrix--vector multiply, which at full scale
-(\texttt{dim = 2048}) is the second most expensive operation in the
-attention block after the Q projection. Restoring the output projection
-requires uncommenting the \texttt{quantize} and \texttt{matmul<dim,dim>}
-calls and updating the residual to add \texttt{xb2} rather than
-\texttt{xb}.
-
-The second simplification is the complete omission of the SwiGLU
-feed-forward network. The FFN sub-block, which follows the attention
-residual in each transformer layer, would contribute three further
-matrix--vector multiplications and the SwiGLU activation function.
-At full TinyLlama scale the FFN weight matrices are larger than the
-attention matrices, making the FFN the dominant contributor to both
-the per-layer compute cost and the memory bandwidth requirement. The
-prototype excludes the FFN entirely, meaning the closing brace of
-\texttt{main\_forward\_loop} appears immediately after the first
-residual addition. This conscious omission was taken to keep the
-prototype kernel focused on validating the attention hardware, which
-is the architecturally novel component. The FFN implementation in
-\texttt{FFN\_update2.cpp} and \texttt{FFN\_update3.cpp} provides the
-full SwiGLU implementation with INT8 quantisation.
-
-The third simplification is the use of a floating-point KV cache. The
-key and value vectors are stored in DDR as \texttt{float32} arrays
-and retrieved as \texttt{float32} in the attention block. In the full
-kernel, these vectors are stored as INT8 with accompanying group scales
-to reduce the KV cache memory footprint by a factor of four and to
-halve the DDR bandwidth required when reading past positions during
-the \texttt{iterate} loop. The float cache was retained in the
-prototype because it avoids the additional quantise-before-write and
-dequantise-on-read steps, keeping the attention data path simpler while
-functional correctness was being established. Bug~2 discovered during
-on-board testing of the full-scale kernel is directly related to this
-transition. The full kernel reads token embeddings from
-\texttt{q\_tokens} (the quantised embedding table) rather than
-\texttt{token\_embedding\_table} (the float table), but the host
-checkpoint loader only populated the quantised table. The prototype
-avoids this issue by always reading from the float table.
+Rotary Positional Embedding (RoPE) remains absent from all kernel
+iterations. Without RoPE the kernel treats all sequence positions
+identically, so query and key vectors at position 0 and position 100
+produce the same dot products. Implementing RoPE requires precomputing
+cosine and sine tables for each frequency and position, then rotating
+each consecutive pair $(q_{2i},\,q_{2i+1})$ and $(k_{2i},\,k_{2i+1})$
+by the angle $\theta_i = \texttt{pos} \cdot \texttt{freq}_i$ before
+the KV write.

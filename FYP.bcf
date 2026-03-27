@@ -2414,8 +2414,7 @@
     <bcf:citekey order="42" intorder="1">de2018hlstransformations</bcf:citekey>
     <bcf:citekey order="43" intorder="1">de2018hlstransformations</bcf:citekey>
     <bcf:citekey order="44" intorder="1">de2018hlstransformations</bcf:citekey>
-    <bcf:citekey order="45" intorder="1">karpathy2023llama2c</bcf:citekey>
-    <bcf:citekey order="46" intorder="1">xiao2023smoothquant</bcf:citekey>
+    <bcf:citekey order="45" intorder="1">PLACEHOLDER</bcf:citekey>
   </bcf:section>
   <!-- SORTING TEMPLATES -->
   <bcf:sortingtemplate name="none">

@@ -34,12 +34,12 @@ primitive in isolation, and the second was end-to-end verification of the
 complete \texttt{forward()} function through a multi-token stress test.
 
 Hardware deployment on the ZCU102 was not completed within the scope of this
-project. The Vivado implementation flow, which translates the synthesised RTL
+project. The Vitis kernel flow, which translates the synthesised RTL
 into a placed-and-routed bitstream, was not run due to time constraints. The
-throughput and latency figures reported in \cref{sec:performance} are therefore
-derived from HLS synthesis estimates at the target clock frequency, and should
-be treated as indicative estimates of the achievable hardware performance
-pending post-implementation validation.
+latency figures presented in this chapter are therefore derived from HLS
+synthesis estimates at the target clock frequency, and should be treated as
+indicative estimates of the achievable hardware performance pending
+post-implementation validation.
 
 \section{HLS Synthesis Results}
 \label{sec:synthesis_results}
@@ -63,10 +63,7 @@ embedding lookup, attention sub-block, and SwiGLU FFN sub-block per layer.
     \bottomrule
   \end{tabular}
   \caption{Timing summary for the \texttt{forward()} kernel at the
-           \SI{150}{\mega\hertz} target clock. The estimated path of
-           \SI{7.456}{\nano\second} plus \SI{1.800}{\nano\second}
-           uncertainty exceeds the \SI{6.667}{\nano\second} budget by
-           \SI{2.589}{\nano\second}.}
+           \SI{150}{\mega\hertz} target clock.}
   \label{tab:forward_timing}
 \end{table}
 
@@ -83,11 +80,8 @@ embedding lookup, attention sub-block, and SwiGLU FFN sub-block per layer.
     \bottomrule
   \end{tabular}
   \caption{Resource utilisation of the \texttt{forward()} kernel after HLS
-           synthesis on the ZCU102.
-           Core-only figures exclude the four AXI master adapters.
-           The \texttt{gmem0} adapter consumes 30\,BRAM, 881\,FF, and 1{,}052\,LUT.
-           The \texttt{gmem1}--\texttt{gmem3} adapters each consume 4\,BRAM,
-           512\,FF, and 580\,LUT.}
+           synthesis on the ZCU102 (\texttt{xczu9eg-ffvb1156-2-e}).
+           Core-only figures exclude the four AXI master adapters.}
   \label{tab:forward_resources}
 \end{table}
 
@@ -198,13 +192,7 @@ layer.
     \bottomrule
   \end{tabular}
   \caption{Per-operation latency for one transformer layer at
-           \SI{150}{\mega\hertz}. The Q projection uses a dedicated
-           \texttt{matmul\_2048\_2048\_s} instance since its output
-           dimension equals \texttt{dim}. The K and V projections share
-           a \texttt{matmul\_2048\_256\_s} instance, as their output
-           dimension equals \texttt{kv\_dim\,=\,256} under GQA. The gate
-           and up projections share one \texttt{matmul\_2048\_5632\_s}
-           instance, called sequentially.}
+           \SI{150}{\mega\hertz}.}
   \label{tab:layer_latency}
 \end{table}
 
@@ -229,7 +217,7 @@ is comparable to a single FFN projection call.
 \label{subsec:primitive_csim}
 
 Each kernel primitive was verified in isolation through a dedicated standalone
-HLS project. The testbench compiled the kernel function with GCC alongside a
+HLS project. The testbench compiled the kernel function alongside a
 software reference, ran both on the same test inputs, and compared outputs
 element-by-element. Table~\ref{tab:primitive_csim} summarises the csim
 outcome for each primitive at prototype and full TinyLlama scale.
@@ -240,28 +228,26 @@ outcome for each primitive at prototype and full TinyLlama scale.
     \toprule
     Primitive & Scale & Test inputs & Result \\
     \midrule
-    \texttt{rmsnorm}           & Proto ($S = 8$)         & Fixed, unit weights     & PASS (0 error) \\
+    \texttt{rmsnorm}           & Prototype ($S = 8$)         & Fixed, unit weights     & PASS (0 error) \\
     \texttt{rmsnorm}           & Full ($S = 2048$)        & Incremental vector      & PASS (0 RMS error) \\
-    \texttt{quantize}          & Proto ($S = 8$)         & Mixed values            & PASS (0 error) \\
+    \texttt{quantize}          & Prototype ($S = 8$)         & Mixed values            & PASS (0 error) \\
     \texttt{quantize}          & Full ($S = 2048$)        & Modular, 32 groups      & PASS (0 error) \\
-    \texttt{dequantize}        & Proto ($S = 8$)         & Known INT8, fixed scale & PASS (0 error) \\
+    \texttt{dequantize}        & Prototype ($S = 8$)         & Known INT8, fixed scale & PASS (0 error) \\
     \texttt{dequantize}        & Full ($S = 2048$)        & Uniform scale 0.03      & PASS (0 error) \\
-    \texttt{matmul}            & Proto ($N = D = 8$)     & Quantised pattern       & PASS (tol.\ $10^{-5}$) \\
+    \texttt{matmul}            & Prototype ($N = D = 8$)     & Quantised pattern       & PASS (tol.\ $10^{-5}$) \\
     \texttt{matmul} (tiled)    & Full ($N = 2048$, $D = 5632$) & 1{,}408 tiles   & PASS (tol.\ $10^{-3}$) \\
-    \texttt{softmax}           & Proto (size 16)          & Scores, float ref       & PASS (0 error) \\
-    \texttt{softmax\_ibert}    & Proto (size 16)          & LUT path                & PASS (0 error) \\
+    \texttt{softmax}           & Prototype (size 16)          & Scores, float ref       & PASS (0 error) \\
+    \texttt{softmax\_ibert}    & Prototype (size 16)          & LUT path                & PASS (0 error) \\
     \texttt{softmax\_ibert}    & Full (size 2048)          & Same as prototype       & PASS (0 error) \\
-    \texttt{attn} (float)      & Proto                    & pos\,=\,3, pre-built cache & PASS (tol.\ $10^{-4}$) \\
-    \texttt{attn} (INT8-KV)    & Proto                    & pos\,=\,3, INT8 cache   & PASS (tol.\ $10^{-4}$) \\
+    \texttt{attn} (float)      & Prototype                & pos\,=\,3, pre-built cache & PASS (tol.\ $10^{-4}$) \\
+    \texttt{attn} (INT8-KV)    & Prototype                & pos\,=\,3, INT8 cache   & PASS (tol.\ $10^{-4}$) \\
     \texttt{attn} (I-BERT)     & Full ($n\_heads = 32$)   & pos\,=\,3, INT8 cache   & PASS (0 error) \\
-    \texttt{ffn}               & Proto ($d = 8$)         & Quantised, float ref    & PASS (tol.\ 0.05) \\
+    \texttt{ffn}               & Prototype ($d = 8$)         & Quantised, float ref    & PASS (tol.\ 0.05) \\
     \texttt{ffn}               & Full ($d = 2048$)        & Quantised, float ref    & PASS (tol.\ 0.05) \\
     \bottomrule
   \end{tabular}
   \caption{C-simulation results for all kernel primitives at both prototype
-           and full TinyLlama scale. Tolerance values indicate the per-element
-           absolute error threshold. Zero-error results indicate bit-identical
-           outputs between the kernel and the software reference.}
+           and full TinyLlama scale.}
   \label{tab:primitive_csim}
 \end{table}
 
@@ -303,9 +289,7 @@ Table~\ref{tab:stress_results} shows the relative error at each position.
     \bottomrule
   \end{tabular}
   \caption{End-to-end relative error between the \texttt{forward()} kernel
-           and the float software reference across five token positions.
-           Relative error is computed as total absolute difference divided
-           by total reference magnitude, expressed as a percentage.}
+           and the float software reference across five token positions.}
   \label{tab:stress_results}
 \end{table}
 
@@ -331,60 +315,13 @@ to differ. Measuring perplexity on a held-out text corpus with trained INT8
 weights is identified as a necessary next step for a complete accuracy
 characterisation.
 
-\section{Inference Performance}
-\label{sec:performance}
-
-Hardware deployment on the ZCU102 was not completed within the scope of this
-project, so measured inference throughput figures are not available. Theoretical
-throughput is derived from the HLS synthesis latency estimates at the
-\SI{150}{\mega\hertz} target clock. Table~\ref{tab:theoretical_throughput}
-presents the theoretical tokens per second across the context length range.
-
-\begin{table}[H]
-  \centering
-  \begin{tabular}{lrrr}
-    \toprule
-    Context length & Latency (cycles) & Latency (s) & Throughput (tok/s) \\
-    \midrule
-    1 (pos\,=\,0)        & 1{,}072{,}750{,}728 & 7.152 & 0.140 \\
-    2048 (pos\,=\,2047)  & 1{,}365{,}291{,}592 & 9.102 & 0.110 \\
-    \bottomrule
-  \end{tabular}
-  \caption{Theoretical inference throughput derived from HLS synthesis
-           latency estimates at \SI{150}{\mega\hertz}. These figures assume
-           the timing violation is resolved and the design operates at the
-           target frequency. No hardware deployment measurements are available.}
-  \label{tab:theoretical_throughput}
-\end{table}
-
-
-The root cause is the sequential tiled matrix--vector multiplication
-architecture. Each of the six weight matrices per layer is read tile-by-tile
-from DDR, and within each tile the load and compute phases execute sequentially
-rather than concurrently. At \SI{150}{\mega\hertz} with \texttt{TILE\_D\,=\,4},
-the DDR burst latency for each weight tile dominates the compute time, as the
-arithmetic intensity of a matrix--vector multiplication is only two operations
-per byte at INT8 precision. The tiled approach was necessary to prevent the AXI
-queue saturation that occurred in earlier iterations, but it sacrifices the
-pipeline overlap between loading and computing that is required to approach
-theoretical DDR bandwidth efficiency.
-
 \section{Discussion}
 \label{sec:discussion}
 
 \subsection{Bottleneck Analysis}
 \label{subsec:bottleneck}
 
-The synthesis results confirm that matrix--vector multiplication is the
-throughput bottleneck for TinyLlama decode-phase inference on this FPGA
-architecture, accounting for over 99\% of the per-layer compute budget at
-short context lengths. This is consistent with the profiling analysis of the
-GPU baseline in \cref{sec:motivations}, which identified the decode phase as
-memory-bandwidth-bound rather than compute-bound. On the GPU the bottleneck
-manifests as low memory bandwidth utilisation due to kernel launch overhead.
-On this FPGA implementation it manifests as sequential DDR bursts within the
-tiling loop, where the hardware stalls during each load phase before the
-compute phase can begin.
+
 
 The LUT utilisation of 73\% indicates that the design is approaching the
 capacity of the ZCU102's programmable logic fabric. The 64-element
@@ -416,18 +353,8 @@ exhibit substantially lower relative error.
 \label{subsec:limitations}
 
 Several deliberate simplifications in the current implementation limit its
-completeness as a deployed inference engine. The output projection
-$\mathbf{W}_O$ after the multihead attention block is disabled. Its computation
-is present in the source but the result is discarded and the attention output
-is added directly to the residual stream without the learned cross-head mixing
-transformation. Rotary positional embeddings are also omitted. Without RoPE
+completeness as a deployed inference engine. Rotary positional embeddings are omitted. Without RoPE
 the model has no positional awareness, and the attention scores treat all
 sequence positions identically.
 
-Double-buffering in the tiled matmul is the highest-impact optimisation
-available without changing the algorithm. Overlapping the DDR load of tile
-$k+1$ with the compute of tile $k$ would approximately halve the per-layer
-matmul latency, reducing the theoretical decode latency from approximately
-8--10 seconds per token to approximately 4--5 seconds. This would bring the
-design within range of the ARM Cortex-A53 software baseline and make a direct
-throughput comparison meaningful.
+

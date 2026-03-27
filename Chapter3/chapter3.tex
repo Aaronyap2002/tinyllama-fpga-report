@@ -14,10 +14,10 @@ Xilinx ZCU102, which integrates a quad-core ARM Cortex-A53 processing system
 (PS) and a Zynq UltraScale+ programmable logic (PL) fabric on a single SoC.
 The two subsystems communicate through a high-bandwidth AXI interconnect and
 share a common DDR4 memory pool. This heterogeneous arrangement is well-suited
-to transformer inference because the workload naturally separates into
-sequential control logic that manages the autoregressive loop, and a large
-volume of repetitive arithmetic that is amenable to pipelined hardware
-acceleration.
+to transformer inference because the workload naturally decomposes into two
+qualitatively different classes of computation: a small amount of sequential
+control logic that manages the autoregressive loop, and a large volume of
+repetitive arithmetic that is amenable to pipelined hardware acceleration.
 
 The PS is responsible for all control-flow operations. These include loading
 the quantised model weights from storage into DDR at startup, running the
@@ -27,12 +27,12 @@ over the XRT API, performing post-attention sampling (temperature scaling and
 argmax over the vocabulary logit vector), and appending each generated token
 back to the context for the next decode step. The PL accelerator kernel
 performs the computationally intensive operations within each transformer
-layer, covering the RMSNorm normalisation, the quantise-and-dequantise operations
+layer: the RMSNorm normalisation, the quantise-and-dequantise operations
 around each matrix multiplication, the grouped-query attention mechanism
 including the scaled dot-product attention and weighted value accumulation,
 and the residual stream addition.
 
-A single decode step runs as follows.
+The overall execution model for a single decode step proceeds as follows.
 The host application supplies the current token index and the current
 sequence position to the PL kernel. The kernel loads the token embedding
 from DDR, then iterates over all transformer layers, performing the attention
@@ -43,14 +43,18 @@ applies the final RMSNorm and the language model head projection entirely in
 software on the ARM cores, and samples the next token. The process repeats
 until the desired output length is reached.
 
-This decomposition allowed more of the forward pass to be offloaded to the PL fabric as the hardware design matured. The FFN block, the output attention projection, and
-the LM head are designed and specified in this chapter.
+This decomposition was chosen at the project outset with the intention of
+incrementally offloading more of the forward pass to the PL fabric as the
+hardware design matured. The FFN block, the output attention projection, and
+the LM head are designed and specified in this chapter; the scope of the
+synthesised hardware kernel and the rationale for the current partitioning
+boundary are discussed in \cref{sec:hw_sw_partition}.
 
 \section{Hardware/Software Partitioning}
 \label{sec:hw_sw_partition}
 
 The partitioning of operations between the PS and PL is governed by two
-criteria applied jointly, namely arithmetic intensity and implementation complexity.
+criteria applied jointly: arithmetic intensity and implementation complexity.
 Arithmetic intensity is defined as the ratio of floating-point operations to
 bytes of memory transferred, and it determines whether a computation is
 bottlenecked by compute throughput or by memory bandwidth. Operations with
@@ -61,10 +65,12 @@ intensity are memory-bandwidth-bound and gain little from hardware parallelism
 relative to the overhead of transferring data to and from the PL kernel.
 
 The matrix--vector multiplications that dominate each transformer layer have
-intermediate arithmetic intensity, since each weight element is loaded once and used
+intermediate arithmetic intensity: each weight element is loaded once and used
 once, giving an intensity of approximately two operations per byte at INT8
 precision. This is above the threshold where FPGA acceleration begins to
-outperform a general-purpose ARM core. The attention score
+outperform a general-purpose ARM core, particularly given that the ZCU102's
+PL fabric supports deeply pipelined DSP48E2 blocks that can sustain one
+multiply-accumulate per clock cycle at 200 MHz. The attention score
 computation and the weighted value accumulation have similar structure and
 are likewise accelerated in the PL.
 
@@ -73,10 +79,14 @@ Tokenisation is a byte-level string operation with negligible arithmetic
 content, and moving it to the PL would introduce significant control-flow
 complexity for no performance benefit. Sampling involves an argmax over the
 vocabulary logit vector of length 32{,}000 followed by optional temperature
-scaling, where the memory access pattern is irregular and the arithmetic is trivial,
+scaling: the memory access pattern is irregular and the arithmetic is trivial,
 making it a poor candidate for hardware acceleration. The residual stream
 additions, by contrast, are kept inside the PL kernel and executed immediately
+after each sub-block's output, avoiding a round-trip of the activation vector
 through the AXI interface back to the ARM core on every layer of every decode step.
+
+
+
 
 \section{Memory Architecture}
 \label{sec:memory_arch}
@@ -87,13 +97,14 @@ ZCU102. The off-chip DDR4 memory offers large capacity but is shared between
 the PS and PL and incurs significant latency for each access. The on-chip
 BRAM and flip-flop registers inside the PL fabric are fast and directly
 accessible to the compute pipeline, but are scarce relative to the volume of
-data involved in transformer inference. Data that is too large to
+data involved in transformer inference. The guiding principle behind the
+memory organisation is therefore straightforward: data that is too large to
 fit on-chip or that must persist across multiple decode steps is placed in
 DDR, while data that is small, short-lived, and accessed repeatedly during
 a single layer computation is held on-chip.
 
 \noindent\textbf{Off-chip DDR memory.} Three categories of data reside in
-DDR, namely the model weights, the KV cache, and the output buffer. The model weights
+DDR: the model weights, the KV cache, and the output buffer. The model weights
 are by far the largest component. At full TinyLlama scale, after INT8 quantisation (described in
 \cref{sec:quant_scheme}), the attention weight matrices across all 22 layers
 total approximately 221\,MB, the FFN weight matrices total approximately
@@ -102,7 +113,7 @@ these far exceed the on-chip memory available on any FPGA device, so the
 weights must remain in DDR and be streamed into the compute pipeline one
 layer at a time. The access pattern
 is sequential and read-only during inference, which is well-matched to the
-burst transfer capability of the DDR memory controller. All DDR buffers shared between the PS and PL must occupy a contiguous region of physical memory, enforced through the Linux Contiguous Memory Allocator (CMA) managed by XRT on the ZCU102.
+burst transfer capability of the DDR memory controller. A key physical constraint on all DDR buffers shared between the PS and PL is that they must occupy a contiguous region of physical memory, which is enforced through the Linux Contiguous Memory Allocator (CMA) managed transparently by XRT on the ZCU102.
 
 The KV cache must also reside in DDR because its size grows linearly with
 sequence length and it must persist across every decode step. Unlike the
@@ -120,8 +131,9 @@ decode step.
 generated during a single layer's computation is held in on-chip BRAM
 and registers. This includes the working activation vectors for the current
 token, the query, key, and value vectors, the attention score accumulator,
-and the intermediate representations produced by the FFN sub-block. None of this data needs to persist
-between layers. Once the residual addition has been applied at the end of
+and the intermediate representations produced by the FFN sub-block. The
+critical property of all this data is that none of it needs to persist
+between layers: once the residual addition has been applied at the end of
 a layer, the intermediate values are discarded and the same on-chip buffers
 are reused in the next iteration of the layer loop. The on-chip memory
 footprint is therefore determined solely by the dimensions of a single layer,
@@ -161,7 +173,7 @@ supported natively by the ZCU102's DSP48E2 blocks as an 8$\times$8 multiply
 accumulating into a 27-bit result, which avoids the resource overhead of
 implementing floating-point multipliers in LUT fabric. Second, the decode
 phase of transformer inference is memory-bandwidth-bound at batch size one,
-as established in the GPU profiling of \cref{sec:motivations}, since reducing the
+as established in the GPU profiling of \cref{sec:motivations}: reducing the
 weight precision from FP32 to INT8 gives a 4$\times$ reduction in the bytes
 transferred per decode step, which directly translates to a 4$\times$
 reduction in the DRAM bandwidth required to sustain a given throughput.
@@ -196,10 +208,12 @@ quantisation, which uses minimal storage for scale factors but suffers
 higher error when the weight distribution has outliers. The design uses a
 group size of $\text{GS} = 64$ for the full TinyLlama model, following the
 convention established in the llama2.c reference implementation
-\cite{karpathy2023llama2c}, which was found to provide an acceptable balance between
+\cite{PLACEHOLDER}, which was found to provide an acceptable balance between
 quantisation error and the memory overhead of scale factor storage. For the
 scaled-down HLS simulation configuration ($d_{\text{model}} = 8$), a group
-size of $\text{GS} = 4$ is used.
+size of $\text{GS} = 4$ is used so that the constraint $\text{GS} \leq
+d_{\text{model}}$ is satisfied and at least one complete quantisation group
+is present per weight vector.
 
 At runtime, activations are quantised dynamically before each matrix-vector
 multiplication. The quantisation is performed using the same symmetric
@@ -210,4 +224,6 @@ by multiplying each partial sum by the product of the corresponding weight
 and activation scale factors. This approach keeps all inner product arithmetic
 in the INT8 domain while accumulating into 32-bit integers to prevent
 overflow, and defers the floating-point conversion to the final output of
-each matrix-vector row.
+each matrix-vector row. The interaction between the quantisation scheme and
+the matrix-vector kernel implementation is described in detail in
+\cref{ch:implementation}.

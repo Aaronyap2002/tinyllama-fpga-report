@@ -1300,32 +1300,8 @@
       \verb https://arxiv.org/abs/1805.08288
       \endverb
     \endentry
-    \entry{karpathy2023llama2c}{misc}{}{}
-      \name{author}{1}{}{%
-        {{hash=e91a4c2044bccdbef249eabc886ff988}{%
-           family={Karpathy},
-           familyi={K\bibinitperiod},
-           given={Andrej},
-           giveni={A\bibinitperiod}}}%
-      }
-      \strng{namehash}{e91a4c2044bccdbef249eabc886ff988}
-      \strng{fullhash}{e91a4c2044bccdbef249eabc886ff988}
-      \strng{fullhashraw}{e91a4c2044bccdbef249eabc886ff988}
-      \strng{bibnamehash}{e91a4c2044bccdbef249eabc886ff988}
-      \strng{authorbibnamehash}{e91a4c2044bccdbef249eabc886ff988}
-      \strng{authornamehash}{e91a4c2044bccdbef249eabc886ff988}
-      \strng{authorfullhash}{e91a4c2044bccdbef249eabc886ff988}
-      \strng{authorfullhashraw}{e91a4c2044bccdbef249eabc886ff988}
-      \field{sortinit}{4}
-      \field{sortinithash}{9381316451d1b9788675a07e972a12a7}
-      \field{labelnamesource}{author}
-      \field{labeltitlesource}{title}
-      \field{howpublished}{\url{https://github.com/karpathy/llama2.c}}
-      \field{note}{Accessed: Mar.\ 24, 2026}
-      \field{title}{llama2.c: Inference {Llama} 2 in One File of Pure {C}}
-      \field{year}{2023}
-    \endentry
   \enddatalist
+  \missing{PLACEHOLDER}
 \endrefsection
 \endinput
 
